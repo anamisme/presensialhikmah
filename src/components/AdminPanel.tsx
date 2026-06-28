@@ -964,17 +964,17 @@ export default function AdminPanel({
                       )}
                     </button>
 
-                    {/* QR Code Preview Box matching mockup */}
+                    {/* QR Code Preview Box */}
                     <div className="mt-6 flex flex-col items-center bg-gray-50 p-6 rounded-xl border border-dashed border-gray-200">
                       <div className="relative w-44 h-44 bg-white p-3 rounded-lg shadow-sm mb-4">
-                        <img 
-                          className={`w-full h-full object-contain transition-all duration-300 ${isQRGenerated ? 'opacity-100 filter-none' : 'opacity-20 blur-[1px]'}`} 
-                          src={ASSETS.qrStatic} 
-                          alt="QR Preview" 
-                        />
-                        
-                        {!isQRGenerated && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                        {isQRGenerated ? (
+                          <img 
+                            className="w-full h-full object-contain"
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent('PRESENSI:' + selectedQRLocation)}`} 
+                            alt={`QR Code - ${selectedQRLocation}`} 
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
                             <p className="text-gray-400 text-[10px] font-semibold text-center px-4 leading-normal">
                               Pilih lokasi dan tekan generate untuk pratinjau QR Code
                             </p>
@@ -982,9 +982,15 @@ export default function AdminPanel({
                         )}
                       </div>
 
+                      {isQRGenerated && (
+                        <p className="text-[10px] text-gray-500 mb-3 text-center font-mono bg-gray-100 px-3 py-1 rounded-lg">
+                          PRESENSI:{selectedQRLocation}
+                        </p>
+                      )}
+
                       {isQRGenerated ? (
                         <a 
-                          href={ASSETS.qrStatic}
+                          href={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('PRESENSI:' + selectedQRLocation)}`}
                           download={`qr_code_${selectedQRLocation.replace(/\s+/g, '_')}.png`}
                           target="_blank"
                           rel="noreferrer"
