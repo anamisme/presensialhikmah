@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, 
@@ -166,7 +166,54 @@ export default function EmployeeApp({
     return R * c;
   }, []);
 
-  // Real GPS location fetching
+  // Anti-Fake GPS: Track location history for anomaly detection
+  const locationHistoryRef = useRef<{ lat: number; lng: number; timestamp: number; accuracy: number }[]>([]);
+  const [gpsWarning, setGpsWarning] = useState<string | null>(null);
+
+  // Anti-Fake GPS validation
+  const validateGPSIntegrity = useCallback((latitude: number, longitude: number, accuracy: number, timestamp: number): { valid: boolean; reason?: string } => {
+    // Check 1: Reject if accuracy is suspiciously perfect (0) or too low (>200m)
+    if (accuracy === 0) {
+      return { valid: false, reason: 'Akurasi GPS tidak valid (0m). Kemungkinan lokasi palsu terdeteksi.' };
+    }
+    if (accuracy > 200) {
+      return { valid: false, reason: `Akurasi GPS terlalu rendah (${Math.round(accuracy)}m). Pastikan GPS aktif di tempat terbuka.` };
+    }
+
+    // Check 2: Detect teleportation (impossible speed between readings)
+    const history = locationHistoryRef.current;
+    if (history.length > 0) {
+      const lastReading = history[history.length - 1];
+      const timeDiffSeconds = (timestamp - lastReading.timestamp) / 1000;
+      
+      if (timeDiffSeconds > 0 && timeDiffSeconds < 300) { // Only check within 5 minutes
+        const distanceMoved = calculateDistance(lastReading.lat, lastReading.lng, latitude, longitude);
+        const speedMps = distanceMoved / timeDiffSeconds; // meters per second
+        const speedKmh = speedMps * 3.6;
+
+        // Max reasonable speed: 200 km/h (covers highway driving)
+        // If moved > 5km in < 10 seconds, definitely fake
+        if (speedKmh > 200 && timeDiffSeconds < 60) {
+          return { valid: false, reason: `Perpindahan lokasi tidak wajar terdeteksi (${Math.round(distanceMoved)}m dalam ${Math.round(timeDiffSeconds)}s). Kemungkinan lokasi palsu.` };
+        }
+      }
+    }
+
+    // Check 3: Detect if coordinates are too round (common in fake GPS apps)
+    const latStr = latitude.toString();
+    const lngStr = longitude.toString();
+    const latDecimals = latStr.includes('.') ? latStr.split('.')[1].length : 0;
+    const lngDecimals = lngStr.includes('.') ? lngStr.split('.')[1].length : 0;
+    
+    if (latDecimals <= 2 && lngDecimals <= 2) {
+      return { valid: false, reason: 'Koordinat GPS terlalu bulat. Gunakan lokasi GPS asli perangkat.' };
+    }
+
+    // All checks passed
+    return { valid: true };
+  }, [calculateDistance]);
+
+  // Real GPS location fetching with anti-fake validation
   const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationError('Geolokasi tidak didukung oleh browser ini.');
@@ -175,10 +222,30 @@ export default function EmployeeApp({
 
     setIsLocating(true);
     setLocationError(null);
+    setGpsWarning(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+        const timestamp = position.timestamp;
+
+        // Anti-fake GPS validation
+        const validation = validateGPSIntegrity(latitude, longitude, accuracy, timestamp);
+        
+        if (!validation.valid) {
+          setIsLocating(false);
+          setGpsWarning(validation.reason || 'Lokasi GPS mencurigakan terdeteksi.');
+          setIsWithinGeofence(false);
+          return;
+        }
+
+        // Store in location history for future checks
+        locationHistoryRef.current.push({ lat: latitude, lng: longitude, timestamp, accuracy });
+        // Keep only last 10 readings
+        if (locationHistoryRef.current.length > 10) {
+          locationHistoryRef.current.shift();
+        }
+
         setUserLocation({ lat: latitude, lng: longitude });
         setIsLocating(false);
 
@@ -224,7 +291,7 @@ export default function EmployeeApp({
         maximumAge: 0
       }
     );
-  }, [geofences, calculateDistance]);
+  }, [geofences, calculateDistance, validateGPSIntegrity]);
 
   // Get location on mount and when tab is home
   useEffect(() => {
@@ -763,6 +830,17 @@ export default function EmployeeApp({
                 </div>
               )}
 
+              {gpsWarning && (
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 p-3 rounded-lg text-xs text-amber-700 dark:text-amber-400 flex gap-2">
+                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                  <div>
+                    <p className="font-bold">⚠️ Peringatan GPS</p>
+                    <p>{gpsWarning}</p>
+                    <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-500">Presensi tidak dapat dilakukan dengan lokasi palsu.</p>
+                  </div>
+                </div>
+              )}
+
               {userLocation && (
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-2.5 rounded-lg transition-colors duration-300">
                   <Navigation className="w-4 h-4 text-[#005bc1] dark:text-[#3b82f6] shrink-0" />
@@ -819,7 +897,7 @@ export default function EmployeeApp({
             {/* Check-In / Check-Out Action Button */}
             <div className="pt-2">
               <button
-                disabled={isScanning || isCameraActive || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin'}
+                disabled={isScanning || isCameraActive || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin' || !!gpsWarning}
                 onClick={handleStartScan}
                 className={`w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] ${
                   isScanning || isCameraActive
