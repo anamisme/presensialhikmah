@@ -18,7 +18,10 @@ import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'employee' | 'admin'>('employee');
+  const [currentView, setCurrentView] = useState<'employee' | 'admin'>(() => {
+    const savedSession = getStoredData('session', null) as { role: 'employee' | 'admin' } | null;
+    return savedSession?.role || 'employee';
+  });
   
   // App-level state initialized from localStorage
   const [employees, setEmployees] = useState<Employee[]>(() => getStoredData('employees', INITIAL_EMPLOYEES));
