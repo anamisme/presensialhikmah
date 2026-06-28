@@ -381,10 +381,10 @@ export default function AdminPanel({
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F9F9FF] text-gray-900 font-sans pb-24 md:pb-0 select-none">
+    <div className="flex flex-col min-h-screen bg-[#F9F9FF] dark:bg-[#121214] text-gray-900 dark:text-gray-100 font-sans pb-24 md:pb-0 select-none transition-colors duration-300">
       
       {/* Admin Top App Bar */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100/50 flex justify-between items-center px-4 md:px-6 h-16 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#1C1C1E]/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-zinc-800/50 flex justify-between items-center px-4 md:px-6 h-16 shadow-sm">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 object-contain" />
           <h1 className="font-bold text-lg text-gray-800 tracking-tight">Admin Panel</h1>
@@ -620,15 +620,8 @@ export default function AdminPanel({
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl md:text-2xl font-extrabold text-gray-800 tracking-tight">Data Karyawan</h2>
-                  <p className="text-xs text-gray-400">Total terdaftar {employees.length} karyawan aktif.</p>
+                  <p className="text-xs text-gray-400">Total terdaftar {employees.length} karyawan aktif. Karyawan otomatis terdaftar saat login pertama.</p>
                 </div>
-                <button 
-                  onClick={() => setIsAddEmployeeOpen(true)}
-                  className="bg-[#00418f] text-white px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:brightness-110 transition-all active:scale-95"
-                >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Tambah</span>
-                </button>
               </div>
 
               {/* Search Bar */}
@@ -1171,39 +1164,6 @@ export default function AdminPanel({
                     >
                       Tambah
                     </button>
-                  </div>
-                </section>
-
-                {/* Info Sistem */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Info className="w-5 h-5 text-[#00418f]" />
-                    <h3 className="font-bold text-gray-800 text-sm">Info Sistem</h3>
-                  </div>
-
-                  <div className="divide-y divide-gray-100 text-xs">
-                    <div className="flex justify-between items-center py-2.5">
-                      <span className="text-gray-400">Versi Aplikasi</span>
-                      <span className="font-semibold text-gray-800">2.1.0</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2.5">
-                      <span className="text-gray-400">Backend Engine</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="font-semibold text-gray-800">Node.js</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-2.5">
-                      <span className="text-gray-400">Database</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#00418f]" />
-                        <span className="font-semibold text-gray-800">PostgreSQL</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-400 text-center font-semibold">
-                    Terakhir diperbarui: 28 Juni 2026 • 04:09 WIB
                   </div>
                 </section>
 

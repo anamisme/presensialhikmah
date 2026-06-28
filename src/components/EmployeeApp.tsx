@@ -567,9 +567,8 @@ export default function EmployeeApp({
 
             {/* Attendance Status Card */}
             <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-4 transition-colors duration-300">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status Kerja Hari Ini</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+              <div className="flex justify-center">
+                <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
                   todayRecord?.status === 'Izin'
                     ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50'
                     : todayRecord?.keluar 
@@ -578,7 +577,7 @@ export default function EmployeeApp({
                     ? 'bg-[#6ffb85]/20 dark:bg-emerald-950/40 text-[#00732a] dark:text-emerald-400' 
                     : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
                 }`}>
-                  {todayRecord?.status === 'Izin' ? 'Izin / Sakit' : todayRecord?.keluar ? 'Selesai' : todayRecord ? 'Aktif' : 'Belum Absen'}
+                  {todayRecord?.status === 'Izin' ? 'Izin' : todayRecord?.keluar ? 'Sudah Absen' : todayRecord ? 'Sudah Absen' : 'Belum Absen'}
                 </span>
               </div>
 
@@ -634,10 +633,10 @@ export default function EmployeeApp({
                 </div>
               )}
 
-              <div className="pt-3.5 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <div className="pt-3.5 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-[#0058bc] dark:text-[#3b82f6]" />
-                  Shift: <span className="font-semibold text-gray-700 dark:text-gray-300">Reguler (08:00 - 17:00)</span>
+                  Jam Kerja: <span className="font-semibold text-gray-700 dark:text-gray-300">{limitTime} - 17:00 WIB</span>
                 </span>
               </div>
             </section>
