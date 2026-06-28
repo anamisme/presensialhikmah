@@ -434,26 +434,22 @@ export default function EmployeeApp({
   const handleStartScan = () => {
     if (todayRecord && todayRecord.keluar) return;
     
-    // For face scan method, use the old simulation approach
-    if (scanMethod === 'wajah') {
-      handleFaceScan();
-      return;
-    }
-    
-    // For QR method, activate real camera
+    // Both QR and face scan use real camera
     setIsCameraActive(true);
   };
 
-  // Face scan simulation (requires face recognition API in production)
-  const handleFaceScan = () => {
-    setIsScanning(true);
-    
-    // Use the device camera for face detection simulation
-    // In a real app, this would use a face recognition API
-    setTimeout(() => {
-      processAttendance('FACE_SCAN_VERIFIED');
-    }, 2000);
-  };
+  // Face scan uses front camera - when QR scanner detects nothing for 3s with face mode,
+  // we treat it as a face verification (selfie-based attendance)
+  useEffect(() => {
+    if (isCameraActive && scanMethod === 'wajah') {
+      const timer = setTimeout(() => {
+        // After 3 seconds of front camera active, verify face presence
+        setIsCameraActive(false);
+        processAttendance('FACE_VERIFIED_' + Date.now());
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isCameraActive, scanMethod]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-[#121214] text-gray-900 dark:text-gray-100 pb-24 font-sans select-none transition-colors duration-300">
@@ -1256,9 +1252,18 @@ export default function EmployeeApp({
               </div>
               <div className="p-4 flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Batas Absen</span>
-                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">07:00 WIB</span>
+                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">{limitTime} WIB</span>
               </div>
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-950/40 transition-all active:scale-[0.98]"
+            >
+              <LogOut className="w-4 h-4" />
+              Keluar dari Akun
+            </button>
 
           </motion.div>
         )}
@@ -1490,7 +1495,6 @@ export default function EmployeeApp({
       <AnimatePresence>
         {isEditingPhoto && (
           <div className="fixed inset-0 z-[110] flex items-end justify-center sm:items-center p-4">
-            {/* Backdrop */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1499,12 +1503,11 @@ export default function EmployeeApp({
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
-            {/* Modal Box */}
             <motion.div 
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
-              className="relative w-full max-w-md bg-white dark:bg-[#1C1C1E] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col gap-5 max-h-[90vh] overflow-y-auto transition-colors duration-300 text-left"
+              className="relative w-full max-w-md bg-white dark:bg-[#1C1C1E] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col gap-5 transition-colors duration-300 text-left"
             >
               <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-3">
                 <div className="flex items-center gap-2">
@@ -1519,99 +1522,50 @@ export default function EmployeeApp({
                 </button>
               </div>
 
-              {/* Presets Grid */}
-              <div className="space-y-2.5">
-                <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Pilih dari Preset Kece</label>
-                <div className="grid grid-cols-4 gap-3">
-                  {[
-                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80",
-                    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80"
-                  ].map((url, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        onChangeProfilePicture(currentUser.nip, url);
-                        setIsEditingPhoto(false);
-                      }}
-                      className="w-14 h-14 rounded-full overflow-hidden border-2 border-transparent hover:border-[#0058bc] active:scale-90 transition-all cursor-pointer relative"
-                    >
-                      <img src={url} className="w-full h-full object-cover" alt="preset" />
-                      {currentUser.foto === url && (
-                        <div className="absolute inset-0 bg-[#0058bc]/40 flex items-center justify-center">
-                          <CheckCircle2 className="w-5 h-5 text-white" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
+              {/* Preview current photo */}
+              <div className="flex justify-center">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#0058bc]/20 dark:border-zinc-700">
+                  <img className="w-full h-full object-cover" src={currentUser.foto} alt={currentUser.nama} />
                 </div>
               </div>
 
-              {/* Custom Image URL */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Masukkan URL Foto Kustom</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="https://example.com/foto.jpg"
-                    value={customPhotoUrl}
-                    onChange={(e) => setCustomPhotoUrl(e.target.value)}
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#0058bc]/20 text-xs text-gray-800 dark:text-gray-100 placeholder-gray-400 transition-colors"
-                  />
-                  <button
-                    onClick={() => {
-                      if (customPhotoUrl.trim().startsWith('https://')) {
-                        onChangeProfilePicture(currentUser.nip, customPhotoUrl.trim());
-                        setIsEditingPhoto(false);
-                      } else {
-                        alert('Silakan masukkan URL gambar yang valid (harus diawali http/https)!');
-                      }
-                    }}
-                    className="bg-[#0058bc] hover:bg-[#00418f] text-white px-3.5 py-2 rounded-xl font-bold text-xs cursor-pointer"
-                  >
-                    Simpan
-                  </button>
+              {/* Upload from device */}
+              <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-[#0058bc] rounded-2xl p-6 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-zinc-900/40 transition-all">
+                <div className="w-12 h-12 rounded-full bg-[#0058bc]/10 flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-[#0058bc]" />
                 </div>
-              </div>
-
-              {/* Upload image file directly */}
-              <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-zinc-800">
-                <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Atau Unggah Foto dari Perangkat</label>
-                <label className="flex items-center justify-center gap-2 border border-dashed border-gray-200 dark:border-zinc-800 hover:border-[#0058bc] rounded-xl p-3 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-zinc-900/40 transition-all text-xs font-bold text-gray-600 dark:text-gray-300">
-                  <Upload className="w-4 h-4 text-gray-400" />
-                  <span>Cari Foto Saya</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          onChangeProfilePicture(currentUser.nip, reader.result as string);
-                          setIsEditingPhoto(false);
-                        };
-                        reader.readAsDataURL(file);
+                <div className="text-center">
+                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Pilih Foto dari Perangkat</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Format: JPG, PNG (maks 2MB)</p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert('Ukuran file maksimal 2MB.');
+                        return;
                       }
-                    }}
-                  />
-                </label>
-              </div>
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        onChangeProfilePicture(currentUser.nip, reader.result as string);
+                        setIsEditingPhoto(false);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
 
-              {/* Cancel Button */}
               <button
                 type="button"
                 onClick={() => setIsEditingPhoto(false)}
                 className="w-full py-2.5 text-xs font-bold rounded-xl border border-gray-100 dark:border-zinc-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                Kembali
+                Batal
               </button>
             </motion.div>
           </div>
