@@ -33,7 +33,8 @@ import {
   FileSpreadsheet,
   ExternalLink,
   Check,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
@@ -56,6 +57,9 @@ interface AdminPanelProps {
   adminProfile: { nama: string; foto: string; role: string };
   onChangeAdminProfilePicture: (newFoto: string) => void;
   onLogout: () => void;
+  adminEmails?: string[];
+  onAddAdminEmail?: (email: string) => void;
+  onRemoveAdminEmail?: (email: string) => void;
 }
 
 export default function AdminPanel({
@@ -72,10 +76,16 @@ export default function AdminPanel({
   onBackToEmployee,
   adminProfile,
   onChangeAdminProfilePicture,
-  onLogout
+  onLogout,
+  adminEmails = [],
+  onAddAdminEmail,
+  onRemoveAdminEmail
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'karyawan' | 'presensi' | 'pengaturan'>('dashboard');
   
+  // Admin email management state
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+
   // Admin custom profile picture states
   const [adminCustomPhotoUrl, setAdminCustomPhotoUrl] = useState('');
   const [isEditingAdminPhoto, setIsEditingAdminPhoto] = useState(false);
@@ -1006,6 +1016,70 @@ export default function AdminPanel({
                         </span>
                       )}
                     </div>
+                  </div>
+                </section>
+
+                {/* Kelola Admin */}
+                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-[#00418f]" />
+                    <h3 className="font-bold text-gray-800 text-sm">Kelola Akun Admin</h3>
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    Email yang terdaftar sebagai admin dapat mengakses panel administrasi ini.
+                  </p>
+
+                  {/* Current admin list */}
+                  <div className="space-y-2">
+                    {adminEmails.map((email, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-[#00418f]/10 flex items-center justify-center">
+                            <ShieldCheck className="w-3.5 h-3.5 text-[#00418f]" />
+                          </div>
+                          <span className="text-xs font-medium text-gray-700">{email}</span>
+                          {email === 'contact@yayasanbaitulhikmah.com' && (
+                            <span className="text-[9px] font-bold bg-[#00418f]/10 text-[#00418f] px-2 py-0.5 rounded-full uppercase">Primary</span>
+                          )}
+                        </div>
+                        {email !== 'contact@yayasanbaitulhikmah.com' && onRemoveAdminEmail && (
+                          <button
+                            onClick={() => onRemoveAdminEmail(email)}
+                            className="text-rose-500 hover:text-rose-700 p-1 rounded-lg hover:bg-rose-50 transition-colors"
+                            title="Hapus admin"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add new admin */}
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="email@domain.com"
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                    />
+                    <button
+                      onClick={() => {
+                        if (newAdminEmail.trim() && newAdminEmail.includes('@') && onAddAdminEmail) {
+                          if (adminEmails.includes(newAdminEmail.toLowerCase())) {
+                            alert('Email ini sudah terdaftar sebagai admin.');
+                            return;
+                          }
+                          onAddAdminEmail(newAdminEmail.trim());
+                          setNewAdminEmail('');
+                        }
+                      }}
+                      className="bg-[#00418f] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:brightness-110 transition-colors active:scale-95"
+                    >
+                      Tambah
+                    </button>
                   </div>
                 </section>
 

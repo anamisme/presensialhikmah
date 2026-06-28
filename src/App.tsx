@@ -42,6 +42,25 @@ export default function App() {
     role: "Super Admin"
   }));
 
+  // Admin emails list (can be managed from admin panel)
+  const [adminEmails, setAdminEmails] = useState<string[]>(() => 
+    getStoredData('admin_emails', ['contact@yayasanbaitulhikmah.com'])
+  );
+
+  const handleAddAdminEmail = (email: string) => {
+    const updated = [...adminEmails, email.toLowerCase()];
+    setAdminEmails(updated);
+    setStoredData('admin_emails', updated);
+  };
+
+  const handleRemoveAdminEmail = (email: string) => {
+    // Cannot remove the primary admin
+    if (email === 'contact@yayasanbaitulhikmah.com') return;
+    const updated = adminEmails.filter(e => e !== email);
+    setAdminEmails(updated);
+    setStoredData('admin_emails', updated);
+  };
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -199,6 +218,7 @@ export default function App() {
         onAddEmployee={handleAddEmployee}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
+        adminEmails={adminEmails}
       />
     );
   }
@@ -240,6 +260,9 @@ export default function App() {
           adminProfile={adminProfile}
           onChangeAdminProfilePicture={handleChangeAdminProfilePicture}
           onLogout={handleLogout}
+          adminEmails={adminEmails}
+          onAddAdminEmail={handleAddAdminEmail}
+          onRemoveAdminEmail={handleRemoveAdminEmail}
         />
       ) : null}
     </div>

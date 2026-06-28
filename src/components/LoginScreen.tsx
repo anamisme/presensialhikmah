@@ -32,6 +32,7 @@ interface LoginScreenProps {
   onAddEmployee?: (emp: Employee) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
+  adminEmails?: string[];
 }
 
 export default function LoginScreen({
@@ -39,7 +40,8 @@ export default function LoginScreen({
   onLoginSuccess,
   onAddEmployee,
   darkMode,
-  setDarkMode
+  setDarkMode,
+  adminEmails = ['contact@yayasanbaitulhikmah.com']
 }: LoginScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -79,7 +81,7 @@ export default function LoginScreen({
     const emailLower = email.toLowerCase();
     
     // 1. Check if Administrator
-    if (emailLower === 'contact@yayasanbaitulhikmah.com') {
+    if (adminEmails.includes(emailLower)) {
       setSuccessMsg('Autentikasi Berhasil! Masuk sebagai Super Admin...');
       setTimeout(() => {
         onLoginSuccess({
@@ -401,7 +403,7 @@ export default function LoginScreen({
             <a href="/terms.html" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Syarat & Ketentuan</a>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium text-center leading-relaxed">
-            © 2025 Yayasan Baitul Hikmah. Seluruh akses dipantau untuk keamanan.
+            © {new Date().getFullYear()} Yayasan Baitul Hikmah
           </p>
         </div>
       </footer>
