@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* QR Scanner styles - hide default html5-qrcode UI elements */
 #qr-reader-container video {
   width: 100% !important;

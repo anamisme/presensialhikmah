@@ -3,6 +3,167 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Target spreadsheet for auto-sync attendance data
+const ATTENDANCE_SPREADSHEET_ID = '1y2LsZUg56C5pDMA-V2lzHmfv3TBjT_HCes0960RcSnQ';
+
+/**
+ * Appends a single attendance record row to the shared spreadsheet.
+ * Called automatically every time a user checks in/out.
+ */
+export async function appendAttendanceToSheet(
+  record: {
+    tanggal: string;
+    nip: string;
+    nama: string;
+    masuk: string;
+    keluar?: string;
+    status: string;
+    lokasi?: string;
+    keterangan?: string;
+  },
+  accessToken: string
+): Promise<boolean> {
+  try {
+    const row = [
+      record.tanggal,
+      record.nip,
+      record.nama,
+      record.masuk,
+      record.keluar || '',
+      record.status,
+      record.lokasi || '',
+      record.keterangan || '',
+      new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) // timestamp sync
+    ];
+
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${ATTENDANCE_SPREADSHEET_ID}/values/Sheet1!A:I:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          values: [row],
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error('Gagal sync ke Spreadsheet:', errorData.error?.message);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Error append to sheet:', err);
+    return false;
+  }
+}
+
+/**
+ * Updates an existing row (for checkout) by finding matching date+NIP and updating keluar column.
+ * Uses a search-then-update approach.
+ */
+export async function updateAttendanceCheckout(
+  nip: string,
+  tanggal: string,
+  keluar: string,
+  accessToken: string
+): Promise<boolean> {
+  try {
+    // 1. Read all data to find the row
+    const readRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${ATTENDANCE_SPREADSHEET_ID}/values/Sheet1!A:I`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!readRes.ok) return false;
+
+    const data = await readRes.json();
+    const rows = data.values || [];
+
+    // 2. Find the row with matching tanggal (col A) and NIP (col B) where keluar (col E) is empty
+    let targetRow = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === tanggal && rows[i][1] === nip && (!rows[i][4] || rows[i][4] === '')) {
+        targetRow = i + 1; // Sheets is 1-indexed
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      console.warn('Row not found for checkout update, appending instead.');
+      return false;
+    }
+
+    // 3. Update the keluar column (E) and timestamp (I)
+    const updateRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${ATTENDANCE_SPREADSHEET_ID}/values/Sheet1!E${targetRow}:I${targetRow}?valueInputOption=USER_ENTERED`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          values: [[keluar, '', '', '', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })]],
+        }),
+      }
+    );
+
+    return updateRes.ok;
+  } catch (err) {
+    console.error('Error updating checkout:', err);
+    return false;
+  }
+}
+
+/**
+ * Ensures the spreadsheet has proper headers on first row.
+ * Call once on app init or when admin sets up.
+ */
+export async function ensureSheetHeaders(accessToken: string): Promise<void> {
+  try {
+    // Check if first row has headers
+    const readRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${ATTENDANCE_SPREADSHEET_ID}/values/Sheet1!A1:I1`,
+      {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!readRes.ok) return;
+
+    const data = await readRes.json();
+    const firstRow = data.values?.[0];
+
+    // If no headers, write them
+    if (!firstRow || firstRow[0] !== 'Tanggal') {
+      const headers = ['Tanggal', 'NIP', 'Nama', 'Masuk', 'Keluar', 'Status', 'Lokasi', 'Keterangan', 'Timestamp Sync'];
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${ATTENDANCE_SPREADSHEET_ID}/values/Sheet1!A1:I1?valueInputOption=USER_ENTERED`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ values: [headers] }),
+        }
+      );
+    }
+  } catch (err) {
+    console.error('Error ensuring headers:', err);
+  }
+}
+
 /**
  * Creates a new Google Sheet and populates it with headers and row data.
  * Applies clean styling to the header row and auto-resizes columns.
