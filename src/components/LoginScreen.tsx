@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ShieldCheck, 
-  LogIn, 
   Fingerprint, 
   Sparkles, 
   Moon, 
@@ -15,7 +13,13 @@ import {
   Building2,
   Mail,
   ShieldAlert,
-  HelpCircle
+  HelpCircle,
+  Wifi,
+  WifiOff,
+  Clock,
+  ShieldCheck,
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import { Employee } from '../types';
 import { ASSETS } from '../data';
@@ -40,9 +44,33 @@ export default function LoginScreen({
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   
+  // Real-time connection tracking on Login Screen
+  const [isOnline, setIsOnline] = useState<boolean>(() => 
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  // Time clock on Login Screen for high-precision vibe
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   // Dev simulation state
   const [showDevPanel, setShowDevPanel] = useState(false);
   const [simulatedEmail, setSimulatedEmail] = useState('ahmad@yayasanbaitulhikmah.com');
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const clockTimer = setInterval(() => setCurrentTime(new Date()), 1000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(clockTimer);
+    };
+  }, []);
 
   const handleLoginSuccessWithDetails = (googleUser: any) => {
     const email = googleUser.email;
@@ -119,6 +147,11 @@ export default function LoginScreen({
   };
 
   const handleGoogleSignInClick = async () => {
+    if (!isOnline) {
+      setError('Autentikasi Google Workspace memerlukan koneksi internet aktif. Silakan hubungkan perangkat Anda ke internet.');
+      return;
+    }
+
     setError(null);
     setSuccessMsg(null);
     setIsAuthenticating(true);
@@ -165,17 +198,39 @@ export default function LoginScreen({
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-400/10 dark:bg-blue-600/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-emerald-400/10 dark:bg-emerald-600/5 blur-[120px] pointer-events-none" />
 
-      {/* Theme Switcher top right */}
-      <div className="absolute top-6 right-6">
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="p-3 rounded-2xl bg-white dark:bg-[#1C1C1E] border border-gray-100 dark:border-zinc-800 text-gray-500 dark:text-gray-400 shadow-sm hover:brightness-95 active:scale-95 transition-all cursor-pointer"
-        >
-          {darkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-600" />}
-        </button>
+      {/* Top Controls Area */}
+      <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
+        {/* Realtime Clock Pill */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 dark:bg-[#1C1C1E]/80 border border-gray-100 dark:border-zinc-800 shadow-sm backdrop-blur-md">
+          <Clock className="w-3.5 h-3.5 text-[#005bc1] dark:text-blue-400" />
+          <span className="font-mono text-xs font-bold text-gray-700 dark:text-gray-300">
+            {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Connection Status Pill on Login Screen */}
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-black tracking-wider shadow-sm transition-all duration-300 ${
+            isOnline 
+              ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
+              : 'bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 animate-pulse'
+          }`}>
+            {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+            <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+          </div>
+
+          {/* Theme Switcher */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2.5 rounded-full bg-white dark:bg-[#1C1C1E] border border-gray-100 dark:border-zinc-800 text-gray-500 dark:text-gray-400 shadow-sm hover:brightness-95 active:scale-95 transition-all cursor-pointer"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+          </button>
+        </div>
       </div>
 
-      <div className="w-full max-w-md z-10 space-y-6">
+      <div className="w-full max-w-md z-10 space-y-6 mt-8">
         
         {/* Main Logo & Headline */}
         <div className="text-center space-y-3">
@@ -211,6 +266,23 @@ export default function LoginScreen({
                 Silakan masuk menggunakan email resmi organisasi Anda untuk memverifikasi identitas dan melakukan presensi geofence.
               </p>
             </div>
+
+            {/* Connection Warning Banner when Offline */}
+            {!isOnline && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 p-4 rounded-2xl text-left flex gap-3 text-xs text-amber-800 dark:text-amber-400"
+              >
+                <WifiOff className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                <div className="space-y-1">
+                  <p className="font-bold">Mode Offline Terdeteksi</p>
+                  <p className="leading-relaxed font-medium">
+                    Autentikasi Google memerlukan internet. Jika Anda adalah pengembang atau ingin menguji sistem, Anda bisa menggunakan panel simulasi di bawah untuk login dan menguji ketahanan absensi offline kami!
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
             {/* Error Message Banner */}
             {error && (
@@ -305,9 +377,12 @@ export default function LoginScreen({
               animate={{ opacity: 1, y: 0 }}
               className="mt-3 pt-3 border-t border-gray-300/40 dark:border-zinc-800/60 text-left space-y-3"
             >
-              <p className="text-[10px] text-gray-500 leading-normal font-medium">
-                Gunakan dropdown di bawah untuk mensimulasikan login Google Workspace tanpa membuka jendela pop-up Google asli. Cocok untuk menguji identitas admin atau karyawan yang berbeda.
-              </p>
+              <div className="bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100/30 p-3 rounded-xl flex gap-2.5 text-[11px] text-blue-700 dark:text-blue-400 font-medium leading-relaxed">
+                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>
+                  Gunakan dropdown untuk mensimulasikan login Google Workspace tanpa jendela pop-up Google asli. Berfungsi penuh baik online maupun offline!
+                </p>
+              </div>
 
               <div className="space-y-1.5">
                 <label className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block">Pilih Akun Simulasi</label>
