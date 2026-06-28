@@ -477,6 +477,15 @@ export default function EmployeeApp({
             </span>
             <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
           </div>
+
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           
           <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
             <img 
@@ -1259,30 +1268,6 @@ export default function EmployeeApp({
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Batas Absen</span>
                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">07:00 WIB</span>
               </div>
-            </div>
-
-            {/* Comfort Settings (Dark Mode Toggle) */}
-            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex justify-between items-center transition-colors duration-300">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gray-100 dark:bg-zinc-800 rounded-xl text-gray-600 dark:text-gray-300 transition-colors">
-                  {darkMode ? <Moon className="w-5 h-5 text-[#3b82f6]" /> : <Sun className="w-5 h-5 text-amber-500" />}
-                </div>
-                <div className="text-left">
-                  <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">Mode Gelap (Malam)</h3>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">Meredupkan layar untuk kenyamanan mata</p>
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => setDarkMode(!darkMode)}
-                className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none flex items-center ${
-                  darkMode ? 'bg-[#3b82f6]' : 'bg-gray-200 dark:bg-zinc-700'
-                }`}
-              >
-                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
-                  darkMode ? 'translate-x-6' : 'translate-x-0'
-                }`} />
-              </button>
             </div>
 
           </motion.div>
