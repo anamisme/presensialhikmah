@@ -32,7 +32,8 @@ import {
   UserPlus,
   FileSpreadsheet,
   ExternalLink,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
@@ -52,6 +53,9 @@ interface AdminPanelProps {
   onAddGeofence: (geo: Geofence) => void;
   onDeleteGeofence: (id: string) => void;
   onBackToEmployee: () => void;
+  adminProfile: { nama: string; foto: string; role: string };
+  onChangeAdminProfilePicture: (newFoto: string) => void;
+  onLogout: () => void;
 }
 
 export default function AdminPanel({
@@ -65,9 +69,18 @@ export default function AdminPanel({
   onDeleteEmployee,
   onAddGeofence,
   onDeleteGeofence,
-  onBackToEmployee
+  onBackToEmployee,
+  adminProfile,
+  onChangeAdminProfilePicture,
+  onLogout
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'karyawan' | 'presensi' | 'pengaturan'>('dashboard');
+  
+  // Admin custom profile picture states
+  const [adminCustomPhotoUrl, setAdminCustomPhotoUrl] = useState('');
+  const [isEditingAdminPhoto, setIsEditingAdminPhoto] = useState(false);
+  const [viewingAttachment, setViewingAttachment] = useState<string | null>(null);
+  const [attachmentTitle, setAttachmentTitle] = useState('');
   
   // Google Sheets integration state
   const [googleUser, setGoogleUser] = useState<User | null>(null);
@@ -168,6 +181,7 @@ export default function AdminPanel({
   const [newJabatan, setNewJabatan] = useState('');
   const [newLembaga, setNewLembaga] = useState('Lembaga IT & Digital');
   const [newPassword, setNewPassword] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   // State for adding geofence modal
@@ -264,7 +278,8 @@ export default function AdminPanel({
       nama: newNama,
       jabatan: newJabatan,
       lembaga: newLembaga,
-      foto: ASSETS.genericAvatar
+      foto: ASSETS.genericAvatar,
+      email: newEmail.trim() || undefined
     };
 
     onAddEmployee(newEmp);
@@ -274,6 +289,7 @@ export default function AdminPanel({
     setNewNama('');
     setNewJabatan('');
     setNewPassword('');
+    setNewEmail('');
     setIsAddEmployeeOpen(false);
   };
 
@@ -320,10 +336,18 @@ export default function AdminPanel({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Admin Profile Badge */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+            <div className="w-5 h-5 rounded-full overflow-hidden border border-[#00418f]/20">
+              <img src={adminProfile.foto} className="w-full h-full object-cover" alt="Admin" />
+            </div>
+            <span className="text-[11px] font-bold text-gray-700">{adminProfile.nama}</span>
+          </div>
+
           {/* Quick toggle to Employee Mode */}
           <button 
             onClick={onBackToEmployee}
-            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95"
+            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Mode Pegawai
@@ -579,7 +603,18 @@ export default function AdminPanel({
                       <div className="flex-grow min-w-0">
                         <h3 className="font-bold text-gray-800 text-sm truncate">{emp.nama}</h3>
                         <p className="text-xs text-gray-500 truncate">{emp.jabatan} • <span className="text-gray-400">{emp.lembaga}</span></p>
-                        <p className="text-[10px] font-semibold text-[#00418f] tracking-wide mt-0.5">NIP: {emp.nip}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-bold text-[#00418f] tracking-wide">NIP: {emp.nip}</span>
+                          {emp.email ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-blue-50 text-[#00418f] border border-blue-100 font-medium lowercase truncate max-w-[180px]" title={emp.email}>
+                              {emp.email}
+                            </span>
+                          ) : (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 font-medium italic">
+                              Email belum diset
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <button 
                         onClick={() => {
@@ -694,11 +729,36 @@ export default function AdminPanel({
                               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
                                 rec.status === 'Tepat Waktu' 
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                                  : rec.status === 'Izin'
+                                  ? 'bg-sky-50 text-sky-700 border border-sky-100'
                                   : 'bg-rose-50 text-rose-700 border border-rose-100'
                               }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${rec.status === 'Tepat Waktu' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  rec.status === 'Tepat Waktu' 
+                                    ? 'bg-emerald-500' 
+                                    : rec.status === 'Izin'
+                                    ? 'bg-sky-500'
+                                    : 'bg-rose-500'
+                                }`} />
                                 {rec.status}
                               </span>
+                              {rec.status === 'Izin' && rec.keterangan && (
+                                <div className="mt-1.5 max-w-[200px] text-left text-[10px] font-medium text-gray-500 leading-normal">
+                                  <p className="italic bg-gray-50 p-1.5 rounded-lg border border-gray-100">{rec.keterangan}</p>
+                                  {rec.lampiran && (
+                                    <button
+                                      onClick={() => {
+                                        setViewingAttachment(rec.lampiran!);
+                                        setAttachmentTitle(`Lampiran Izin: ${rec.nama}`);
+                                      }}
+                                      className="inline-flex items-center gap-1 mt-1.5 text-[#00418f] font-bold hover:underline cursor-pointer"
+                                    >
+                                      <FileText className="w-3.5 h-3.5" />
+                                      Lihat Lampiran Bukti
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -978,6 +1038,139 @@ export default function AdminPanel({
                   </div>
                 </section>
 
+                {/* Profil Administrator Customizer */}
+                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-[#00418f]" />
+                      <h3 className="font-bold text-gray-800 text-sm">Profil Administrator</h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+                    <div className="relative group shrink-0">
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#00418f]/20 shadow-inner">
+                        <img className="w-full h-full object-cover" src={adminProfile.foto} alt={adminProfile.nama} />
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setIsEditingAdminPhoto(true);
+                          setAdminCustomPhotoUrl(adminProfile.foto);
+                        }}
+                        className="absolute bottom-0 right-0 p-1.5 bg-[#00418f] text-white rounded-full shadow-md hover:brightness-110 active:scale-90 transition-all cursor-pointer"
+                        title="Edit Foto Profil"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex-grow min-w-0 text-left">
+                      <h4 className="font-bold text-gray-800 text-sm">{adminProfile.nama}</h4>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">{adminProfile.role}</p>
+                      <button
+                        onClick={onLogout}
+                        className="mt-2 flex items-center gap-1 text-[10px] text-red-600 font-bold hover:underline"
+                      >
+                        <LogOut className="w-3 h-3" />
+                        Keluar dari Sesi
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline preset editor directly embedded for administrative comfort */}
+                  {isEditingAdminPhoto && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="border-t border-gray-100 pt-4 space-y-3"
+                    >
+                      <h4 className="text-xs font-bold text-gray-500 text-left">Pilih Foto Preset Administrator:</h4>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80",
+                          "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80",
+                          "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80",
+                          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80"
+                        ].map((url, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              onChangeAdminProfilePicture(url);
+                              setIsEditingAdminPhoto(false);
+                            }}
+                            className="w-12 h-12 rounded-xl overflow-hidden border-2 border-transparent hover:border-[#00418f] active:scale-95 transition-all cursor-pointer relative animate-none"
+                          >
+                            <img src={url} className="w-full h-full object-cover" alt="preset" />
+                            {adminProfile.foto === url && (
+                              <div className="absolute inset-0 bg-[#00418f]/40 flex items-center justify-center">
+                                <Check className="w-4 h-4 text-white stroke-[3]" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="space-y-1 text-left">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Atau masukkan URL Foto Kustom:</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="https://example.com/foto.jpg"
+                            value={adminCustomPhotoUrl}
+                            onChange={(e) => setAdminCustomPhotoUrl(e.target.value)}
+                            className="flex-grow bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                          />
+                          <button
+                            onClick={() => {
+                              if (adminCustomPhotoUrl.trim().startsWith('http')) {
+                                onChangeAdminProfilePicture(adminCustomPhotoUrl);
+                                setIsEditingAdminPhoto(false);
+                              } else {
+                                alert('Harap masukkan URL yang valid!');
+                              }
+                            }}
+                            className="bg-[#00418f] text-white px-3 py-2 rounded-xl text-xs font-bold hover:brightness-110"
+                          >
+                            Set
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 text-left">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Atau Unggah file gambar:</label>
+                        <label className="flex items-center justify-center gap-2 border border-dashed border-gray-200 hover:border-[#00418f] rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all text-xs font-bold text-gray-600">
+                          <Download className="w-4 h-4 text-gray-400" />
+                          <span>Cari Foto Saya</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  onChangeAdminProfilePicture(reader.result as string);
+                                  setIsEditingAdminPhoto(false);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <button
+                        onClick={() => setIsEditingAdminPhoto(false)}
+                        className="w-full text-center py-2 text-xs text-gray-400 hover:text-gray-600 font-bold"
+                      >
+                        Tutup Editor
+                      </button>
+                    </motion.div>
+                  )}
+                </section>
+
               </div>
               
             </motion.div>
@@ -1068,7 +1261,25 @@ export default function AdminPanel({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase">Password Akses</label>
+                    <label className="text-xs font-bold text-[#00418f] ml-1 uppercase flex items-center gap-1.5">
+                      Email Google Workspace
+                      <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase">Utama</span>
+                    </label>
+                    <input 
+                      type="email"
+                      required
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="w-full bg-white border border-[#00418f]/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 font-medium text-gray-800"
+                      placeholder="contoh: budi@yayasanbaitulhikmah.com"
+                    />
+                    <p className="text-[10px] text-gray-400 leading-relaxed px-1">
+                      Karyawan akan login menggunakan Akun Google ini. Pastikan domain email organisasi sesuai.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase">Password Akses (Sandi Alternatif)</label>
                     <input 
                       type="password"
                       value={newPassword}
@@ -1433,6 +1644,40 @@ export default function AdminPanel({
           <span className="text-[10px] tracking-tight">Settings</span>
         </button>
       </nav>
+
+      {/* Lightbox Preview Lampiran Bukti untuk Admin */}
+      <AnimatePresence>
+        {viewingAttachment && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setViewingAttachment(null)}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-lg w-full bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/80 p-4 text-center z-10 text-left"
+            >
+              <div className="flex justify-between items-center text-white mb-3">
+                <span className="text-xs font-bold tracking-tight">{attachmentTitle || 'Preview Bukti Lampiran'}</span>
+                <button 
+                  onClick={() => setViewingAttachment(null)}
+                  className="p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-black flex items-center justify-center">
+                <img src={viewingAttachment} className="max-w-full max-h-full object-contain animate-none" alt="Bukti lampiran" referrerPolicy="no-referrer" />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

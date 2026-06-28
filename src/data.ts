@@ -26,42 +26,48 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     nama: "Ahmad",
     jabatan: "Staf IT",
     lembaga: "Lembaga IT & Digital",
-    foto: ASSETS.ahmadProfile
+    foto: ASSETS.ahmadProfile,
+    email: "ahmad@yayasanbaitulhikmah.com"
   },
   {
     nip: "198504122010011002",
     nama: "Budi Santoso",
     jabatan: "Kepala Bagian",
     lembaga: "Lembaga IT & Digital",
-    foto: ASSETS.budiProfile
+    foto: ASSETS.budiProfile,
+    email: "budi@yayasanbaitulhikmah.com"
   },
   {
     nip: "199208242015032004",
     nama: "Siti Aminah",
     jabatan: "Staf Senior",
     lembaga: "Keuangan",
-    foto: ASSETS.sitiProfile
+    foto: ASSETS.sitiProfile,
+    email: "siti@yayasanbaitulhikmah.com"
   },
   {
     nip: "198011152005011003",
     nama: "Dian Wijaya",
     jabatan: "Staf Logistik",
     lembaga: "Logistik",
-    foto: ASSETS.dianProfile
+    foto: ASSETS.dianProfile,
+    email: "dian@yayasanbaitulhikmah.com"
   },
   {
     nip: "197801152005011005",
     nama: "Agus Pratama",
     jabatan: "Operator Utama",
     lembaga: "Sarana & Prasarana",
-    foto: ASSETS.agusProfile
+    foto: ASSETS.agusProfile,
+    email: "agus@yayasanbaitulhikmah.com"
   },
   {
     nip: "199511022019022001",
     nama: "Rina Wijaya",
     jabatan: "Sekretaris",
     lembaga: "Rektorat",
-    foto: ASSETS.genericAvatar
+    foto: ASSETS.genericAvatar,
+    email: "rina@yayasanbaitulhikmah.com"
   }
 ];
 

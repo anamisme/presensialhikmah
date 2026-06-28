@@ -10,6 +10,7 @@ export interface Employee {
   lembaga: string;
   password?: string;
   foto: string;
+  email?: string;
 }
 
 export interface AttendanceRecord {
@@ -20,8 +21,10 @@ export interface AttendanceRecord {
   tanggal: string; // formats "YYYY-MM-DD"
   masuk: string;   // format "HH:MM"
   keluar?: string;  // format "HH:MM"
-  status: 'Tepat Waktu' | 'Terlambat' | 'Alpa';
-  lokasi?: string;  // geofence name
+  status: 'Tepat Waktu' | 'Terlambat' | 'Alpa' | 'Izin';
+  lokasi?: string;  // geofence name or "Izin"
+  keterangan?: string; // reason for permit
+  lampiran?: string; // base64 or photo URL for permit proof
 }
 
 export interface Geofence {
