@@ -8,7 +8,6 @@ export interface Employee {
   nama: string;
   jabatan: string;
   lembaga: string;
-  password?: string;
   foto: string;
   email?: string;
 }

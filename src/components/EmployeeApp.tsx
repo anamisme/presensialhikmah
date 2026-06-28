@@ -1576,8 +1576,8 @@ export default function EmployeeApp({
                   />
                   <button
                     onClick={() => {
-                      if (customPhotoUrl.trim().startsWith('http')) {
-                        onChangeProfilePicture(currentUser.nip, customPhotoUrl);
+                      if (customPhotoUrl.trim().startsWith('https://')) {
+                        onChangeProfilePicture(currentUser.nip, customPhotoUrl.trim());
                         setIsEditingPhoto(false);
                       } else {
                         alert('Silakan masukkan URL gambar yang valid (harus diawali http/https)!');

@@ -10,7 +10,8 @@ import {
   INITIAL_EMPLOYEES, 
   INITIAL_GEOFENCES, 
   INITIAL_ATTENDANCE, 
-  INITIAL_ACTIVITIES 
+  INITIAL_ACTIVITIES,
+  ASSETS
 } from './data';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from './types';
 import EmployeeApp from './components/EmployeeApp';
@@ -46,19 +47,29 @@ export default function App() {
   }));
 
   // Admin emails list (can be managed from admin panel)
-  const [adminEmails, setAdminEmails] = useState<string[]>(() => 
-    getStoredData('admin_emails', ['contact@yayasanbaitulhikmah.com'])
-  );
+  // Security: validate against hardcoded primary admin on load
+  const PRIMARY_ADMIN = 'contact@yayasanbaitulhikmah.com';
+  const [adminEmails, setAdminEmails] = useState<string[]>(() => {
+    const stored = getStoredData('admin_emails', [PRIMARY_ADMIN]);
+    // Ensure primary admin is always present
+    if (!stored.includes(PRIMARY_ADMIN)) {
+      return [PRIMARY_ADMIN, ...stored];
+    }
+    return stored;
+  });
 
   const handleAddAdminEmail = (email: string) => {
-    const updated = [...adminEmails, email.toLowerCase()];
+    const sanitized = email.toLowerCase().trim();
+    if (!sanitized.includes('@') || sanitized.length < 5) return;
+    if (adminEmails.includes(sanitized)) return;
+    const updated = [...adminEmails, sanitized];
     setAdminEmails(updated);
     setStoredData('admin_emails', updated);
   };
 
   const handleRemoveAdminEmail = (email: string) => {
     // Cannot remove the primary admin
-    if (email === 'contact@yayasanbaitulhikmah.com') return;
+    if (email === PRIMARY_ADMIN) return;
     const updated = adminEmails.filter(e => e !== email);
     setAdminEmails(updated);
     setStoredData('admin_emails', updated);
@@ -146,8 +157,15 @@ export default function App() {
     }
   };
 
-  // Pre-selected default employee for dev purposes
-  const defaultEmployee = employees.find(e => e.nip === '19920801') || employees[0] || INITIAL_EMPLOYEES[0];
+  // Default employee fallback (for admin switching to employee view)
+  const defaultEmployee = employees[0] || {
+    nip: 'SYSTEM',
+    nama: 'User',
+    jabatan: 'Pegawai',
+    lembaga: 'Yayasan Baitul Hikmah',
+    foto: ASSETS.genericAvatar,
+    email: ''
+  };
 
   const handleAddAttendance = (record: AttendanceRecord) => {
     // Check if record exists for update (checkout) or append (checkin)

@@ -218,16 +218,29 @@ export default function AdminPanel({
   const [tempLimitTime, setTempLimitTime] = useState(limitTime);
 
   // CSV Exporter
+  // CSV Exporter with injection prevention
+  const sanitizeCSVField = (field: string): string => {
+    // Prevent CSV injection: if field starts with =, +, -, @ prepend a single quote
+    if (/^[=+\-@]/.test(field)) {
+      return `'${field}`;
+    }
+    // Wrap in quotes if contains comma or quotes
+    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    return field;
+  };
+
   const handleExportCSV = () => {
     const headers = ['Tanggal', 'NIP', 'Nama', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
     const rows = attendanceRecords.map(r => [
       r.tanggal,
       r.nip,
-      r.nama,
+      sanitizeCSVField(r.nama),
       r.masuk,
       r.keluar || '--:--',
       r.status,
-      r.lokasi || 'Kantor Pusat'
+      sanitizeCSVField(r.lokasi || 'Kantor Pusat')
     ]);
     
     const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
@@ -307,12 +320,34 @@ export default function AdminPanel({
     e.preventDefault();
     if (!geoNama || !geoLat || !geoLng) return;
 
+    const lat = parseFloat(geoLat);
+    const lng = parseFloat(geoLng);
+    const radius = parseInt(geoRadius, 10);
+
+    // Validate coordinates
+    if (isNaN(lat) || isNaN(lng) || isNaN(radius)) {
+      alert('Koordinat atau radius tidak valid.');
+      return;
+    }
+    if (lat < -90 || lat > 90) {
+      alert('Latitude harus antara -90 dan 90.');
+      return;
+    }
+    if (lng < -180 || lng > 180) {
+      alert('Longitude harus antara -180 dan 180.');
+      return;
+    }
+    if (radius < 10 || radius > 5000) {
+      alert('Radius harus antara 10m dan 5000m.');
+      return;
+    }
+
     const newGeo: Geofence = {
       id: `geo-${Date.now()}`,
-      nama: geoNama,
-      lat: parseFloat(geoLat),
-      lng: parseFloat(geoLng),
-      radius: parseInt(geoRadius, 10)
+      nama: geoNama.trim(),
+      lat,
+      lng,
+      radius
     };
 
     onAddGeofence(newGeo);
