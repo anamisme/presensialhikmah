@@ -40,7 +40,7 @@ import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
 import { createAndPopulateSpreadsheet } from '../googleSheets';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
-import { ASSETS } from '../data';
+import { ASSETS, setStoredData } from '../data';
 
 interface AdminPanelProps {
   employees: Employee[];
@@ -216,6 +216,18 @@ export default function AdminPanel({
 
   // Set Waktu input state
   const [tempLimitTime, setTempLimitTime] = useState(limitTime);
+  const [tempJamPulang, setTempJamPulang] = useState(() => {
+    try {
+      const stored = localStorage.getItem('baitul_hikmah_jam_pulang');
+      return stored ? JSON.parse(stored) : '17:00';
+    } catch { return '17:00'; }
+  });
+  const [hariLibur, setHariLibur] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem('baitul_hikmah_hari_libur');
+      return stored ? JSON.parse(stored) : [6]; // Default: Minggu (index 6)
+    } catch { return [6]; }
+  });
 
   // CSV Exporter
   // CSV Exporter with injection prevention
@@ -882,16 +894,16 @@ export default function AdminPanel({
               {/* Left Column: Waktu & Geofences */}
               <div className="space-y-6">
                 
-                {/* Batas Jam Masuk */}
+                {/* Pengaturan Waktu Kerja */}
                 <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-[#00418f]" />
-                    <h3 className="font-bold text-gray-800 text-sm">Batas Jam Masuk</h3>
+                    <h3 className="font-bold text-gray-800 text-sm">Pengaturan Waktu Kerja</h3>
                   </div>
                   
-                  <div className="flex items-end gap-4">
-                    <div className="flex-grow">
-                      <label className="text-xs font-semibold text-gray-400 block mb-1">Set Waktu Maksimal Presensi</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Jam Masuk</label>
                       <input 
                         type="time" 
                         value={tempLimitTime}
@@ -899,16 +911,60 @@ export default function AdminPanel({
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                       />
                     </div>
-                    <button 
-                      onClick={() => {
-                        onSetLimitTime(tempLimitTime);
-                        alert(`Batas waktu presensi berhasil disimpan: ${tempLimitTime} WIB`);
-                      }}
-                      className="bg-[#00418f] text-white px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md"
-                    >
-                      Simpan
-                    </button>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Jam Pulang</label>
+                      <input 
+                        type="time" 
+                        value={tempJamPulang}
+                        onChange={(e) => setTempJamPulang(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                      />
+                    </div>
                   </div>
+
+                  {/* Hari Libur */}
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Hari Libur (tidak wajib absen)</label>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                      {['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'].map((day, idx) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            if (hariLibur.includes(idx)) {
+                              setHariLibur(hariLibur.filter(d => d !== idx));
+                            } else {
+                              setHariLibur([...hariLibur, idx]);
+                            }
+                          }}
+                          className={`py-2 px-1 rounded-lg text-[10px] font-bold border transition-all ${
+                            hariLibur.includes(idx)
+                              ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          {day.slice(0, 3)}
+                        </button>
+                      ))}
+                    </div>
+                    {hariLibur.length > 0 && (
+                      <p className="text-[10px] text-rose-500 font-medium mt-2">
+                        Libur: {hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ')}
+                      </p>
+                    )}
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      onSetLimitTime(tempLimitTime);
+                      setStoredData('jam_pulang', tempJamPulang);
+                      setStoredData('hari_libur', hariLibur);
+                      alert(`Pengaturan waktu kerja berhasil disimpan!\nJam Masuk: ${tempLimitTime}\nJam Pulang: ${tempJamPulang}\nHari Libur: ${hariLibur.length > 0 ? hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ') : 'Tidak ada'}`);
+                    }}
+                    className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md"
+                  >
+                    Simpan Pengaturan Waktu
+                  </button>
                 </section>
 
                 {/* Lokasi Gedung */}
