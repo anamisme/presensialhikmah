@@ -258,6 +258,8 @@ export default function App() {
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
           limitTime={limitTime}
+          isAdmin={session.role === 'admin'}
+          onNavigateToAdmin={session.role === 'admin' ? () => setCurrentView('admin') : undefined}
         />
       ) : session.role === 'admin' ? (
         <AdminPanel 
@@ -271,13 +273,7 @@ export default function App() {
           onDeleteEmployee={handleDeleteEmployee}
           onAddGeofence={handleAddGeofence}
           onDeleteGeofence={handleDeleteGeofence}
-          onBackToEmployee={() => {
-            setCurrentView('employee');
-            setSession({
-              role: 'employee',
-              user: defaultEmployee
-            });
-          }}
+          onBackToEmployee={() => setCurrentView('employee')}
           adminProfile={adminProfile}
           onChangeAdminProfilePicture={handleChangeAdminProfilePicture}
           onLogout={handleLogout}

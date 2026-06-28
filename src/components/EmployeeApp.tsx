@@ -47,6 +47,8 @@ interface EmployeeAppProps {
   onLogout: () => void;
   onChangeProfilePicture: (nip: string, newFoto: string) => void;
   limitTime?: string;
+  isAdmin?: boolean;
+  onNavigateToAdmin?: () => void;
 }
 
 export default function EmployeeApp({
@@ -58,7 +60,9 @@ export default function EmployeeApp({
   setDarkMode,
   onLogout,
   onChangeProfilePicture,
-  limitTime = '07:00'
+  limitTime = '07:00',
+  isAdmin = false,
+  onNavigateToAdmin
 }: EmployeeAppProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'stats' | 'profile'>('home');
   const [scanMethod, setScanMethod] = useState<'qr' | 'wajah'>('qr');
@@ -486,6 +490,17 @@ export default function EmployeeApp({
           >
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+
+          {/* Admin panel button - only for admins viewing employee mode */}
+          {isAdmin && onNavigateToAdmin && (
+            <button
+              onClick={onNavigateToAdmin}
+              className="hidden sm:flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all active:scale-95"
+            >
+              <ShieldAlert className="w-3 h-3" />
+              Admin
+            </button>
+          )}
           
           <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
             <img 
