@@ -790,6 +790,55 @@ export default function EmployeeApp({
               </AnimatePresence>
             </section>
 
+            {/* Check-In / Check-Out Action Button - langsung di bawah QR scanner */}
+            <div>
+              <button
+                disabled={isScanning || isCameraActive || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin' || !!gpsWarning}
+                onClick={handleStartScan}
+                className={`w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] ${
+                  isScanning || isCameraActive
+                    ? 'bg-gray-400 dark:bg-zinc-600 text-white cursor-not-allowed'
+                    : todayRecord?.status === 'Izin'
+                    ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/30 cursor-not-allowed'
+                    : (todayRecord?.masuk && todayRecord?.keluar)
+                    ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    : todayRecord
+                    ? 'bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700'
+                    : 'bg-[#005bc1] dark:bg-blue-600 text-white hover:bg-[#0070eb] dark:hover:bg-blue-700'
+                }`}
+              >
+                {isScanning ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Memverifikasi...
+                  </>
+                ) : todayRecord?.status === 'Izin' ? (
+                  <>
+                    <FileText className="w-5 h-5" />
+                    Izin Hari Ini Terdaftar
+                  </>
+                ) : (todayRecord?.masuk && todayRecord?.keluar) ? (
+                  <>
+                    <UserCheck className="w-5 h-5" />
+                    Absen Selesai Hari Ini
+                  </>
+                ) : todayRecord ? (
+                  <>
+                    <LogOut className="w-5 h-5" />
+                    Scan Keluar (Pulang)
+                  </>
+                ) : (
+                  <>
+                    <QrCode className="w-5 h-5" />
+                    Scan Masuk Sekarang
+                  </>
+                )}
+              </button>
+            </div>
+
             {/* Real GPS Location Status */}
             <div className="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-3 transition-colors duration-300">
               <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
@@ -893,54 +942,6 @@ export default function EmployeeApp({
               )}
             </div>
 
-            {/* Check-In / Check-Out Action Button */}
-            <div className="pt-2">
-              <button
-                disabled={isScanning || isCameraActive || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin' || !!gpsWarning}
-                onClick={handleStartScan}
-                className={`w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] ${
-                  isScanning || isCameraActive
-                    ? 'bg-gray-400 dark:bg-zinc-600 text-white cursor-not-allowed'
-                    : todayRecord?.status === 'Izin'
-                    ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/30 cursor-not-allowed'
-                    : (todayRecord?.masuk && todayRecord?.keluar)
-                    ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    : todayRecord
-                    ? 'bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700'
-                    : 'bg-[#005bc1] dark:bg-blue-600 text-white hover:bg-[#0070eb] dark:hover:bg-blue-700'
-                }`}
-              >
-                {isScanning ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Memverifikasi...
-                  </>
-                ) : todayRecord?.status === 'Izin' ? (
-                  <>
-                    <FileText className="w-5 h-5" />
-                    Izin Hari Ini Terdaftar
-                  </>
-                ) : (todayRecord?.masuk && todayRecord?.keluar) ? (
-                  <>
-                    <UserCheck className="w-5 h-5" />
-                    Absen Selesai Hari Ini
-                  </>
-                ) : todayRecord ? (
-                  <>
-                    <LogOut className="w-5 h-5" />
-                    Scan Keluar (Pulang)
-                  </>
-                ) : (
-                  <>
-                    <QrCode className="w-5 h-5" />
-                    Scan Masuk Sekarang
-                  </>
-                )}
-              </button>
-            </div>
           </motion.div>
         )}
 
