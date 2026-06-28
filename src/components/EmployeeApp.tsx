@@ -565,104 +565,6 @@ export default function EmployeeApp({
               </div>
             )}
 
-            {/* Attendance Status Card */}
-            <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-4 transition-colors duration-300">
-              <div className="flex justify-center">
-                <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
-                  todayRecord?.status === 'Izin'
-                    ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50'
-                    : todayRecord?.keluar 
-                    ? 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400' 
-                    : todayRecord 
-                    ? 'bg-[#6ffb85]/20 dark:bg-emerald-950/40 text-[#00732a] dark:text-emerald-400' 
-                    : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
-                }`}>
-                  {todayRecord?.status === 'Izin' ? 'Izin' : todayRecord?.keluar ? 'Sudah Absen' : todayRecord ? 'Sudah Absen' : 'Belum Absen'}
-                </span>
-              </div>
-
-              {todayRecord?.status === 'Izin' ? (
-                <div className="bg-sky-50/50 dark:bg-sky-950/10 p-4 rounded-xl border border-sky-100 dark:border-sky-900/30 text-left">
-                  <div className="flex items-center gap-2 text-sky-800 dark:text-sky-400 font-bold text-sm mb-1.5">
-                    <FileText className="w-4 h-4 shrink-0" />
-                    <span>Pengisian Izin/Sakit Terdaftar</span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                    Keterangan: <strong className="text-gray-800 dark:text-gray-100">{todayRecord.keterangan || 'Tanpa keterangan tambahan'}</strong>
-                  </p>
-                  {todayRecord.lampiran && (
-                    <button 
-                      onClick={() => {
-                        setViewingAttachment(todayRecord.lampiran || null);
-                        setAttachmentTitle(`Lampiran Izin - ${currentUser.nama}`);
-                      }}
-                      className="mt-3 inline-flex items-center gap-1 text-[10px] font-black text-sky-600 dark:text-sky-400 hover:underline border border-sky-200 dark:border-sky-800/50 px-2.5 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/50 cursor-pointer"
-                    >
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      Lihat Dokumen Bukti
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Masuk</p>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
-                        {todayRecord ? todayRecord.masuk : '--:--'}
-                      </span>
-                      {todayRecord?.status === 'Terlambat' && (
-                        <span className="text-[10px] font-semibold bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 px-1.5 py-0.5 rounded">Terlambat</span>
-                      )}
-                      {todayRecord?.status === 'Tepat Waktu' && (
-                        <span className="text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded">Tepat</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1 border-l border-gray-200 dark:border-zinc-800 pl-4">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Keluar</p>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                      <span className="font-bold text-lg text-gray-700 dark:text-gray-300">
-                        {todayRecord?.keluar ? todayRecord.keluar : '--:--'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-3.5 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#0058bc] dark:text-[#3b82f6]" />
-                  Jam Kerja: <span className="font-semibold text-gray-700 dark:text-gray-300">{limitTime} - 17:00 WIB</span>
-                </span>
-              </div>
-            </section>
-
-            {/* Request Permit Banner Section */}
-            {!todayRecord ? (
-              <div className="bg-sky-500/10 dark:bg-sky-500/5 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
-                <div className="space-y-1">
-                  <h4 className="text-xs font-black text-[#0058bc] dark:text-sky-400 uppercase tracking-wider">Berhalangan Hadir Hari Ini?</h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Ajukan surat izin sakit, kedinasan, atau keperluan mendesak di sini.</p>
-                </div>
-                <button
-                  onClick={() => setIsPermitModalOpen(true)}
-                  className="bg-sky-600 hover:bg-sky-700 dark:bg-sky-600 dark:hover:bg-sky-500 text-white font-bold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-xl shadow-md transition-all active:scale-95 shrink-0 cursor-pointer"
-                >
-                  Ajukan Izin
-                </button>
-              </div>
-            ) : todayRecord.status === 'Izin' ? (
-              <div className="bg-emerald-500/10 dark:bg-emerald-500/5 rounded-2xl p-4 border border-emerald-500/20 text-left transition-all duration-300">
-                <p className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wide">Pemberitahuan Izin</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Sesi kerja ditiadakan untuk hari ini sesuai dengan pengajuan izin yang disetujui lembaga.</p>
-              </div>
-            ) : null}
-
-
             {/* Segmented Control for Scan Method */}
             <div className="bg-gray-200 dark:bg-zinc-800 p-1 rounded-xl flex shadow-inner transition-colors duration-300">
               <button 
@@ -852,6 +754,79 @@ export default function EmployeeApp({
                 )}
               </button>
             </div>
+
+            {/* Attendance Status Card */}
+            <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-4 transition-colors duration-300">
+              <div className="flex justify-center">
+                <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
+                  todayRecord?.status === 'Izin'
+                    ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50'
+                    : todayRecord?.keluar 
+                    ? 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400' 
+                    : todayRecord 
+                    ? 'bg-[#6ffb85]/20 dark:bg-emerald-950/40 text-[#00732a] dark:text-emerald-400' 
+                    : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+                }`}>
+                  {todayRecord?.status === 'Izin' ? 'Izin' : todayRecord?.keluar ? 'Sudah Absen' : todayRecord ? 'Sudah Absen' : 'Belum Absen'}
+                </span>
+              </div>
+
+              {todayRecord?.status === 'Izin' ? (
+                <div className="bg-sky-50/50 dark:bg-sky-950/10 p-4 rounded-xl border border-sky-100 dark:border-sky-900/30 text-left">
+                  <div className="flex items-center gap-2 text-sky-800 dark:text-sky-400 font-bold text-sm mb-1.5">
+                    <FileText className="w-4 h-4 shrink-0" />
+                    <span>Izin/Sakit Terdaftar</span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                    {todayRecord.keterangan || 'Tanpa keterangan'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Masuk</p>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
+                        {todayRecord ? todayRecord.masuk : '--:--'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 border-l border-gray-200 dark:border-zinc-800 pl-4">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Keluar</p>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="font-bold text-lg text-gray-700 dark:text-gray-300">
+                        {todayRecord?.keluar ? todayRecord.keluar : '--:--'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-3.5 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#0058bc] dark:text-[#3b82f6]" />
+                  Jam Kerja: <span className="font-semibold text-gray-700 dark:text-gray-300">{limitTime} - 17:00 WIB</span>
+                </span>
+              </div>
+            </section>
+
+            {/* Request Permit Banner */}
+            {!todayRecord && (
+              <div className="bg-sky-500/10 dark:bg-sky-500/5 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black text-[#0058bc] dark:text-sky-400 uppercase tracking-wider">Berhalangan Hadir?</h4>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Ajukan izin sakit atau keperluan lainnya.</p>
+                </div>
+                <button
+                  onClick={() => setIsPermitModalOpen(true)}
+                  className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-xl shadow-md transition-all active:scale-95 shrink-0"
+                >
+                  Ajukan Izin
+                </button>
+              </div>
+            )}
 
             {/* Real GPS Location Status */}
             <div className="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-3 transition-colors duration-300">
