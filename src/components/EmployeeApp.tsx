@@ -97,8 +97,7 @@ export default function EmployeeApp({
 
   // Online/Offline status and syncing state
   const [isOnlineReal, setIsOnlineReal] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
-  const [forceOffline, setForceOffline] = useState<boolean>(false);
-  const isOnline = isOnlineReal && !forceOffline;
+  const isOnline = isOnlineReal;
 
   const [offlineQueue, setOfflineQueue] = useState<AttendanceRecord[]>(() => {
     try {
@@ -393,30 +392,26 @@ export default function EmployeeApp({
       {/* TopAppBar with frosted-glass aesthetic */}
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-[#1C1C1E]/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-zinc-800/50 flex justify-between items-center px-4 h-16 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-3">
-          <div className="bg-[#0058bc] dark:bg-[#3b82f6] p-2 rounded-xl text-white flex items-center justify-center shadow-md">
-            <QrCode className="w-5 h-5" />
-          </div>
+          <img src="/logo.png" alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 object-contain" />
           <span className="font-bold text-lg tracking-tight text-[#0058bc] dark:text-[#3b82f6]">Baitul Hikmah</span>
         </div>
         
         {/* User avatar with mini settings portal */}
         <div className="flex items-center gap-2">
-          {/* Connection status pills & toggle simulation */}
-          <button
-            onClick={() => setForceOffline(!forceOffline)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[9px] font-black tracking-wider transition-all duration-300 shadow-sm active:scale-95 cursor-pointer ${
+          {/* Connection status indicator */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[9px] font-black tracking-wider transition-all duration-300 shadow-sm ${
               isOnline 
                 ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
                 : 'bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400 animate-pulse'
             }`}
-            title={forceOffline ? "Klik untuk mengaktifkan kembali koneksi online" : "Klik untuk mensimulasikan mode offline (tanpa internet)"}
           >
             <span className="w-1.5 h-1.5 rounded-full relative flex">
               {isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400" />}
               <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             </span>
             <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
-          </button>
+          </div>
 
           <button 
             onClick={onNavigateToAdmin} 
@@ -460,7 +455,7 @@ export default function EmployeeApp({
             animate={{ opacity: 1, y: 0 }}
             className="space-y-5"
           >
-            {/* Greeting & Time display matching mockup */}
+            {/* Greeting & Time display */}
             <header className="flex justify-between items-end">
               <div>
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{getGreeting()}, {currentUser.nama}</span>
@@ -1402,24 +1397,6 @@ export default function EmployeeApp({
                           }}
                         />
                       </label>
-
-                      {/* Mock Presets for easy testing */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setPermitFile("https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=600&q=80")}
-                          className="text-[9px] font-bold bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-sky-100 dark:hover:bg-sky-950/40 hover:text-sky-700 px-2 py-1 rounded"
-                        >
-                          + Pasang Mock Surat Dokter
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPermitFile("https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=600&q=80")}
-                          className="text-[9px] font-bold bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-sky-100 dark:hover:bg-sky-950/40 hover:text-sky-700 px-2 py-1 rounded"
-                        >
-                          + Pasang Mock Surat Dinas
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>

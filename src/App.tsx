@@ -16,7 +16,6 @@ import { Employee, AttendanceRecord, Geofence, RecentActivity } from './types';
 import EmployeeApp from './components/EmployeeApp';
 import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
-import { ShieldCheck, User, Sparkles, RefreshCw, LogOut } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'employee' | 'admin'>('employee');
@@ -191,32 +190,6 @@ export default function App() {
     updateGeofences(updated);
   };
 
-  // Reset demo states to initial setup
-  const handleResetDemoData = () => {
-    if (confirm('Apakah Anda ingin menyetel ulang semua data demo ke konfigurasi awal?')) {
-      localStorage.clear();
-      setEmployees(INITIAL_EMPLOYEES);
-      setGeofences(INITIAL_GEOFENCES);
-      setAttendanceRecords(INITIAL_ATTENDANCE);
-      setRecentActivities(INITIAL_ACTIVITIES);
-      setLimitTime('07:00');
-      setSession(null);
-      setAdminProfile({
-        nama: "Admin Baitul Hikmah",
-        foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80",
-        role: "Super Admin"
-      });
-      
-      setStoredData('employees', INITIAL_EMPLOYEES);
-      setStoredData('geofences', INITIAL_GEOFENCES);
-      setStoredData('attendance', INITIAL_ATTENDANCE);
-      setStoredData('activities', INITIAL_ACTIVITIES);
-      setStoredData('limit_time', '07:00');
-      
-      alert('Data demo berhasil disetel ulang!');
-    }
-  };
-
   // If no active session, show Login Screen
   if (!session) {
     return (
@@ -232,80 +205,6 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-[#F2F2F7] dark:bg-[#121214] text-gray-900 dark:text-gray-100 transition-colors duration-300">
-      
-      {/* Floating Interactive Role Switcher Banner */}
-      <div className="fixed top-20 right-4 z-[100] flex flex-col gap-2">
-        <div className="bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 flex flex-col gap-1.5 max-w-[210px] transition-colors duration-300">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-            <Sparkles className="w-3.5 h-3.5 text-[#005bc1] dark:text-[#3b82f6]" />
-            Sistem Role Portal
-          </div>
-          
-          <button 
-            onClick={() => {
-              const target = currentView === 'employee' ? 'admin' : 'employee';
-              setCurrentView(target);
-              // Auto-fill active session with admin or default employee if switching manually
-              if (target === 'admin' && session.role !== 'admin') {
-                setSession({
-                  role: 'admin',
-                  user: {
-                    nama: adminProfile.nama,
-                    foto: adminProfile.foto,
-                    role: adminProfile.role
-                  }
-                });
-              } else if (target === 'employee' && session.role !== 'employee') {
-                setSession({
-                  role: 'employee',
-                  user: defaultEmployee
-                });
-              }
-            }}
-            className="w-full text-left flex items-center justify-between gap-3 text-xs bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 px-3 py-2 rounded-xl border border-gray-100 dark:border-zinc-800 font-bold transition-all active:scale-95 text-gray-800 dark:text-gray-200"
-          >
-            {currentView === 'employee' ? (
-              <>
-                <span className="text-amber-700 dark:text-amber-500 flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-500" />
-                  Admin Panel
-                </span>
-                <span className="text-[10px] bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 px-1 py-0.5 rounded">Tukar</span>
-              </>
-            ) : (
-              <>
-                <span className="text-[#0058bc] dark:text-[#3b82f6] flex items-center gap-1">
-                  <User className="w-4 h-4 text-[#0058bc] dark:text-[#3b82f6]" />
-                  App Pegawai
-                </span>
-                <span className="text-[10px] bg-[#0058bc]/5 dark:bg-blue-950/40 text-[#0058bc] dark:text-[#3b82f6] px-1 py-0.5 rounded">Tukar</span>
-              </>
-            )}
-          </button>
-
-          {/* Real Logout option in panel */}
-          <button
-            onClick={handleLogout}
-            className="w-full text-left flex items-center justify-between gap-3 text-xs bg-rose-50 dark:bg-rose-950/10 hover:bg-rose-100/75 dark:hover:bg-rose-950/30 px-3 py-2 rounded-xl border border-rose-100/50 dark:border-rose-900/30 font-bold transition-all active:scale-95 text-rose-600 dark:text-rose-400"
-          >
-            <span className="flex items-center gap-1">
-              <LogOut className="w-4 h-4" />
-              Keluar Sesi
-            </span>
-            <span className="text-[10px] px-1 py-0.5 rounded">Exit</span>
-          </button>
-
-          {/* Reset Demo button */}
-          <button 
-            onClick={handleResetDemoData}
-            title="Setel Ulang Data Demo"
-            className="w-full text-center flex items-center justify-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-1 mt-1 border-t border-gray-100 dark:border-zinc-800 font-medium"
-          >
-            <RefreshCw className="w-2.5 h-2.5 animate-spin" style={{ animationDuration: '6s' }} />
-            Setel Ulang Demo
-          </button>
-        </div>
-      </div>
 
       {currentView === 'employee' ? (
         <EmployeeApp 

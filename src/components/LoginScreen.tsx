@@ -13,13 +13,11 @@ import {
   Building2,
   Mail,
   ShieldAlert,
-  HelpCircle,
   Wifi,
   WifiOff,
   Clock,
   ShieldCheck,
   ArrowRight,
-  Info,
   Lock,
   Globe,
   ExternalLink
@@ -54,10 +52,6 @@ export default function LoginScreen({
 
   // Time clock on Login Screen for high-precision vibe
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Dev simulation state
-  const [showDevPanel, setShowDevPanel] = useState(false);
-  const [simulatedEmail, setSimulatedEmail] = useState('ahmad@yayasanbaitulhikmah.com');
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -174,27 +168,7 @@ export default function LoginScreen({
     }
   };
 
-  // Simulation for Dev Workspace testing purposes
-  const handleSimulateLogin = (email: string) => {
-    setError(null);
-    setSuccessMsg(null);
-    setIsAuthenticating(true);
-
-    setTimeout(() => {
-      const nameFromEmail = email.split('@')[0].replace(/\b\w/g, c => c.toUpperCase());
-      const mockGoogleUser = {
-        email: email,
-        displayName: nameFromEmail + " (Simulated)",
-        photoURL: email.includes('ahmad') ? ASSETS.ahmadProfile 
-                : email.includes('budi') ? ASSETS.budiProfile 
-                : email.includes('siti') ? ASSETS.sitiProfile 
-                : ASSETS.genericAvatar
-      };
-      handleLoginSuccessWithDetails(mockGoogleUser);
-    }, 800);
-  };
-
-  const logoUrl = "https://lh3.googleusercontent.com/aida/AP1WRLvLxzdiCTTFFd3TVsagYAsLRDCTQlulEunF1dTlp2Zh_KAtO9TLiy7ijfMuPjl5H8UH5juXud4Yt7T6F_YCU6rVGzqvrdGUuBbs8t_l0L4hWw3yYstCLIBYg5tL-9qYcIU0lew6hNergAawot5upJncjHByGFZHimD5Eptmd4TJVfVY7hmqoKrInSr9B7-ZVyPIAUS-s8XxR_LM-RIholBvH-GoUq5L3vVXSTk2jtSNnFhBYQNx2OFfNhU";
+  const logoUrl = "/logo.png";
 
   return (
     <div className="min-h-screen bg-[#F6F3F6] dark:bg-[#121214] text-[#1b1b1d] dark:text-gray-100 font-sans flex flex-col relative overflow-x-hidden transition-colors duration-300">
@@ -313,7 +287,7 @@ export default function LoginScreen({
               <div className="space-y-1">
                 <p className="font-bold uppercase tracking-wider text-[9px]">Sinyal Terputus</p>
                 <p className="leading-relaxed font-medium">
-                  Masuk dengan akun Google asli memerlukan internet. Gunakan panel simulasi di bagian bawah untuk login secara offline dan menguji fitur sinkronisasi otomatis.
+                  Masuk dengan akun Google Workspace memerlukan koneksi internet aktif. Silakan hubungkan perangkat Anda ke internet terlebih dahulu.
                 </p>
               </div>
             </motion.div>
@@ -392,67 +366,6 @@ export default function LoginScreen({
           {/* Domain Restriction Footer telah dihilangkan */}
         </motion.div>
 
-        {/* Development Helper Panel (Bypass/Simulasi Login) */}
-        <div className="w-full max-w-[440px] mt-6 bg-white/40 dark:bg-[#1C1C1E]/40 border border-gray-200/50 dark:border-zinc-800/50 rounded-3xl p-4 text-center backdrop-blur-md transition-all duration-300">
-          <button 
-            onClick={() => setShowDevPanel(!showDevPanel)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#004494] dark:text-blue-400 hover:underline cursor-pointer"
-          >
-            <HelpCircle className="w-4 h-4" />
-            {showDevPanel ? 'Sembunyikan Menu Simulasi' : 'Tampilkan Simulasi Akun (Testing)'}
-          </button>
-
-          {showDevPanel && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-3 pt-3 border-t border-gray-200/50 dark:border-zinc-800/60 text-left space-y-3"
-            >
-              <div className="bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100/30 p-3 rounded-xl flex gap-2.5 text-[11px] text-[#004494] dark:text-blue-400 font-medium leading-relaxed">
-                <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <p>
-                  Gunakan dropdown untuk mensimulasikan login Google Workspace tanpa jendela pop-up Google asli. Berfungsi penuh baik online maupun offline!
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block">Pilih Akun Simulasi</label>
-                <div className="flex gap-2">
-                  <select 
-                    value={simulatedEmail}
-                    onChange={(e) => setSimulatedEmail(e.target.value)}
-                    className="flex-grow bg-white dark:bg-[#1C1C1E] border border-gray-200/60 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 outline-none"
-                  >
-                    <optgroup label="Super Admin">
-                      <option value="contact@yayasanbaitulhikmah.com">contact@yayasanbaitulhikmah.com (Admin)</option>
-                    </optgroup>
-                    <optgroup label="Daftar Karyawan Bawaan">
-                      <option value="ahmad@yayasanbaitulhikmah.com">ahmad@yayasanbaitulhikmah.com (Ahmad - IT)</option>
-                      <option value="budi@yayasanbaitulhikmah.com">budi@yayasanbaitulhikmah.com (Budi - Kepala Bagian)</option>
-                      <option value="siti@yayasanbaitulhikmah.com">siti@yayasanbaitulhikmah.com (Siti - Keuangan)</option>
-                      <option value="dian@yayasanbaitulhikmah.com">dian@yayasanbaitulhikmah.com (Dian - Logistik)</option>
-                      <option value="agus@yayasanbaitulhikmah.com">agus@yayasanbaitulhikmah.com (Agus - Operator)</option>
-                    </optgroup>
-                    <optgroup label="Pendaftaran Otomatis Baru">
-                      <option value="hasan.basri@yayasanbaitulhikmah.com">hasan.basri@yayasanbaitulhikmah.com (Baru)</option>
-                      <option value="zainab.nur@yayasanbaitulhikmah.com">zainab.nur@yayasanbaitulhikmah.com (Baru)</option>
-                    </optgroup>
-                    <optgroup label="Eksklusif (Ditolak / Non-Organisasi)">
-                      <option value="hacker@gmail.com">hacker@gmail.com (Personal Gmail - Blokir)</option>
-                    </optgroup>
-                  </select>
-                  <button 
-                    onClick={() => handleSimulateLogin(simulatedEmail)}
-                    disabled={isAuthenticating}
-                    className="px-3.5 py-2 bg-[#004494] hover:bg-blue-600 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
-                  >
-                    Simulasi
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
       </main>
 
       {/* Global Footer */}

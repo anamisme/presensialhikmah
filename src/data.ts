@@ -75,24 +75,17 @@ export const INITIAL_EMPLOYEES: Employee[] = [
 export const INITIAL_GEOFENCES: Geofence[] = [
   {
     id: "geo-1",
-    nama: "Gedung Pusat A",
-    lat: -6.2088,
-    lng: 106.8456,
+    nama: "Rumah",
+    lat: -6.932299522617215,
+    lng: 109.65582552262504,
     radius: 50
   },
   {
     id: "geo-2",
-    nama: "Kantor Cabang Sudirman",
-    lat: -6.2297,
-    lng: 106.8091,
-    radius: 100
-  },
-  {
-    id: "geo-3",
     nama: "Kantor Yayasan",
-    lat: -6.1751,
-    lng: 106.8272,
-    radius: 75
+    lat: -6.945395233828707,
+    lng: 109.63843346975865,
+    radius: 100
   }
 ];
 
