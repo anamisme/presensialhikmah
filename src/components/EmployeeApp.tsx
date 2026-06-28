@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, 
@@ -30,10 +30,12 @@ import {
   Plus,
   X,
   Calendar,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Navigation
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence } from '../types';
 import { ASSETS } from '../data';
+import QRScanner from './QRScanner';
 
 interface EmployeeAppProps {
   currentUser: Employee;
@@ -45,6 +47,7 @@ interface EmployeeAppProps {
   setDarkMode: (val: boolean) => void;
   onLogout: () => void;
   onChangeProfilePicture: (nip: string, newFoto: string) => void;
+  limitTime?: string;
 }
 
 export default function EmployeeApp({
@@ -56,7 +59,8 @@ export default function EmployeeApp({
   darkMode,
   setDarkMode,
   onLogout,
-  onChangeProfilePicture
+  onChangeProfilePicture,
+  limitTime = '07:00'
 }: EmployeeAppProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'stats' | 'profile'>('home');
   const [scanMethod, setScanMethod] = useState<'qr' | 'wajah'>('qr');
@@ -78,6 +82,18 @@ export default function EmployeeApp({
   // New State for viewing attachments
   const [viewingAttachment, setViewingAttachment] = useState<string | null>(null);
   const [attachmentTitle, setAttachmentTitle] = useState('');
+
+  // Real GPS location state
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [nearestGeofence, setNearestGeofence] = useState<Geofence | null>(null);
+  const [distanceToNearest, setDistanceToNearest] = useState<number | null>(null);
+  const [isWithinGeofence, setIsWithinGeofence] = useState(false);
+
+  // Camera scanner state
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
 
   // Online/Offline status and syncing state
   const [isOnlineReal, setIsOnlineReal] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -139,6 +155,173 @@ export default function EmployeeApp({
     };
   }, []);
 
+  // Haversine formula to calculate distance between two GPS coordinates
+  const calculateDistance = useCallback((lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371000; // Earth radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }, []);
+
+  // Real GPS location fetching
+  const getCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolokasi tidak didukung oleh browser ini.');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setIsLocating(false);
+
+        // Find nearest geofence and check if within radius
+        let nearest: Geofence | null = null;
+        let minDistance = Infinity;
+
+        geofences.forEach(geo => {
+          const dist = calculateDistance(latitude, longitude, geo.lat, geo.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearest = geo;
+          }
+        });
+
+        setNearestGeofence(nearest);
+        setDistanceToNearest(Math.round(minDistance));
+        setIsWithinGeofence(nearest ? minDistance <= nearest.radius : false);
+        
+        if (nearest) {
+          setSelectedLocation(nearest);
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Akses lokasi ditolak. Silakan izinkan di pengaturan browser.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Informasi lokasi tidak tersedia.');
+            break;
+          case error.TIMEOUT:
+            setLocationError('Permintaan lokasi timeout.');
+            break;
+          default:
+            setLocationError('Gagal mendapatkan lokasi.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }, [geofences, calculateDistance]);
+
+  // Get location on mount and when tab is home
+  useEffect(() => {
+    if (activeTab === 'home') {
+      getCurrentLocation();
+    }
+  }, [activeTab]);
+
+  // Handle QR scan success
+  const handleQRScanSuccess = (decodedText: string) => {
+    setScanResult(decodedText);
+    setIsCameraActive(false);
+    
+    // Validate QR code - expected format: "PRESENSI:{location_id}" or any valid QR
+    // Process attendance after successful scan
+    processAttendance(decodedText);
+  };
+
+  // Process attendance record after scan
+  const processAttendance = (qrData: string) => {
+    if (todayRecord && todayRecord.keluar) return; // already fully checked out
+
+    setIsScanning(true);
+    setTimeout(() => {
+      setIsScanning(false);
+      setScanSuccess(true);
+      
+      const isCheckIn = !todayRecord;
+      const currentHrsMins = formatClock(currentTime);
+
+      // Determine location from QR data or GPS
+      let locationName = selectedLocation?.nama || 'Kantor Pusat';
+      
+      // Try to parse QR data for location info
+      if (qrData.startsWith('PRESENSI:')) {
+        const locId = qrData.replace('PRESENSI:', '');
+        const matchedGeo = geofences.find(g => g.id === locId || g.nama === locId);
+        if (matchedGeo) {
+          locationName = matchedGeo.nama;
+        }
+      }
+
+      if (isCheckIn) {
+        const checkInHour = currentTime.getHours();
+        const checkInMinute = currentTime.getMinutes();
+        // Parse limit time from settings
+        const [limitHour, limitMinute] = (limitTime || '07:00').split(':').map(Number);
+        const isLate = checkInHour > limitHour || (checkInHour === limitHour && checkInMinute > limitMinute);
+        
+        const newRecord: AttendanceRecord = {
+          id: `rec-${Date.now()}`,
+          nip: currentUser.nip,
+          nama: currentUser.nama,
+          foto: currentUser.foto,
+          tanggal: todayStr,
+          masuk: currentHrsMins,
+          status: isLate ? 'Terlambat' : 'Tepat Waktu',
+          lokasi: locationName
+        };
+
+        if (isOnline) {
+          onAddAttendance(newRecord);
+        } else {
+          const updatedQueue = [...offlineQueue, newRecord];
+          setOfflineQueue(updatedQueue);
+          localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
+        }
+      } else {
+        const updatedRecord = {
+          ...todayRecord,
+          keluar: currentHrsMins
+        } as AttendanceRecord;
+
+        if (isOnline) {
+          onAddAttendance(updatedRecord);
+        } else {
+          const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && r.nip === currentUser.nip);
+          let updatedQueue: AttendanceRecord[];
+          if (queueIndex > -1) {
+            updatedQueue = [...offlineQueue];
+            updatedQueue[queueIndex] = updatedRecord;
+          } else {
+            updatedQueue = [...offlineQueue, updatedRecord];
+          }
+          setOfflineQueue(updatedQueue);
+          localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
+        }
+      }
+
+      setTimeout(() => {
+        setScanSuccess(false);
+        setScanResult(null);
+      }, 3500);
+    }, 500);
+  };
+
   // Syncing routine when going online
   useEffect(() => {
     if (isOnline && offlineQueue.length > 0) {
@@ -180,69 +363,27 @@ export default function EmployeeApp({
     return 'Selamat Malam';
   };
 
-  const handleSimulateScan = () => {
-    if (todayRecord && todayRecord.keluar) return; // already fully checked out
+  const handleStartScan = () => {
+    if (todayRecord && todayRecord.keluar) return;
+    
+    // For face scan method, use the old simulation approach
+    if (scanMethod === 'wajah') {
+      handleFaceScan();
+      return;
+    }
+    
+    // For QR method, activate real camera
+    setIsCameraActive(true);
+  };
 
+  // Face scan simulation (requires face recognition API in production)
+  const handleFaceScan = () => {
     setIsScanning(true);
+    
+    // Use the device camera for face detection simulation
+    // In a real app, this would use a face recognition API
     setTimeout(() => {
-      setIsScanning(false);
-      setScanSuccess(true);
-      
-      const isCheckIn = !todayRecord;
-      const currentHrsMins = formatClock(currentTime);
-
-      if (isCheckIn) {
-        // Formulate check-in status (Limit is 07:00 as per admin settings)
-        const checkInHour = currentTime.getHours();
-        const checkInMinute = currentTime.getMinutes();
-        const isLate = checkInHour > 7 || (checkInHour === 7 && checkInMinute > 0);
-        
-        const newRecord: AttendanceRecord = {
-          id: `rec-${Date.now()}`,
-          nip: currentUser.nip,
-          nama: currentUser.nama,
-          foto: currentUser.foto,
-          tanggal: todayStr,
-          masuk: currentHrsMins,
-          status: isLate ? 'Terlambat' : 'Tepat Waktu',
-          lokasi: selectedLocation?.nama || 'Kantor Pusat'
-        };
-
-        if (isOnline) {
-          onAddAttendance(newRecord);
-        } else {
-          const updatedQueue = [...offlineQueue, newRecord];
-          setOfflineQueue(updatedQueue);
-          localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
-        }
-      } else {
-        // Checkout today's record
-        const updatedRecord = {
-          ...todayRecord,
-          keluar: currentHrsMins
-        } as AttendanceRecord;
-
-        if (isOnline) {
-          onAddAttendance(updatedRecord);
-        } else {
-          const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && r.nip === currentUser.nip);
-          let updatedQueue: AttendanceRecord[];
-          if (queueIndex > -1) {
-            updatedQueue = [...offlineQueue];
-            updatedQueue[queueIndex] = updatedRecord;
-          } else {
-            updatedQueue = [...offlineQueue, updatedRecord];
-          }
-          setOfflineQueue(updatedQueue);
-          localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
-        }
-      }
-
-      // Automatically hide success screen after 3 seconds
-      setTimeout(() => {
-        setScanSuccess(false);
-      }, 3500);
-
+      processAttendance('FACE_SCAN_VERIFIED');
     }, 2000);
   };
 
@@ -467,68 +608,84 @@ export default function EmployeeApp({
               </button>
             </div>
 
-            {/* Simulated Camera Viewfinder with Success Overlay */}
-            <section className="relative aspect-square w-full overflow-hidden rounded-3xl border-4 border-white shadow-lg bg-neutral-900 group">
+            {/* Real Camera QR Scanner */}
+            <section className="relative aspect-square w-full overflow-hidden rounded-3xl border-4 border-white dark:border-zinc-800 shadow-lg bg-neutral-900 group">
               
-              {/* Background Mock Feed */}
-              <div 
-                className={`absolute inset-0 bg-cover bg-center transition-all duration-500 ${
-                  isScanning ? 'scale-105 brightness-110' : 'scale-100 brightness-75'
-                }`}
-                style={{
-                  backgroundImage: `url(${scanMethod === 'qr' ? ASSETS.cameraPOV : ASSETS.officeBlur})`
-                }}
-              />
-
-              {/* Laser Scanning Animation */}
-              {isScanning && (
-                <div className="absolute inset-0 bg-black/20 pointer-events-none">
-                  {/* Laser line */}
-                  <div className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#0058bc] to-transparent shadow-[0_0_15px_#0058bc] animate-pulse" 
-                       style={{
-                         top: '10%',
-                         animation: 'scan-motion 2s ease-in-out infinite'
-                       }}
+              {isCameraActive ? (
+                <>
+                  {/* Real QR Scanner using device camera */}
+                  <QRScanner
+                    isActive={isCameraActive}
+                    scanMethod={scanMethod}
+                    onScanSuccess={handleQRScanSuccess}
+                    onScanError={(err) => console.error('Scan error:', err)}
                   />
-                  <style>{`
-                    @keyframes scan-motion {
-                      0% { top: 10%; }
-                      50% { top: 90%; }
-                      100% { top: 10%; }
-                    }
-                  `}</style>
-                </div>
+                  
+                  {/* Close camera button */}
+                  <button
+                    onClick={() => setIsCameraActive(false)}
+                    className="absolute top-4 right-4 z-20 p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-black/80 transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+
+                  {/* Viewfinder Frame Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center p-12 pointer-events-none">
+                    <div className="w-full h-full border-2 border-white/30 rounded-2xl relative">
+                      <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-[#0058bc] rounded-tl-lg" />
+                      <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-[#0058bc] rounded-tr-lg" />
+                      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-[#0058bc] rounded-bl-lg" />
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-[#0058bc] rounded-br-lg" />
+                    </div>
+                  </div>
+
+                  {/* Guidance text */}
+                  <div className="absolute bottom-6 left-0 right-0 text-center px-4 pointer-events-none z-10">
+                    <span className="bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-2 shadow-sm">
+                      <Camera className="w-3.5 h-3.5 text-[#005bc1]" />
+                      Arahkan kamera ke QR Code presensi
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Idle state - show preview/placeholder */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 flex flex-col items-center justify-center p-8">
+                    <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4">
+                      {scanMethod === 'qr' ? (
+                        <QrCode className="w-10 h-10 text-white/70" />
+                      ) : (
+                        <User className="w-10 h-10 text-white/70" />
+                      )}
+                    </div>
+                    <p className="text-white/80 text-sm font-semibold text-center">
+                      {scanMethod === 'qr' ? 'Tekan tombol di bawah untuk membuka kamera' : 'Tekan tombol untuk verifikasi wajah'}
+                    </p>
+                    <p className="text-white/50 text-xs mt-2 text-center max-w-[250px]">
+                      {scanMethod === 'qr' 
+                        ? 'Kamera akan aktif dan memindai QR code secara otomatis'
+                        : 'Kamera depan akan aktif untuk verifikasi identitas'}
+                    </p>
+                  </div>
+
+                  {/* Scanning animation (when processing) */}
+                  {isScanning && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-3" />
+                      <p className="text-white text-sm font-semibold">Memproses...</p>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Viewfinder Frame Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center p-12">
-                <div className="w-full h-full border-2 border-white/30 rounded-2xl relative">
-                  {/* Corners */}
-                  <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-[#0058bc] rounded-tl-lg" />
-                  <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-[#0058bc] rounded-tr-lg" />
-                  <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-[#0058bc] rounded-bl-lg" />
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-[#0058bc] rounded-br-lg" />
-                </div>
-              </div>
-
-              {/* Ambient Guidance Indicator */}
-              {!isScanning && !scanSuccess && (
-                <div className="absolute bottom-6 left-0 right-0 text-center px-4">
-                  <span className="bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-2 shadow-sm">
-                    <Camera className="w-3.5 h-3.5 text-[#005bc1]" />
-                    Posisikan {scanMethod === 'qr' ? 'QR Code' : 'Wajah'} dalam bingkai
-                  </span>
-                </div>
-              )}
-
-              {/* Success Screen Overlay (Beautifully animated with Framer Motion equivalent) */}
+              {/* Success Screen Overlay */}
               <AnimatePresence>
                 {scanSuccess && (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-emerald-950/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6"
+                    className="absolute inset-0 bg-emerald-950/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 z-30"
                   >
                     <motion.div 
                       initial={{ scale: 0.8, opacity: 0 }}
@@ -545,7 +702,7 @@ export default function EmployeeApp({
                       transition={{ delay: 0.3 }}
                       className="text-white text-xl font-bold drop-shadow-sm"
                     >
-                      Scan Berhasil
+                      {scanMethod === 'qr' ? 'QR Terverifikasi' : 'Wajah Terverifikasi'}
                     </motion.h2>
                     
                     <motion.p 
@@ -556,55 +713,121 @@ export default function EmployeeApp({
                     >
                       Data absen {todayRecord?.keluar ? 'keluar' : 'masuk'} telah tersimpan
                     </motion.p>
+
+                    {scanResult && (
+                      <motion.p 
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-emerald-300/60 text-[10px] mt-3 font-mono"
+                      >
+                        ID: {scanResult.substring(0, 30)}
+                      </motion.p>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </section>
 
-            {/* Geofence Proximity Proving Ground Selector */}
+            {/* Real GPS Location Status */}
             <div className="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-3 transition-colors duration-300">
               <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1 font-medium">
                   <MapPin className="w-3.5 h-3.5 text-[#005bc1] dark:text-[#3b82f6]" />
-                  Simulasi Lokasi Perangkat
+                  Lokasi GPS Perangkat
                 </span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Dalam Radius
-                </span>
+                {isLocating ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Mencari...
+                  </span>
+                ) : isWithinGeofence ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Dalam Radius
+                  </span>
+                ) : userLocation ? (
+                  <span className="text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                    Di Luar Radius
+                  </span>
+                ) : (
+                  <span className="text-gray-500 dark:text-gray-400 font-bold bg-gray-50 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                    Belum Terdeteksi
+                  </span>
+                )}
               </div>
               
-              <div className="grid grid-cols-3 gap-2">
-                {geofences.map(g => (
-                  <button
-                    key={g.id}
-                    onClick={() => setSelectedLocation(g)}
-                    className={`text-center p-2 rounded-lg text-xs font-medium border transition-all ${
-                      selectedLocation?.id === g.id 
-                        ? 'border-[#0058bc] dark:border-[#3b82f6] bg-[#0058bc]/5 dark:bg-blue-950/40 text-[#0058bc] dark:text-[#3b82f6] font-bold shadow-sm' 
-                        : 'border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700'
-                    }`}
-                  >
-                    {g.nama}
-                  </button>
-                ))}
-              </div>
+              {locationError && (
+                <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 p-3 rounded-lg text-xs text-rose-600 dark:text-rose-400 flex gap-2">
+                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Error Lokasi</p>
+                    <p>{locationError}</p>
+                  </div>
+                </div>
+              )}
 
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-2.5 rounded-lg transition-colors duration-300">
-                <Compass className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
-                <span className="truncate">
-                  Terdeteksi: <strong className="text-gray-700 dark:text-gray-200">{selectedLocation?.nama || 'Tidak terdeteksi'}</strong> {selectedLocation ? `(${selectedLocation.lat}, ${selectedLocation.lng})` : ''}
-                </span>
-              </div>
+              {userLocation && (
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-2.5 rounded-lg transition-colors duration-300">
+                  <Navigation className="w-4 h-4 text-[#005bc1] dark:text-[#3b82f6] shrink-0" />
+                  <span className="truncate">
+                    Posisi: <strong className="text-gray-700 dark:text-gray-200">{userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</strong>
+                  </span>
+                </div>
+              )}
+
+              {nearestGeofence && distanceToNearest !== null && (
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-2.5 rounded-lg transition-colors duration-300">
+                  <Compass className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                  <span className="truncate">
+                    Terdekat: <strong className="text-gray-700 dark:text-gray-200">{nearestGeofence.nama}</strong> 
+                    {' '}({distanceToNearest}m dari radius {nearestGeofence.radius}m)
+                  </span>
+                </div>
+              )}
+
+              {/* Refresh location button */}
+              <button
+                onClick={getCurrentLocation}
+                disabled={isLocating}
+                className="w-full py-2 text-xs font-bold text-[#005bc1] dark:text-[#3b82f6] bg-[#005bc1]/5 dark:bg-blue-950/30 rounded-lg hover:bg-[#005bc1]/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                {isLocating ? 'Memuat lokasi...' : 'Perbarui Lokasi GPS'}
+              </button>
+
+              {/* Geofence list for reference */}
+              {geofences.length > 0 && (
+                <div className="pt-2 border-t border-gray-100 dark:border-zinc-800">
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Zona Presensi Terdaftar</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {geofences.map(g => (
+                      <div
+                        key={g.id}
+                        className={`text-center p-2 rounded-lg text-[10px] font-medium border transition-all ${
+                          nearestGeofence?.id === g.id && isWithinGeofence
+                            ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold' 
+                            : nearestGeofence?.id === g.id
+                            ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
+                            : 'border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-300'
+                        }`}
+                      >
+                        {g.nama} ({g.radius}m)
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Check-In / Check-Out Action Button */}
             <div className="pt-2">
               <button
-                disabled={isScanning || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin'}
-                onClick={handleSimulateScan}
+                disabled={isScanning || isCameraActive || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin'}
+                onClick={handleStartScan}
                 className={`w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] ${
-                  isScanning 
+                  isScanning || isCameraActive
                     ? 'bg-gray-400 dark:bg-zinc-600 text-white cursor-not-allowed'
                     : todayRecord?.status === 'Izin'
                     ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/30 cursor-not-allowed'

@@ -328,6 +328,7 @@ export default function App() {
           setDarkMode={setDarkMode}
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
+          limitTime={limitTime}
         />
       ) : (
         <AdminPanel 
