@@ -78,8 +78,8 @@ export default function LoginScreen({
 
     const emailLower = email.toLowerCase();
     
-    // 1. Check if Administrator (contact@yayasanbaitulhikmah.com or admin@)
-    if (emailLower === 'contact@yayasanbaitulhikmah.com' || emailLower === 'admin@yayasanbaitulhikmah.com') {
+    // 1. Check if Administrator
+    if (emailLower === 'contact@yayasanbaitulhikmah.com') {
       setSuccessMsg('Autentikasi Berhasil! Masuk sebagai Super Admin...');
       setTimeout(() => {
         onLoginSuccess({
@@ -95,10 +95,16 @@ export default function LoginScreen({
       return;
     }
 
-    // 2. Check if email belongs to the allowed organization domain
-    const isOrgEmail = emailLower.endsWith('@yayasanbaitulhikmah.com');
+    // 2. Check if email belongs to the allowed organization domains
+    const allowedDomains = [
+      '@yayasanbaitulhikmah.com',
+      '@mtsalhikmahtangkilkulon.sch.id',
+      '@misalhikmahtangkilkulon.sch.id',
+      '@pkbmalhikmah.com'
+    ];
+    const isOrgEmail = allowedDomains.some(domain => emailLower.endsWith(domain));
     if (!isOrgEmail) {
-      setError('Akses ditolak. Silakan gunakan akun Google Workspace dengan email organisasi resmi (@yayasanbaitulhikmah.com).');
+      setError('Akses ditolak. Silakan gunakan akun Google Workspace dengan email organisasi resmi.');
       return;
     }
 
