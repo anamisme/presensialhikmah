@@ -42,7 +42,6 @@ interface EmployeeAppProps {
   geofences: Geofence[];
   attendanceRecords: AttendanceRecord[];
   onAddAttendance: (record: AttendanceRecord) => void;
-  onNavigateToAdmin: () => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   onLogout: () => void;
@@ -55,7 +54,6 @@ export default function EmployeeApp({
   geofences,
   attendanceRecords,
   onAddAttendance,
-  onNavigateToAdmin,
   darkMode,
   setDarkMode,
   onLogout,
@@ -480,12 +478,13 @@ export default function EmployeeApp({
             <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
           </div>
 
-          <button 
-            onClick={onNavigateToAdmin} 
-            className="hidden sm:flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-[#0058bc]/10 dark:bg-blue-950/40 text-[#0058bc] dark:text-[#3b82f6] hover:bg-[#0058bc]/20 transition-all active:scale-95"
+          {/* Dark mode toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
+            aria-label="Toggle dark mode"
           >
-            Portal Admin
-            <ArrowRight className="w-3.5 h-3.5" />
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           
           <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
@@ -1295,19 +1294,6 @@ export default function EmployeeApp({
               </button>
             </div>
 
-            {/* Portal toggle to Admin Panel */}
-            <div className="bg-[#0058bc]/5 dark:bg-blue-950/20 rounded-xl p-4 border border-[#0058bc]/10 dark:border-[#3b82f6]/20 flex justify-between items-center transition-colors duration-300">
-              <div className="space-y-0.5 text-left">
-                <p className="text-xs font-bold text-[#0058bc] dark:text-[#3b82f6] uppercase tracking-wider">Akses Administrator</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Masuk ke modul panel admin monitoring</p>
-              </div>
-              <button 
-                onClick={onNavigateToAdmin}
-                className="bg-[#0058bc] dark:bg-blue-600 text-white p-2.5 rounded-xl shadow-md hover:bg-[#0070eb] dark:hover:bg-blue-700 active:scale-95 transition-all"
-              >
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
           </motion.div>
         )}
 

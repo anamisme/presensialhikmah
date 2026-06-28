@@ -231,6 +231,15 @@ export default function LoginScreen({
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
             {/* Status Badge */}
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider ${
               isOnline 
@@ -377,15 +386,22 @@ export default function LoginScreen({
       {/* Global Footer */}
       <footer className="w-full py-8 border-t border-gray-200/30 dark:border-zinc-800/30 relative z-10">
         <div className="max-w-5xl mx-auto px-6 flex flex-col items-center gap-4">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs font-medium transition-colors hover:bg-gray-200 dark:hover:bg-zinc-700"
+          >
+            {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            {darkMode ? 'Mode Terang' : 'Mode Gelap'}
+          </button>
+
           <div className="flex items-center gap-6 text-xs text-gray-500 dark:text-gray-400 font-semibold">
-            <a href="#" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Security Policy</a>
+            <a href="/privacy-policy.html" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Kebijakan Privasi</a>
             <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700" />
-            <a href="#" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Privacy</a>
-            <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700" />
-            <a href="#" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Support</a>
+            <a href="/terms.html" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Syarat & Ketentuan</a>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium text-center leading-relaxed">
-            © 2026 Yayasan Baitul Hikmah. All institutional access is monitored for security purposes.
+            © 2025 Yayasan Baitul Hikmah. Seluruh akses dipantau untuk keamanan.
           </p>
         </div>
       </footer>

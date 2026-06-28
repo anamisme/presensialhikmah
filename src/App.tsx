@@ -212,24 +212,13 @@ export default function App() {
           geofences={geofences}
           attendanceRecords={attendanceRecords}
           onAddAttendance={handleAddAttendance}
-          onNavigateToAdmin={() => {
-            setCurrentView('admin');
-            setSession({
-              role: 'admin',
-              user: {
-                nama: adminProfile.nama,
-                foto: adminProfile.foto,
-                role: adminProfile.role
-              }
-            });
-          }}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
           limitTime={limitTime}
         />
-      ) : (
+      ) : session.role === 'admin' ? (
         <AdminPanel 
           employees={employees}
           attendanceRecords={attendanceRecords}
@@ -252,7 +241,7 @@ export default function App() {
           onChangeAdminProfilePicture={handleChangeAdminProfilePicture}
           onLogout={handleLogout}
         />
-      )}
+      ) : null}
     </div>
   );
 }
