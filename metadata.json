@@ -1,0 +1,11 @@
+{
+  "name": "Presensi Baitul Hikmah",
+  "description": "Aplikasi presensi kehadiran terintegrasi berbasis lokasi dan QR Code untuk karyawan Baitul Hikmah.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
