@@ -477,15 +477,6 @@ export default function EmployeeApp({
             </span>
             <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
           </div>
-
-          {/* Dark mode toggle */}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
           
           <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
             <img 
