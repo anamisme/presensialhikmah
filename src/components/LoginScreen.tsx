@@ -30,8 +30,6 @@ interface LoginScreenProps {
   employees: Employee[];
   onLoginSuccess: (session: { role: 'employee' | 'admin'; user: any }) => void;
   onAddEmployee?: (emp: Employee) => void;
-  darkMode: boolean;
-  setDarkMode: (val: boolean) => void;
   adminEmails?: string[];
 }
 
@@ -39,8 +37,6 @@ export default function LoginScreen({
   employees,
   onLoginSuccess,
   onAddEmployee,
-  darkMode,
-  setDarkMode,
   adminEmails = ['contact@yayasanbaitulhikmah.com']
 }: LoginScreenProps) {
   const [error, setError] = useState<string | null>(null);
@@ -179,27 +175,21 @@ export default function LoginScreen({
   const logoUrl = "/logo.png";
 
   return (
-    <div className="min-h-screen bg-[#F6F3F6] dark:bg-[#121214] text-[#1b1b1d] dark:text-gray-100 font-sans flex flex-col relative overflow-x-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-[#F6F3F6] text-[#1b1b1d] font-sans flex flex-col relative overflow-x-hidden transition-colors duration-300">
       
       {/* Neumorphic/Glass custom styles inject */}
       <style>{`
         .stitch-card {
-          background: ${darkMode ? '#1C1C1E' : '#FCF8FB'};
-          box-shadow: ${darkMode 
-            ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)' 
-            : '20px 20px 60px #d6d3d6, -20px -20px 60px #ffffff'};
+          background: #FCF8FB;
+          box-shadow: 20px 20px 60px #d6d3d6, -20px -20px 60px #ffffff;
         }
         .stitch-pill {
-          background: ${darkMode ? '#242426' : '#FCF8FB'};
-          box-shadow: ${darkMode 
-            ? 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 6px -1px rgba(0,0,0,0.2)' 
-            : '6px 6px 12px #e5e1e4, -6px -6px 12px #ffffff'};
+          background: #FCF8FB;
+          box-shadow: 6px 6px 12px #e5e1e4, -6px -6px 12px #ffffff;
         }
         .stitch-inset {
-          background: ${darkMode ? '#161618' : '#FCF8FB'};
-          box-shadow: ${darkMode 
-            ? 'inset 2px 2px 5px rgba(0,0,0,0.5), inset -1px -1px 2px rgba(255,255,255,0.05)' 
-            : 'inset 4px 4px 8px #e5e1e4, inset -4px -4px 8px #ffffff'};
+          background: #FCF8FB;
+          box-shadow: inset 4px 4px 8px #e5e1e4, inset -4px -4px 8px #ffffff;
         }
         .stitch-button {
           background: #004494;
@@ -207,11 +197,11 @@ export default function LoginScreen({
         }
         .stitch-halo-blue {
           filter: blur(80px);
-          background: radial-gradient(circle, rgba(0, 68, 148, ${darkMode ? '0.2' : '0.15'}) 0%, rgba(0, 68, 148, 0) 70%);
+          background: radial-gradient(circle, rgba(0, 68, 148, 0.15) 0%, rgba(0, 68, 148, 0) 70%);
         }
         .stitch-halo-emerald {
           filter: blur(80px);
-          background: radial-gradient(circle, rgba(16, 185, 129, ${darkMode ? '0.15' : '0.1'}) 0%, rgba(16, 185, 129, 0) 70%);
+          background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0) 70%);
         }
       `}</style>
 
@@ -220,13 +210,13 @@ export default function LoginScreen({
       <div className="fixed bottom-[-10%] left-[-10%] w-[500px] h-[500px] stitch-halo-emerald pointer-events-none z-0"></div>
 
       {/* Institutional Header Bar */}
-      <header className="w-full bg-[#FCF8FB]/80 dark:bg-[#1C1C1E]/80 backdrop-blur-md border-b border-gray-200/50 dark:border-zinc-800/50 sticky top-0 z-50 transition-colors duration-300">
+      <header className="w-full bg-[#FCF8FB]/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50 transition-colors duration-300">
         <div className="max-w-5xl mx-auto h-16 px-6 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Digital Clock di pojok kiri atas */}
             <div className="flex items-center gap-2 py-1.5 px-4 rounded-full stitch-inset">
-              <Clock className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-              <span className="text-[12px] font-bold text-gray-600 dark:text-gray-300 tabular-nums">
+              <Clock className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-[12px] font-bold text-gray-600 tabular-nums">
                 {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
               </span>
             </div>
@@ -236,8 +226,8 @@ export default function LoginScreen({
             {/* Status Badge */}
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider ${
               isOnline 
-                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
-                : 'bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-700 dark:text-rose-400 animate-pulse'
+                ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                : 'bg-rose-50 border-rose-100 text-rose-700 animate-pulse'
             }`}>
               <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               <span>{isOnline ? 'Online' : 'Offline'}</span>
@@ -268,18 +258,18 @@ export default function LoginScreen({
 
           {/* Titles */}
           <div className="text-center space-y-2 mb-8">
-            <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-[0.25em] uppercase">
+            <h2 className="text-[10px] font-black text-gray-400 tracking-[0.25em] uppercase">
               Presensi Online
             </h2>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#004494] dark:text-blue-400 leading-tight tracking-tight uppercase">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#004494] leading-tight tracking-tight uppercase">
               Yayasan Baitul Hikmah
             </h1>
           </div>
 
           {/* Access Restriction Info */}
           <div className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-full stitch-inset mb-8">
-            <ShieldCheck className="w-4 h-4 text-[#004494] dark:text-blue-400" />
-            <span className="text-xs text-gray-500 dark:text-gray-300 font-bold tracking-wide">
+            <ShieldCheck className="w-4 h-4 text-[#004494]" />
+            <span className="text-xs text-gray-500 font-bold tracking-wide">
               Google Workspace Access Only
             </span>
           </div>
@@ -289,9 +279,9 @@ export default function LoginScreen({
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 p-4 rounded-2xl text-left flex gap-3 text-xs text-amber-800 dark:text-amber-400 mb-6"
+              className="w-full bg-amber-50 border border-amber-100 p-4 rounded-2xl text-left flex gap-3 text-xs text-amber-800 mb-6"
             >
-              <WifiOff className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <WifiOff className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
               <div className="space-y-1">
                 <p className="font-bold uppercase tracking-wider text-[9px]">Sinyal Terputus</p>
                 <p className="leading-relaxed font-medium">
@@ -306,7 +296,7 @@ export default function LoginScreen({
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 p-4 rounded-2xl text-left flex gap-3 text-xs text-rose-600 dark:text-rose-400 mb-6"
+              className="w-full bg-rose-50 border border-rose-100 p-4 rounded-2xl text-left flex gap-3 text-xs text-rose-600 mb-6"
             >
               <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
               <div className="space-y-1">
@@ -321,7 +311,7 @@ export default function LoginScreen({
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 p-4 rounded-2xl text-left flex gap-3 text-xs text-emerald-700 dark:text-emerald-400 mb-6"
+              className="w-full bg-emerald-50 border border-emerald-100 p-4 rounded-2xl text-left flex gap-3 text-xs text-emerald-700 mb-6"
             >
               <div className="w-5 h-5 shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[10px] animate-bounce">
                 ✓
@@ -377,23 +367,14 @@ export default function LoginScreen({
       </main>
 
       {/* Global Footer */}
-      <footer className="w-full py-8 border-t border-gray-200/30 dark:border-zinc-800/30 relative z-10">
+      <footer className="w-full py-8 border-t border-gray-200/30 relative z-10">
         <div className="max-w-5xl mx-auto px-6 flex flex-col items-center gap-4">
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs font-medium transition-colors hover:bg-gray-200 dark:hover:bg-zinc-700"
-          >
-            {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            {darkMode ? 'Mode Terang' : 'Mode Gelap'}
-          </button>
-
-          <div className="flex items-center gap-6 text-xs text-gray-500 dark:text-gray-400 font-semibold">
-            <a href="/privacy-policy.html" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Kebijakan Privasi</a>
-            <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700" />
-            <a href="/terms.html" className="hover:text-[#004494] dark:hover:text-blue-400 transition-colors">Syarat & Ketentuan</a>
+          <div className="flex items-center gap-6 text-xs text-gray-500 font-semibold">
+            <a href="/privacy-policy.html" className="hover:text-[#004494] transition-colors">Kebijakan Privasi</a>
+            <span className="w-1 h-1 rounded-full bg-gray-300" />
+            <a href="/terms.html" className="hover:text-[#004494] transition-colors">Syarat & Ketentuan</a>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium text-center leading-relaxed">
+          <p className="text-[11px] text-gray-400 font-medium text-center leading-relaxed">
             © {new Date().getFullYear()} Yayasan Baitul Hikmah
           </p>
         </div>

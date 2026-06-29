@@ -30,9 +30,6 @@ export default function App() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => getStoredData('attendance', INITIAL_ATTENDANCE));
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(() => getStoredData('activities', INITIAL_ACTIVITIES));
   const [limitTime, setLimitTime] = useState<string>(() => getStoredData('limit_time', '07:00'));
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('darkMode') === 'true';
-  });
 
   // Session state (null means logged out, shows Login screen)
   const [session, setSession] = useState<{ role: 'employee' | 'admin'; user: any } | null>(() => {
@@ -72,15 +69,6 @@ export default function App() {
     setAdminEmails(updated);
     setStoredData('admin_emails', updated);
   };
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('darkMode', String(darkMode));
-  }, [darkMode]);
 
   // Sync state to localStorage on update
   const updateEmployees = (newEmployees: Employee[]) => {
@@ -235,15 +223,13 @@ export default function App() {
         employees={employees}
         onLoginSuccess={handleLoginSuccess}
         onAddEmployee={handleAddEmployee}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
         adminEmails={adminEmails}
       />
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#F2F2F7] dark:bg-[#121214] text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div className="relative min-h-screen bg-[#F2F2F7] text-gray-900 transition-colors duration-300">
 
       {currentView === 'employee' ? (
         <EmployeeApp 
@@ -251,8 +237,6 @@ export default function App() {
           geofences={geofences}
           attendanceRecords={attendanceRecords}
           onAddAttendance={handleAddAttendance}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
           limitTime={limitTime}
@@ -278,8 +262,6 @@ export default function App() {
           adminEmails={adminEmails}
           onAddAdminEmail={handleAddAdminEmail}
           onRemoveAdminEmail={handleRemoveAdminEmail}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
         />
       ) : null}
     </div>

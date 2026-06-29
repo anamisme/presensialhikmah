@@ -42,8 +42,6 @@ interface EmployeeAppProps {
   geofences: Geofence[];
   attendanceRecords: AttendanceRecord[];
   onAddAttendance: (record: AttendanceRecord) => void;
-  darkMode: boolean;
-  setDarkMode: (val: boolean) => void;
   onLogout: () => void;
   onChangeProfilePicture: (nip: string, newFoto: string) => void;
   limitTime?: string;
@@ -56,8 +54,6 @@ export default function EmployeeApp({
   geofences,
   attendanceRecords,
   onAddAttendance,
-  darkMode,
-  setDarkMode,
   onLogout,
   onChangeProfilePicture,
   limitTime = '07:00',
@@ -468,38 +464,29 @@ export default function EmployeeApp({
   }, [isCameraActive, scanMethod]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-[#121214] text-gray-900 dark:text-gray-100 pb-24 font-sans select-none transition-colors duration-300">
+    <div className="flex flex-col min-h-screen bg-[#F2F2F7] text-gray-900 pb-24 font-sans select-none transition-colors duration-300">
       
       {/* TopAppBar with frosted-glass aesthetic */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-[#1C1C1E]/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-zinc-800/50 flex justify-between items-center px-4 h-16 shadow-sm transition-colors duration-300">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 flex justify-between items-center px-4 h-16 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 object-contain" />
-          <span className="font-bold text-lg tracking-tight text-[#0058bc] dark:text-[#3b82f6]">Baitul Hikmah</span>
+          <span className="font-bold text-lg tracking-tight text-[#0058bc]">Baitul Hikmah</span>
         </div>
         
         {/* User avatar with mini settings portal */}
         <div className="flex items-center gap-2">
-          {/* Dark mode toggle */}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
           {/* Admin panel button - only for admins */}
           {isAdmin && onNavigateToAdmin && (
             <button
               onClick={onNavigateToAdmin}
-              className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all active:scale-95"
+              className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all active:scale-95"
             >
               <ShieldAlert className="w-3 h-3" />
               Admin
             </button>
           )}
           
-          <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm">
             <img 
               alt={currentUser.nama} 
               className="w-full h-full object-cover" 
@@ -519,7 +506,7 @@ export default function EmployeeApp({
               initial={{ opacity: 0, y: -10, height: 0 }}
               animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, y: -10, height: 0 }}
-              className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 shadow-sm"
+              className="bg-emerald-50 border border-emerald-100 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-emerald-800 shadow-sm"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="leading-relaxed">{syncMessage}</span>
@@ -536,23 +523,23 @@ export default function EmployeeApp({
             {/* Greeting & Time display */}
             <header className="flex justify-between items-end">
               <div>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{getGreeting()}, {currentUser.nama}</span>
-                <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                <span className="text-sm font-medium text-gray-500">{getGreeting()}, {currentUser.nama}</span>
+                <h1 className="text-xl font-bold text-gray-800">
                   {new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }).format(currentTime)}
                 </h1>
               </div>
               <div className="text-right">
-                <span className="text-4xl font-extrabold text-[#0058bc] dark:text-[#3b82f6] tracking-tight tabular-nums">
+                <span className="text-4xl font-extrabold text-[#0058bc] tracking-tight tabular-nums">
                   {formatClock(currentTime)}
                 </span>
-                <span className="ml-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500">WIB</span>
+                <span className="ml-1.5 text-xs font-semibold text-gray-400">WIB</span>
               </div>
             </header>
 
             {/* Offline queue warnings */}
             {offlineQueue.length > 0 && (
-              <div className="bg-amber-50 dark:bg-amber-950/15 border border-amber-200/50 dark:border-amber-900/40 p-4 rounded-2xl flex gap-3 text-xs text-amber-800 dark:text-amber-400 text-left">
-                <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <div className="bg-amber-50 border border-amber-200/50 p-4 rounded-2xl flex gap-3 text-xs text-amber-800 text-left">
+                <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                 <div className="space-y-1">
                   <p className="font-bold uppercase tracking-wider text-[10px]">Ada Antrean Presensi Offline</p>
                   <p className="leading-relaxed font-semibold">
@@ -565,15 +552,15 @@ export default function EmployeeApp({
             {/* Lokasi Terkini - di atas scanner */}
             <div className="text-center">
               {nearestGeofence && isWithinGeofence ? (
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                <p className="text-sm font-bold text-emerald-700">
                   📍 {nearestGeofence.nama}
                 </p>
               ) : nearestGeofence ? (
-                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                <p className="text-sm font-bold text-amber-700">
                   📍 {nearestGeofence.nama} ({distanceToNearest}m)
                 </p>
               ) : userLocation ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500">
                   📍 {userLocation.lat.toFixed(5)}, {userLocation.lng.toFixed(5)}
                 </p>
               ) : (
@@ -582,7 +569,7 @@ export default function EmployeeApp({
             </div>
 
             {/* QR Scanner - always active viewfinder */}
-            <section className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border-4 border-white dark:border-zinc-800 shadow-lg bg-neutral-900">
+            <section className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border-4 border-white shadow-lg bg-neutral-900">
               
               {/* Always-on QR Scanner */}
               <QRScanner
@@ -668,47 +655,47 @@ export default function EmployeeApp({
             </section>
 
             {/* Attendance Status Card */}
-            <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-4 transition-colors duration-300">
+            <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4 transition-colors duration-300">
               <div className="flex justify-center">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
                   todayRecord?.status === 'Izin'
-                    ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50'
+                    ? 'bg-sky-100 text-sky-700 border border-sky-100'
                     : todayRecord?.keluar 
-                    ? 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400' 
+                    ? 'bg-gray-100 text-gray-500'
                     : todayRecord 
-                    ? 'bg-[#6ffb85]/20 dark:bg-emerald-950/40 text-[#00732a] dark:text-emerald-400' 
-                    : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
+                    ? 'bg-[#6ffb85]/20 text-[#00732a]'
+                    : 'bg-amber-100 text-amber-700'
                 }`}>
                   {todayRecord?.status === 'Izin' ? 'Izin' : todayRecord?.keluar ? 'Sudah Absen' : todayRecord ? 'Sudah Absen' : 'Belum Absen'}
                 </span>
               </div>
 
               {todayRecord?.status === 'Izin' ? (
-                <div className="bg-sky-50/50 dark:bg-sky-950/10 p-4 rounded-xl border border-sky-100 dark:border-sky-900/30 text-left">
-                  <div className="flex items-center gap-2 text-sky-800 dark:text-sky-400 font-bold text-sm mb-1.5">
+                <div className="bg-sky-50/50 p-4 rounded-xl border border-sky-100 text-left">
+                  <div className="flex items-center gap-2 text-sky-800 font-bold text-sm mb-1.5">
                     <FileText className="w-4 h-4 shrink-0" />
                     <span>Izin/Sakit Terdaftar</span>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                  <p className="text-xs text-gray-600 font-medium">
                     {todayRecord.keterangan || 'Tanpa keterangan'}
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Masuk</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jam Masuk</p>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
+                      <Clock className="w-4 h-4 text-emerald-600" />
+                      <span className="font-bold text-lg text-emerald-600">
                         {todayRecord ? todayRecord.masuk : '--:--'}
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-1 border-l border-gray-200 dark:border-zinc-800 pl-4">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Keluar</p>
+                  <div className="space-y-1 border-l border-gray-200 pl-4">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jam Keluar</p>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                      <span className="font-bold text-lg text-gray-700 dark:text-gray-300">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="font-bold text-lg text-gray-700">
                         {todayRecord?.keluar ? todayRecord.keluar : '--:--'}
                       </span>
                     </div>
@@ -716,20 +703,20 @@ export default function EmployeeApp({
                 </div>
               )}
 
-              <div className="pt-3.5 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+              <div className="pt-3.5 border-t border-gray-100 flex items-center justify-center text-xs text-gray-500">
                 <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[#0058bc] dark:text-[#3b82f6]" />
-                  Jam Kerja: <span className="font-semibold text-gray-700 dark:text-gray-300">{limitTime} - 17:00 WIB</span>
+                  <Clock className="w-3.5 h-3.5 text-[#0058bc]" />
+                  Jam Kerja: <span className="font-semibold text-gray-700">{limitTime} - 17:00 WIB</span>
                 </span>
               </div>
             </section>
 
             {/* Request Permit Banner */}
             {!todayRecord && (
-              <div className="bg-sky-500/10 dark:bg-sky-500/5 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
+              <div className="bg-sky-500/10 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
                 <div className="space-y-1">
-                  <h4 className="text-xs font-black text-[#0058bc] dark:text-sky-400 uppercase tracking-wider">Berhalangan Hadir?</h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Ajukan izin sakit atau keperluan lainnya.</p>
+                  <h4 className="text-xs font-black text-[#0058bc] uppercase tracking-wider">Berhalangan Hadir?</h4>
+                  <p className="text-[10px] text-gray-500">Ajukan izin sakit atau keperluan lainnya.</p>
                 </div>
                 <button
                   onClick={() => setIsPermitModalOpen(true)}
@@ -741,36 +728,36 @@ export default function EmployeeApp({
             )}
 
             {/* Real GPS Location Status */}
-            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-3 transition-colors duration-300">
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3 transition-colors duration-300">
+              <div className="flex items-center justify-between text-xs text-gray-500">
                 <span className="flex items-center gap-1 font-medium">
-                  <MapPin className="w-3.5 h-3.5 text-[#005bc1] dark:text-[#3b82f6]" />
+                  <MapPin className="w-3.5 h-3.5 text-[#005bc1]" />
                   Lokasi GPS Perangkat
                 </span>
                 {isLocating ? (
-                  <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                     Mencari...
                   </span>
                 ) : isWithinGeofence ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Dalam Radius
                   </span>
                 ) : userLocation ? (
-                  <span className="text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                     Di Luar Radius
                   </span>
                 ) : (
-                  <span className="text-gray-500 dark:text-gray-400 font-bold bg-gray-50 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                  <span className="text-gray-500 font-bold bg-gray-50 px-2 py-0.5 rounded-full">
                     Belum Terdeteksi
                   </span>
                 )}
               </div>
               
               {locationError && (
-                <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 p-3 rounded-lg text-xs text-rose-600 dark:text-rose-400 flex gap-2">
+                <div className="bg-rose-50 border border-rose-100 p-3 rounded-lg text-xs text-rose-600 flex gap-2">
                   <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold">Error Lokasi</p>
@@ -780,30 +767,30 @@ export default function EmployeeApp({
               )}
 
               {gpsWarning && (
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 p-3 rounded-lg text-xs text-amber-700 dark:text-amber-400 flex gap-2">
+                <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg text-xs text-amber-700 flex gap-2">
                   <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                   <div>
                     <p className="font-bold">⚠️ Peringatan GPS</p>
                     <p>{gpsWarning}</p>
-                    <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-500">Presensi tidak dapat dilakukan dengan lokasi palsu.</p>
+                    <p className="mt-1 text-[10px] text-amber-600">Presensi tidak dapat dilakukan dengan lokasi palsu.</p>
                   </div>
                 </div>
               )}
 
               {userLocation && (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-2.5 rounded-lg transition-colors duration-300">
-                  <Navigation className="w-4 h-4 text-[#005bc1] dark:text-[#3b82f6] shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg transition-colors duration-300">
+                  <Navigation className="w-4 h-4 text-[#005bc1] shrink-0" />
                   <span className="truncate">
-                    Posisi: <strong className="text-gray-700 dark:text-gray-200">{userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</strong>
+                    Posisi: <strong className="text-gray-700">{userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</strong>
                   </span>
                 </div>
               )}
 
               {nearestGeofence && distanceToNearest !== null && (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-2.5 rounded-lg transition-colors duration-300">
-                  <Compass className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg transition-colors duration-300">
+                  <Compass className="w-4 h-4 text-gray-400 shrink-0" />
                   <span className="truncate">
-                    Terdekat: <strong className="text-gray-700 dark:text-gray-200">{nearestGeofence.nama}</strong> 
+                    Terdekat: <strong className="text-gray-700">{nearestGeofence.nama}</strong> 
                     {' '}({distanceToNearest}m dari radius {nearestGeofence.radius}m)
                   </span>
                 </div>
@@ -813,7 +800,7 @@ export default function EmployeeApp({
               <button
                 onClick={getCurrentLocation}
                 disabled={isLocating}
-                className="w-full py-2 text-xs font-bold text-[#005bc1] dark:text-[#3b82f6] bg-[#005bc1]/5 dark:bg-blue-950/30 rounded-lg hover:bg-[#005bc1]/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                className="w-full py-2 text-xs font-bold text-[#005bc1] bg-[#005bc1]/5 rounded-lg hover:bg-[#005bc1]/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 <MapPin className="w-3.5 h-3.5" />
                 {isLocating ? 'Memuat lokasi...' : 'Perbarui Lokasi GPS'}
@@ -821,18 +808,18 @@ export default function EmployeeApp({
 
               {/* Geofence list for reference */}
               {geofences.length > 0 && (
-                <div className="pt-2 border-t border-gray-100 dark:border-zinc-800">
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Zona Presensi Terdaftar</p>
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Zona Presensi Terdaftar</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     {geofences.map(g => (
                       <div
                         key={g.id}
                         className={`text-center p-2 rounded-lg text-[10px] font-medium border transition-all ${
                           nearestGeofence?.id === g.id && isWithinGeofence
-                            ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold' 
+                            ? 'border-emerald-400 bg-emerald-50 text-emerald-700 font-bold' 
                             : nearestGeofence?.id === g.id
-                            ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
-                            : 'border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-300'
+                            ? 'border-amber-300 bg-amber-50 text-amber-700'
+                            : 'border-gray-200 bg-gray-50 text-gray-600'
                         }`}
                       >
                         {g.nama} ({g.radius}m)
@@ -853,17 +840,17 @@ export default function EmployeeApp({
             className="space-y-4"
           >
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Riwayat Presensi</h2>
-              <span className="text-xs bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full font-semibold">
+              <h2 className="text-xl font-bold text-gray-800">Riwayat Presensi</h2>
+              <span className="text-xs bg-gray-200 text-gray-600 px-2.5 py-1 rounded-full font-semibold">
                 {personalRecords.length} Hari Kerja
               </span>
             </div>
 
             <div className="space-y-3">
               {personalRecords.map((r, idx) => (
-                <div key={idx} className="bg-white dark:bg-[#1C1C1E] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-zinc-800 flex justify-between items-center transition-colors duration-300">
+                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex justify-between items-center transition-colors duration-300">
                   <div className="space-y-1 text-left">
-                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm flex items-center gap-2">
+                    <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
                       {new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(r.tanggal))}
                       {r.isOfflinePending && (
                         <span className="text-[8px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 uppercase font-black tracking-wider animate-pulse shrink-0">
@@ -871,10 +858,10 @@ export default function EmployeeApp({
                         </span>
                       )}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
                       {r.status === 'Izin' ? (
                         <div className="flex flex-col gap-1">
-                          <span className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-semibold">
+                          <span className="flex items-center gap-1.5 text-sky-600 font-semibold">
                             <span className="w-2 h-2 rounded-full bg-sky-500" />
                             Izin: {r.keterangan || 'Tanpa Keterangan'}
                           </span>
@@ -899,7 +886,7 @@ export default function EmployeeApp({
                           </span>
                           {r.keluar && (
                             <span className="flex items-center gap-1">
-                              <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-zinc-600" />
+                              <span className="w-2 h-2 rounded-full bg-gray-400" />
                               Out: {r.keluar}
                             </span>
                           )}
@@ -910,14 +897,14 @@ export default function EmployeeApp({
                   <div className="text-right shrink-0">
                     <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       r.status === 'Tepat Waktu' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50' 
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
                         : r.status === 'Izin'
-                        ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-100 dark:border-sky-900/50'
-                        : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50'
+                        ? 'bg-sky-50 text-sky-700 border border-sky-100'
+                        : 'bg-rose-50 text-rose-700 border border-rose-100'
                     }`}>
                       {r.status}
                     </span>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{r.lokasi || 'Kantor Pusat'}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">{r.lokasi || 'Kantor Pusat'}</p>
                   </div>
                 </div>
               ))}
@@ -947,16 +934,16 @@ export default function EmployeeApp({
               animate={{ opacity: 1, y: 0 }}
               className="space-y-5"
             >
-              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Ringkasan Statistik</h2>
+              <h2 className="text-xl font-bold text-gray-800">Ringkasan Statistik</h2>
 
               {/* Monthly Attendance Summary Card */}
-              <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-4 transition-colors duration-300">
-                <div className="flex items-center justify-between border-b border-gray-50 dark:border-zinc-800/50 pb-3">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4 transition-colors duration-300">
+                <div className="flex items-center justify-between border-b border-gray-50 pb-3">
                   <div className="text-left">
-                    <span className="text-[10px] font-bold text-[#0058bc] dark:text-blue-400 uppercase tracking-wider">Laporan Bulanan</span>
-                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">{currentMonthName}</h3>
+                    <span className="text-[10px] font-bold text-[#0058bc] uppercase tracking-wider">Laporan Bulanan</span>
+                    <h3 className="text-sm font-bold text-gray-800">{currentMonthName}</h3>
                   </div>
-                  <div className="px-2.5 py-1 bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-bold">
+                  <div className="px-2.5 py-1 bg-sky-50 text-sky-600 rounded-lg text-[10px] font-bold">
                     {monthlyTotal} Hari Kerja
                   </div>
                 </div>
@@ -965,8 +952,8 @@ export default function EmployeeApp({
                 <div className="space-y-4">
                   {/* Horizontal Stacked Bar Chart */}
                   <div className="space-y-1.5 text-left">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Proporsi Kehadiran Bulanan</span>
-                    <div className="h-4 w-full rounded-full bg-gray-100 dark:bg-zinc-800 flex overflow-hidden">
+                    <span className="text-xs font-semibold text-gray-500">Proporsi Kehadiran Bulanan</span>
+                    <div className="h-4 w-full rounded-full bg-gray-100 flex overflow-hidden">
                       {monthlyTotal > 0 ? (
                         <>
                           <div 
@@ -986,7 +973,7 @@ export default function EmployeeApp({
                           />
                         </>
                       ) : (
-                        <div className="w-full bg-gray-200 dark:bg-zinc-800 text-center text-[10px] text-gray-400 flex items-center justify-center">
+                        <div className="w-full bg-gray-200 text-center text-[10px] text-gray-400 flex items-center justify-center">
                           Belum ada data bulan ini
                         </div>
                       )}
@@ -994,64 +981,64 @@ export default function EmployeeApp({
                   </div>
 
                   {/* Vertical Bar Chart (Clean programmatically drawn visual component) */}
-                  <div className="flex justify-around items-end h-28 pt-4 pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+                  <div className="flex justify-around items-end h-28 pt-4 pb-2 border-b border-gray-50">
                     {/* Tepat Waktu Bar */}
                     <div className="flex flex-col items-center gap-1.5 h-full justify-end w-16">
-                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="text-[10px] font-bold text-emerald-600">
                         {monthlyTepatWaktu} H
                       </span>
                       <div 
                         style={{ height: `${monthlyTotal > 0 ? Math.max((monthlyTepatWaktu / monthlyTotal) * 60, 4) : 4}px` }}
                         className="w-8 bg-gradient-to-t from-emerald-500 to-emerald-400 rounded-t-md transition-all duration-500"
                       />
-                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tepat</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Tepat</span>
                     </div>
 
                     {/* Terlambat Bar */}
                     <div className="flex flex-col items-center gap-1.5 h-full justify-end w-16">
-                      <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400">
+                      <span className="text-[10px] font-bold text-rose-500">
                         {monthlyTerlambat} H
                       </span>
                       <div 
                         style={{ height: `${monthlyTotal > 0 ? Math.max((monthlyTerlambat / monthlyTotal) * 60, 4) : 4}px` }}
                         className="w-8 bg-gradient-to-t from-rose-500 to-rose-400 rounded-t-md transition-all duration-500"
                       />
-                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Lambat</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Lambat</span>
                     </div>
 
                     {/* Izin Bar */}
                     <div className="flex flex-col items-center gap-1.5 h-full justify-end w-16">
-                      <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400">
+                      <span className="text-[10px] font-bold text-sky-600">
                         {monthlyIzin} H
                       </span>
                       <div 
                         style={{ height: `${monthlyTotal > 0 ? Math.max((monthlyIzin / monthlyTotal) * 60, 4) : 4}px` }}
                         className="w-8 bg-gradient-to-t from-sky-500 to-sky-400 rounded-t-md transition-all duration-500"
                       />
-                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Izin</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Izin</span>
                     </div>
                   </div>
 
                   {/* Numeric Summary Table */}
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/30">
-                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Total Hadir</p>
-                      <p className="text-base font-black text-emerald-800 dark:text-emerald-300 mt-0.5">{monthlyTotalHadir}</p>
-                      <p className="text-[9px] text-emerald-600 dark:text-emerald-500">
+                    <div className="p-2 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
+                      <p className="text-[10px] font-bold text-emerald-700">Total Hadir</p>
+                      <p className="text-base font-black text-emerald-800 mt-0.5">{monthlyTotalHadir}</p>
+                      <p className="text-[9px] text-emerald-600">
                         {monthlyTotal > 0 ? ((monthlyTotalHadir / monthlyTotal) * 100).toFixed(1) : 0}%
                       </p>
                     </div>
-                    <div className="p-2 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100/50 dark:border-rose-900/30">
-                      <p className="text-[10px] font-bold text-rose-700 dark:text-rose-400">Terlambat</p>
-                      <p className="text-base font-black text-rose-800 dark:text-rose-300 mt-0.5">{monthlyTerlambat}</p>
-                      <p className="text-[9px] text-rose-600 dark:text-rose-500">
+                    <div className="p-2 rounded-xl bg-rose-50/50 border border-rose-100/50">
+                      <p className="text-[10px] font-bold text-rose-700">Terlambat</p>
+                      <p className="text-base font-black text-rose-800 mt-0.5">{monthlyTerlambat}</p>
+                      <p className="text-[9px] text-rose-600">
                         {monthlyTotal > 0 ? ((monthlyTerlambat / monthlyTotal) * 100).toFixed(1) : 0}%
                       </p>
                     </div>
-                    <div className="p-2 rounded-xl bg-sky-50/50 dark:bg-sky-950/20 border border-sky-100/50 dark:border-sky-900/30">
-                      <p className="text-[10px] font-bold text-sky-700 dark:text-sky-400">Total Izin</p>
-                      <p className="text-base font-black text-sky-800 dark:text-sky-300 mt-0.5">{monthlyIzin}</p>
-                      <p className="text-[9px] text-sky-600 dark:text-sky-500">
+                    <div className="p-2 rounded-xl bg-sky-50/50 border border-sky-100/50">
+                      <p className="text-[10px] font-bold text-sky-700">Total Izin</p>
+                      <p className="text-base font-black text-sky-800 mt-0.5">{monthlyIzin}</p>
+                      <p className="text-[9px] text-sky-600">
                         {monthlyTotal > 0 ? ((monthlyIzin / monthlyTotal) * 100).toFixed(1) : 0}%
                       </p>
                     </div>
@@ -1060,7 +1047,7 @@ export default function EmployeeApp({
               </div>
               
               {/* Circular summary progress */}
-              <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col items-center text-center gap-4 transition-colors duration-300">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-4 transition-colors duration-300">
                 <div className="relative w-32 h-32 flex items-center justify-center">
                   {/* SVG circular track */}
                   <svg className="absolute w-full h-full transform -rotate-90">
@@ -1072,16 +1059,16 @@ export default function EmployeeApp({
                     />
                   </svg>
                   <div className="text-center">
-                    <span className="text-2xl font-black text-gray-800 dark:text-gray-100">
+                    <span className="text-2xl font-black text-gray-800">
                       {personalRecords.length > 0 ? ((personalRecords.filter(r => r.status === 'Tepat Waktu').length / personalRecords.length) * 100).toFixed(1) : '100'}%
                     </span>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Hadir Tepat</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hadir Tepat</p>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-gray-100">Performa Kehadiran Bagus</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[280px] mt-1">
+                  <h3 className="font-bold text-gray-800">Performa Kehadiran Bagus</h3>
+                  <p className="text-xs text-gray-500 max-w-[280px] mt-1">
                     Pertahankan catatan kehadiran Anda untuk mempertahankan kompensasi optimal dan poin kinerja lembaga.
                   </p>
                 </div>
@@ -1091,31 +1078,31 @@ export default function EmployeeApp({
             {/* Metrics Breakdown Grid */}
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-1 transition-colors duration-300">
-                  <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold text-left">Tepat Waktu</span>
-                  <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 text-left">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-1 transition-colors duration-300">
+                  <span className="text-xs text-gray-400 font-semibold text-left">Tepat Waktu</span>
+                  <span className="text-2xl font-black text-emerald-600 text-left">
                     {personalRecords.filter(r => r.status === 'Tepat Waktu').length} Hari
                   </span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 text-left">Datang sebelum batas jam masuk</span>
+                  <span className="text-[10px] text-gray-400 text-left">Datang sebelum batas jam masuk</span>
                 </div>
-                <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-1 transition-colors duration-300">
-                  <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold text-left">Terlambat</span>
-                  <span className="text-2xl font-black text-rose-500 dark:text-rose-400 text-left">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-1 transition-colors duration-300">
+                  <span className="text-xs text-gray-400 font-semibold text-left">Terlambat</span>
+                  <span className="text-2xl font-black text-rose-500 text-left">
                     {personalRecords.filter(r => r.status === 'Terlambat').length} Hari
                   </span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 text-left">Datang setelah 07:00 WIB</span>
+                  <span className="text-[10px] text-gray-400 text-left">Datang setelah 07:00 WIB</span>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#1C1C1E] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 flex justify-between items-center transition-colors duration-300">
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-colors duration-300">
                 <div className="flex flex-col gap-1 text-left">
-                  <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold">Izin & Sakit Resmi</span>
-                  <span className="text-2xl font-black text-sky-600 dark:text-sky-400">
+                  <span className="text-xs text-gray-400 font-semibold">Izin & Sakit Resmi</span>
+                  <span className="text-2xl font-black text-sky-600">
                     {personalRecords.filter(r => r.status === 'Izin').length} Hari
                   </span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">Absen disetujui administrasi lembaga</span>
+                  <span className="text-[10px] text-gray-400">Absen disetujui administrasi lembaga</span>
                 </div>
-                <div className="p-3 bg-sky-50 dark:bg-sky-950/30 rounded-xl text-sky-600 dark:text-sky-400">
+                <div className="p-3 bg-sky-50 rounded-xl text-sky-600">
                   <FileText className="w-6 h-6" />
                 </div>
               </div>
@@ -1131,9 +1118,9 @@ export default function EmployeeApp({
             className="space-y-6"
           >
             {/* Header info */}
-            <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col items-center text-center gap-3 transition-colors duration-300">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 transition-colors duration-300">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#0058bc]/20 dark:border-zinc-700 shadow-inner">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#0058bc]/20 shadow-inner">
                   <img className="w-full h-full object-cover" src={currentUser.foto} alt={currentUser.nama} />
                 </div>
                 <button 
@@ -1141,25 +1128,25 @@ export default function EmployeeApp({
                     setIsEditingPhoto(true);
                     setCustomPhotoUrl(currentUser.foto);
                   }}
-                  className="absolute bottom-0 right-0 p-2 bg-[#0058bc] dark:bg-blue-600 hover:bg-[#00418f] text-white rounded-full shadow-lg transition-all active:scale-90 cursor-pointer"
+                  className="absolute bottom-0 right-0 p-2 bg-[#0058bc] hover:bg-[#00418f] text-white rounded-full shadow-lg transition-all active:scale-90 cursor-pointer"
                   title="Ganti Foto Profil"
                 >
                   <Camera className="w-3.5 h-3.5" />
                 </button>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{currentUser.nama}</h2>
-                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{currentUser.jabatan}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{currentUser.lembaga}</p>
+                <h2 className="text-lg font-bold text-gray-800">{currentUser.nama}</h2>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{currentUser.jabatan}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{currentUser.lembaga}</p>
               </div>
             </div>
 
             {/* Edit Jabatan & Lembaga */}
-            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 p-4 space-y-4 transition-colors duration-300">
-              <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Profil Kepegawaian</h3>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4 transition-colors duration-300">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Profil Kepegawaian</h3>
               
               <div>
-                <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Jabatan</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Jabatan</label>
                 <select
                   value={currentUser.jabatan}
                   onChange={(e) => {
@@ -1180,7 +1167,7 @@ export default function EmployeeApp({
                     }
                     window.location.reload();
                   }}
-                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800"
                 >
                   <option value="Pendidik">Pendidik</option>
                   <option value="Tenaga Kependidikan">Tenaga Kependidikan</option>
@@ -1189,7 +1176,7 @@ export default function EmployeeApp({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Lembaga</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Lembaga</label>
                 <select
                   value={currentUser.lembaga}
                   onChange={(e) => {
@@ -1208,7 +1195,7 @@ export default function EmployeeApp({
                     }
                     window.location.reload();
                   }}
-                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800"
                 >
                   <option value="Yayasan Baitul Hikmah">Yayasan Baitul Hikmah</option>
                   <option value="MTS Al-Hikmah">MTS Al-Hikmah</option>
@@ -1220,21 +1207,21 @@ export default function EmployeeApp({
             </div>
 
             {/* Info Card */}
-            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 divide-y divide-gray-100 dark:divide-zinc-800 transition-colors duration-300">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 transition-colors duration-300">
               <div className="p-4 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</span>
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{currentUser.email || '-'}</span>
+                <span className="text-sm font-medium text-gray-500">Email</span>
+                <span className="text-sm font-semibold text-gray-800">{currentUser.email || '-'}</span>
               </div>
               <div className="p-4 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Jam Kerja</span>
-                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">{limitTime} WIB</span>
+                <span className="text-sm font-medium text-gray-500">Jam Kerja</span>
+                <span className="text-sm font-semibold text-amber-700">{limitTime} WIB</span>
               </div>
             </div>
 
             {/* Logout Button */}
             <button
               onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-950/40 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 font-bold text-sm hover:bg-rose-100 transition-all active:scale-[0.98]"
             >
               <LogOut className="w-4 h-4" />
               Keluar dari Akun
@@ -1246,11 +1233,11 @@ export default function EmployeeApp({
       </main>
 
       {/* Bottom Tab Navigation Bar with frosted glass */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#1C1C1E]/90 backdrop-blur-xl border-t border-gray-200/50 dark:border-zinc-800/50 flex justify-around items-center px-4 py-2 shadow-lg transition-colors duration-300">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-200/50 flex justify-around items-center px-4 py-2 shadow-lg transition-colors duration-300">
         <button 
           onClick={() => setActiveTab('home')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'home' ? 'text-[#0058bc] dark:text-[#3b82f6] scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            activeTab === 'home' ? 'text-[#0058bc] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
           }`}
         >
           <Home className="w-5 h-5 mb-0.5" />
@@ -1260,7 +1247,7 @@ export default function EmployeeApp({
         <button 
           onClick={() => setActiveTab('history')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'history' ? 'text-[#0058bc] dark:text-[#3b82f6] scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            activeTab === 'history' ? 'text-[#0058bc] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
           }`}
         >
           <History className="w-5 h-5 mb-0.5" />
@@ -1270,7 +1257,7 @@ export default function EmployeeApp({
         <button 
           onClick={() => setActiveTab('stats')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'stats' ? 'text-[#0058bc] dark:text-[#3b82f6] scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            activeTab === 'stats' ? 'text-[#0058bc] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
           }`}
         >
           <BarChart2 className="w-5 h-5 mb-0.5" />
@@ -1280,7 +1267,7 @@ export default function EmployeeApp({
         <button 
           onClick={() => setActiveTab('profile')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'profile' ? 'text-[#0058bc] dark:text-[#3b82f6] scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            activeTab === 'profile' ? 'text-[#0058bc] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
           }`}
         >
           <User className="w-5 h-5 mb-0.5" />
@@ -1306,16 +1293,16 @@ export default function EmployeeApp({
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
-              className="relative w-full max-w-md bg-white dark:bg-[#1C1C1E] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col gap-5 overflow-y-auto max-h-[90vh] transition-colors duration-300 text-left"
+              className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-5 overflow-y-auto max-h-[90vh] transition-colors duration-300 text-left"
             >
-              <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-3">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-[#0058bc] dark:text-[#3b82f6]" />
-                  <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">Form Pengajuan Izin</h3>
+                  <FileText className="w-5 h-5 text-[#0058bc]" />
+                  <h3 className="font-bold text-lg text-gray-800">Form Pengajuan Izin</h3>
                 </div>
                 <button 
                   onClick={() => setIsPermitModalOpen(false)}
-                  className="p-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1325,7 +1312,7 @@ export default function EmployeeApp({
               <div className="space-y-4">
                 {/* Leave Type Segmented Controls */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tipe Pengajuan</label>
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tipe Pengajuan</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['Izin', 'Sakit', 'Dinas Luar'] as const).map(type => (
                       <button
@@ -1334,8 +1321,8 @@ export default function EmployeeApp({
                         onClick={() => setPermitType(type)}
                         className={`py-2 rounded-xl text-xs font-bold border transition-all ${
                           permitType === type 
-                            ? 'border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-400 font-bold shadow-sm'
-                            : 'border-gray-200 dark:border-zinc-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                            ? 'border-sky-500 bg-sky-500/10 text-sky-700 font-bold shadow-sm'
+                            : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                         }`}
                       >
                         {type}
@@ -1346,8 +1333,8 @@ export default function EmployeeApp({
 
                 {/* Date display */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tanggal Berlaku</label>
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tanggal Berlaku</label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <span>Hari ini ({new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())})</span>
                   </div>
@@ -1355,41 +1342,41 @@ export default function EmployeeApp({
 
                 {/* Reason/Keterangan */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Alasan / Keterangan Tambahan</label>
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Alasan / Keterangan Tambahan</label>
                   <textarea
                     rows={3}
                     placeholder="Contoh: Mengikuti wisuda keluarga, Demam tinggi butuh istirahat dokter, Menghadiri seminar eksternal, dll."
                     value={permitReason}
                     onChange={(e) => setPermitReason(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#0058bc]/20 text-xs font-medium text-gray-800 dark:text-gray-100 placeholder-gray-400 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0058bc]/20 text-xs font-medium text-gray-800 placeholder-gray-400 transition-colors"
                   />
                 </div>
 
                 {/* File Attachment Upload */}
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Unggah Lampiran Bukti (Opsional)</label>
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Unggah Lampiran Bukti (Opsional)</label>
                   
                   {permitFile ? (
-                    <div className="relative rounded-xl overflow-hidden border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20 p-3 flex items-center justify-between gap-3">
+                    <div className="relative rounded-xl overflow-hidden border border-sky-200 bg-sky-50/50 p-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <img src={permitFile} className="w-10 h-10 object-cover rounded-lg border border-sky-200/50" alt="Attachment" />
                         <div className="min-w-0 text-left">
-                          <p className="text-[10px] font-bold text-sky-800 dark:text-sky-400 truncate">Dokumen_Izin.jpg</p>
-                          <p className="text-[9px] text-sky-600 dark:text-sky-500">File berhasil dipindai</p>
+                          <p className="text-[10px] font-bold text-sky-800 truncate">Dokumen_Izin.jpg</p>
+                          <p className="text-[9px] text-sky-600">File berhasil dipindai</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setPermitFile(null)}
-                        className="p-1 rounded-full bg-sky-200/50 dark:bg-sky-900 text-sky-800 dark:text-sky-400 hover:bg-sky-200"
+                        className="p-1 rounded-full bg-sky-200/50 text-sky-800 hover:bg-sky-200"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2">
-                      <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-zinc-800 hover:border-sky-500 rounded-xl p-4 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all text-center">
+                      <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 hover:border-sky-500 rounded-xl p-4 cursor-pointer hover:bg-gray-50/50 transition-all text-center">
                         <Upload className="w-5 h-5 text-gray-400 mb-1" />
-                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">Pilih file / Ambil Foto</span>
+                        <span className="text-[10px] font-bold text-gray-500">Pilih file / Ambil Foto</span>
                         <span className="text-[9px] text-gray-400 mt-0.5">JPEG, PNG maks 2MB</span>
                         <input
                           type="file"
@@ -1417,7 +1404,7 @@ export default function EmployeeApp({
                 <button
                   type="button"
                   onClick={() => setIsPermitModalOpen(false)}
-                  className="flex-1 py-3 text-xs font-bold rounded-xl border border-gray-200 dark:border-zinc-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                  className="flex-1 py-3 text-xs font-bold rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   Kembali
                 </button>
@@ -1482,16 +1469,16 @@ export default function EmployeeApp({
               initial={{ y: '100%', opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
-              className="relative w-full max-w-md bg-white dark:bg-[#1C1C1E] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 flex flex-col gap-5 transition-colors duration-300 text-left"
+              className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-5 transition-colors duration-300 text-left"
             >
-              <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-3">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-[#0058bc] dark:text-[#3b82f6]" />
-                  <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">Ganti Foto Profil</h3>
+                  <Camera className="w-5 h-5 text-[#0058bc]" />
+                  <h3 className="font-bold text-lg text-gray-800">Ganti Foto Profil</h3>
                 </div>
                 <button 
                   onClick={() => setIsEditingPhoto(false)}
-                  className="p-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1499,18 +1486,18 @@ export default function EmployeeApp({
 
               {/* Preview current photo */}
               <div className="flex justify-center">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#0058bc]/20 dark:border-zinc-700">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#0058bc]/20">
                   <img className="w-full h-full object-cover" src={currentUser.foto} alt={currentUser.nama} />
                 </div>
               </div>
 
               {/* Upload from device */}
-              <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-[#0058bc] rounded-2xl p-6 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-zinc-900/40 transition-all">
+              <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-200 hover:border-[#0058bc] rounded-2xl p-6 cursor-pointer hover:bg-gray-50/50 transition-all">
                 <div className="w-12 h-12 rounded-full bg-[#0058bc]/10 flex items-center justify-center">
                   <Upload className="w-6 h-6 text-[#0058bc]" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Pilih Foto dari Perangkat</p>
+                  <p className="text-sm font-bold text-gray-700">Pilih Foto dari Perangkat</p>
                   <p className="text-[10px] text-gray-400 mt-1">Format: JPG, PNG (maks 2MB)</p>
                 </div>
                 <input
@@ -1538,7 +1525,7 @@ export default function EmployeeApp({
               <button
                 type="button"
                 onClick={() => setIsEditingPhoto(false)}
-                className="w-full py-2.5 text-xs font-bold rounded-xl border border-gray-100 dark:border-zinc-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="w-full py-2.5 text-xs font-bold rounded-xl border border-gray-100 text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 Batal
               </button>
