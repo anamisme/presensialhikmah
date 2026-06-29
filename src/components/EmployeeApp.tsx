@@ -1541,7 +1541,7 @@ export default function EmployeeApp({
                       masuk: '--:--',
                       keluar: '--:--',
                       status: 'Izin',
-                      lokasi: 'Pengajuan Izin',
+                      lokasi: currentUser.lembaga || 'Umum',
                       keterangan: fullKeterangan,
                       lampiran: permitFile || undefined
                     };
