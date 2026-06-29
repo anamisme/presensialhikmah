@@ -18,6 +18,7 @@ import EmployeeApp from './components/EmployeeApp';
 import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
 import { syncAttendanceToSheet } from './googleSheets';
+import { ThemeProvider } from './ThemeContext';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'employee' | 'admin'>(() => {
@@ -234,17 +235,20 @@ export default function App() {
   // If no active session, show Login Screen
   if (!session) {
     return (
-      <LoginScreen 
-        employees={employees}
-        onLoginSuccess={handleLoginSuccess}
-        onAddEmployee={handleAddEmployee}
-        adminEmails={adminEmails}
-      />
+      <ThemeProvider>
+        <LoginScreen 
+          employees={employees}
+          onLoginSuccess={handleLoginSuccess}
+          onAddEmployee={handleAddEmployee}
+          adminEmails={adminEmails}
+        />
+      </ThemeProvider>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#F2F2F7] text-gray-900 transition-colors duration-300">
+    <ThemeProvider>
+      <div className="relative min-h-screen bg-[#F2F2F7] text-gray-900 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-300">
 
       {currentView === 'employee' ? (
         <EmployeeApp 
@@ -279,6 +283,7 @@ export default function App() {
           onRemoveAdminEmail={handleRemoveAdminEmail}
         />
       ) : null}
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
