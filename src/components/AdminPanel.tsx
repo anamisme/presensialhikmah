@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Users,
@@ -36,7 +36,8 @@ import {
   X,
   ShieldCheck,
   Sun,
-  Moon
+  Moon,
+  AlertTriangle
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
@@ -95,6 +96,9 @@ export default function AdminPanel({
   const [customQrLng, setCustomQrLng] = useState('');
   const [customQrRadius, setCustomQrRadius] = useState('100');
   const [customQrGenerated, setCustomQrGenerated] = useState(false);
+  const [customQrDataUrl, setCustomQrDataUrl] = useState('');
+  const [customQrImgError, setCustomQrImgError] = useState(false);
+  const customQrRef = useRef<HTMLDivElement>(null);
 
   // Admin custom profile picture states
   const [adminCustomPhotoUrl, setAdminCustomPhotoUrl] = useState('');
@@ -1139,7 +1143,11 @@ export default function AdminPanel({
                           alert('Koordinat tidak valid.');
                           return;
                         }
+                        const qrData = `P|custom-${Date.now()}|${customQrNama.trim()}|${lat.toFixed(4)}|${lng.toFixed(4)}|${customQrRadius || '100'}`;
+                        setCustomQrDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`);
+                        setCustomQrImgError(false);
                         setCustomQrGenerated(true);
+                        setTimeout(() => customQrRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
                       }}
                       className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 dark:bg-blue-700"
                     >
@@ -1148,32 +1156,40 @@ export default function AdminPanel({
                     </button>
 
                     {/* QR Preview */}
-                    {customQrGenerated && customQrNama && customQrLat && customQrLng && (() => {
-                      const qrData = `P|custom-${Date.now()}|${customQrNama.trim()}|${parseFloat(customQrLat).toFixed(4)}|${parseFloat(customQrLng).toFixed(4)}|${customQrRadius || '100'}`;
-                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
-
-                      return (
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col items-center gap-3 dark:bg-gray-800 dark:border-gray-700">
-                          <div className="w-40 h-40 bg-white p-2 rounded-lg shadow-sm">
-                            <img src={qrUrl} alt={`QR - ${customQrNama}`} className="w-full h-full object-contain" />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{customQrNama}</p>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400">{customQrLat}, {customQrLng} • Radius: {customQrRadius || '100'}m</p>
-                          </div>
-                          <a
-                            href={qrUrl.replace('400x400', '800x800')}
-                            download={`QR_${customQrNama.replace(/\s+/g, '_')}.png`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00418f] bg-[#00418f]/10 px-4 py-2 rounded-lg hover:bg-[#00418f]/20 transition-all dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            Download QR Code
-                          </a>
+                    {customQrGenerated && customQrDataUrl && (
+                      <div ref={customQrRef} className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col items-center gap-3 dark:bg-gray-800 dark:border-gray-700">
+                        <div className="w-40 h-40 bg-white p-2 rounded-lg shadow-sm">
+                          {customQrImgError ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 gap-2">
+                              <AlertTriangle className="w-8 h-8" />
+                              <p className="text-[10px] text-center">Gagal memuat QR. Periksa koneksi internet.</p>
+                            </div>
+                          ) : (
+                            <img
+                              src={customQrDataUrl}
+                              alt={`QR - ${customQrNama}`}
+                              className="w-full h-full object-contain"
+                              onError={() => setCustomQrImgError(true)}
+                              onLoad={() => setCustomQrImgError(false)}
+                            />
+                          )}
                         </div>
-                      );
-                    })()}
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{customQrNama}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400">{customQrLat}, {customQrLng} • Radius: {customQrRadius || '100'}m</p>
+                        </div>
+                        <a
+                          href={customQrDataUrl.replace('400x400', '800x800')}
+                          download={`QR_${customQrNama.replace(/\s+/g, '_')}.png`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00418f] bg-[#00418f]/10 px-4 py-2 rounded-lg hover:bg-[#00418f]/20 transition-all dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Download QR Code
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </section>
 
