@@ -92,6 +92,13 @@ export default function AdminPanel({
   // Admin email management state
   const [newAdminEmail, setNewAdminEmail] = useState('');
 
+  // Custom QR generation state
+  const [customQrNama, setCustomQrNama] = useState('');
+  const [customQrLat, setCustomQrLat] = useState('');
+  const [customQrLng, setCustomQrLng] = useState('');
+  const [customQrRadius, setCustomQrRadius] = useState('100');
+  const [customQrGenerated, setCustomQrGenerated] = useState(false);
+
   // Admin custom profile picture states
   const [adminCustomPhotoUrl, setAdminCustomPhotoUrl] = useState('');
   const [isEditingAdminPhoto, setIsEditingAdminPhoto] = useState(false);
@@ -1110,6 +1117,117 @@ export default function AdminPanel({
                   )}
                 </section>
 
+                {/* Generate QR Kustom */}
+                <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-[#00418f]" />
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm">Generate QR Kustom</h3>
+                  </div>
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Buat QR Code baru dengan memasukkan nama gedung dan koordinat GPS.
+                  </p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Nama Gedung / Lokasi</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: Masjid Al Hikmah"
+                        value={customQrNama}
+                        onChange={(e) => setCustomQrNama(e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Latitude</label>
+                        <input
+                          type="text"
+                          placeholder="-6.945395"
+                          value={customQrLat}
+                          onChange={(e) => setCustomQrLat(e.target.value)}
+                          className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Longitude</label>
+                        <input
+                          type="text"
+                          placeholder="109.638433"
+                          value={customQrLng}
+                          onChange={(e) => setCustomQrLng(e.target.value)}
+                          className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Radius (meter)</label>
+                      <input
+                        type="number"
+                        placeholder="100"
+                        value={customQrRadius}
+                        onChange={(e) => setCustomQrRadius(e.target.value)}
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        if (!customQrNama.trim() || !customQrLat.trim() || !customQrLng.trim()) {
+                          alert('Lengkapi nama, latitude, dan longitude.');
+                          return;
+                        }
+                        const lat = parseFloat(customQrLat);
+                        const lng = parseFloat(customQrLng);
+                        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                          alert('Koordinat tidak valid.');
+                          return;
+                        }
+                        setCustomQrGenerated(true);
+                      }}
+                      className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      Generate QR Code
+                    </button>
+
+                    {/* QR Preview */}
+                    {customQrGenerated && customQrNama && customQrLat && customQrLng && (() => {
+                      const qrData = JSON.stringify({
+                        type: 'PRESENSI',
+                        id: `custom-${Date.now()}`,
+                        nama: customQrNama.trim(),
+                        lat: parseFloat(customQrLat),
+                        lng: parseFloat(customQrLng),
+                        radius: parseInt(customQrRadius) || 100
+                      });
+                      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
+
+                      return (
+                        <div className="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4 border border-gray-100 dark:border-zinc-700 flex flex-col items-center gap-3">
+                          <div className="w-40 h-40 bg-white p-2 rounded-lg shadow-sm">
+                            <img src={qrUrl} alt={`QR - ${customQrNama}`} className="w-full h-full object-contain" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{customQrNama}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">{customQrLat}, {customQrLng} • Radius: {customQrRadius || '100'}m</p>
+                          </div>
+                          <a
+                            href={qrUrl.replace('400x400', '800x800')}
+                            download={`QR_${customQrNama.replace(/\s+/g, '_')}.png`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00418f] dark:text-blue-400 bg-[#00418f]/10 dark:bg-blue-950/30 px-4 py-2 rounded-lg hover:bg-[#00418f]/20 transition-all"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download QR Code
+                          </a>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </section>
 
                 {/* Profil Administrator Customizer */}
                 <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
