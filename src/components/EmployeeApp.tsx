@@ -529,7 +529,7 @@ export default function EmployeeApp({
           {isAdmin && onNavigateToAdmin && (
             <button
               onClick={onNavigateToAdmin}
-              className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-amber-50 text-amber-700 dark:text-amber-400 border border-amber-200 hover:bg-amber-100 transition-all active:scale-95"
+              className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all active:scale-95"
             >
               <ShieldAlert className="w-3 h-3" />
               Admin
@@ -842,18 +842,18 @@ export default function EmployeeApp({
                   Lokasi GPS Perangkat
                 </span>
                 {isLocating ? (
-                  <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-900/40 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                     Mencari...
                   </span>
                 ) : isWithinGeofence ? (
-                  <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                     Dalam Radius
                   </span>
                 ) : userLocation ? (
-                  <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  <span className="text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 dark:bg-rose-400" />
                     Di Luar Radius
                   </span>
                 ) : (
@@ -879,13 +879,13 @@ export default function EmployeeApp({
                   <div>
                     <p className="font-bold">⚠️ Peringatan GPS</p>
                     <p>{gpsWarning}</p>
-                    <p className="mt-1 text-[10px] text-amber-600">Presensi tidak dapat dilakukan dengan lokasi palsu.</p>
+                    <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-500">Presensi tidak dapat dilakukan dengan lokasi palsu.</p>
                   </div>
                 </div>
               )}
 
               {userLocation && (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 p-2.5 rounded-lg transition-colors duration-300">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-lg transition-colors duration-300">
                   <Navigation className="w-4 h-4 text-[#005bc1] dark:text-[#3b82f6] shrink-0" />
                   <span className="truncate">
                     Posisi: <strong className="text-gray-700 dark:text-gray-300">{userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</strong>
@@ -894,7 +894,7 @@ export default function EmployeeApp({
               )}
 
               {nearestGeofence && distanceToNearest !== null && (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 p-2.5 rounded-lg transition-colors duration-300">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-lg transition-colors duration-300">
                   <Compass className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
                   <span className="truncate">
                     Terdekat: <strong className="text-gray-700 dark:text-gray-300">{nearestGeofence.nama}</strong> 
@@ -923,9 +923,9 @@ export default function EmployeeApp({
                         key={g.id}
                         className={`text-center p-2 rounded-lg text-[10px] font-medium border transition-all ${
                           nearestGeofence?.id === g.id && isWithinGeofence
-                            ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:text-emerald-400 font-bold' 
+                            ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold'
                             : nearestGeofence?.id === g.id
-                            ? 'border-amber-300 bg-amber-50 text-amber-700 dark:text-amber-400'
+                            ? 'border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
                             : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                         }`}
                       >

@@ -1731,11 +1731,11 @@ export default function AdminPanel({
       </AnimatePresence>
 
       {/* Admin Mobile Bottom Tabs Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-100 flex justify-around items-center px-4 py-2 shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 flex justify-around items-center px-4 py-2 shadow-lg">
         <button 
           onClick={() => setActiveTab('dashboard')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'dashboard' ? 'text-[#00418f] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
+            activeTab === 'dashboard' ? 'text-[#00418f] dark:text-blue-400 scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           <LayoutDashboard className="w-5 h-5 mb-0.5" />
@@ -1745,7 +1745,7 @@ export default function AdminPanel({
         <button 
           onClick={() => setActiveTab('karyawan')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'karyawan' ? 'text-[#00418f] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
+            activeTab === 'karyawan' ? 'text-[#00418f] dark:text-blue-400 scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           <Users className="w-5 h-5 mb-0.5" />
@@ -1755,7 +1755,7 @@ export default function AdminPanel({
         <button 
           onClick={() => setActiveTab('presensi')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'presensi' ? 'text-[#00418f] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
+            activeTab === 'presensi' ? 'text-[#00418f] dark:text-blue-400 scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           <FileText className="w-5 h-5 mb-0.5" />
@@ -1765,7 +1765,7 @@ export default function AdminPanel({
         <button 
           onClick={() => setActiveTab('pengaturan')}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
-            activeTab === 'pengaturan' ? 'text-[#00418f] scale-105 font-bold' : 'text-gray-400 hover:text-gray-700'
+            activeTab === 'pengaturan' ? 'text-[#00418f] dark:text-blue-400 scale-105 font-bold' : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           <Settings className="w-5 h-5 mb-0.5" />
