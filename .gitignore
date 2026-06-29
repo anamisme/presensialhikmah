@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+icons/
+assets/
+android/app/src/main/res/drawable*/splash.png
+*.webp

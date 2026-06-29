@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Presensi Al Hikmah</string>
-    <string name="title_activity_main">Presensi Al Hikmah</string>
+    <string name="app_name">Presensi Alhikmah</string>
+    <string name="title_activity_main">Presensi Alhikmah</string>
     <string name="package_name">com.yayasanbaitulhikmah.presensi</string>
     <string name="custom_url_scheme">com.yayasanbaitulhikmah.presensi</string>
 </resources>

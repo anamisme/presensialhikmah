@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.yayasanbaitulhikmah.presensi',
-  appName: 'Presensi Al Hikmah',
+  appName: 'Presensi Alhikmah',
   webDir: 'dist',
   server: {
     // This makes Firebase Auth popup open in system browser (Chrome)
@@ -26,7 +26,10 @@ const config: CapacitorConfig = {
       backgroundColor: '#FFFFFF',
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
-      showSpinner: false
+      showSpinner: false,
+      splashDarkMode: true,
+      splashFullScreen: true,
+      splashImmersive: false
     }
   },
   android: {
