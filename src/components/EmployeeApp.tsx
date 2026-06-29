@@ -827,7 +827,7 @@ export default function EmployeeApp({
             </section>
 
             {/* Request Permit Banner */}
-            {!todayRecords.some(r => r.status === 'Izin') && todayRecords.length === 0 && (
+            {!todayRecords.some(r => r.status === 'Izin') && (
               <div className="bg-sky-500/10 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
                 <div className="space-y-1">
                   <h4 className="text-xs font-black text-[#0058bc] uppercase tracking-wider">Berhalangan Hadir?</h4>
