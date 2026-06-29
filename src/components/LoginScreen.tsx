@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Employee } from '../types';
 import { ASSETS } from '../data';
-import { googleSignIn } from '../googleAuth';
+import { googleSignIn, initAuth } from '../googleAuth';
 
 interface LoginScreenProps {
   employees: Employee[];
@@ -147,6 +147,18 @@ export default function LoginScreen({
     }
   };
 
+  // Handle redirect result when user returns from Google
+  useEffect(() => {
+    const unsubscribe = initAuth(
+      (user) => handleLoginSuccessWithDetails(user),
+      () => {
+        setIsAuthenticating(false);
+      }
+    );
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleGoogleSignInClick = async () => {
     if (!isOnline) {
       setError('Autentikasi Google Workspace memerlukan koneksi internet aktif. Silakan hubungkan perangkat Anda ke internet.');
@@ -158,13 +170,7 @@ export default function LoginScreen({
     setIsAuthenticating(true);
 
     try {
-      const res = await googleSignIn();
-      if (res && res.user) {
-        handleLoginSuccessWithDetails(res.user);
-      } else {
-        setError('Proses masuk Google dibatalkan atau gagal.');
-        setIsAuthenticating(false);
-      }
+      await googleSignIn();
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Gagal terhubung dengan layanan Google Auth.');

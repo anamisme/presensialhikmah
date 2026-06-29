@@ -63,7 +63,6 @@ export default function EmployeeApp({
 }: EmployeeAppProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'stats' | 'profile'>('home');
   const [scanMethod, setScanMethod] = useState<'qr' | 'wajah'>('qr');
-  const [selectedLocation, setSelectedLocation] = useState<Geofence | null>(() => geofences[2] || geofences[0] || null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -126,16 +125,6 @@ export default function EmployeeApp({
   const activeSession = todayRecords.find(r => r.masuk !== '--:--' && !r.keluar && r.status !== 'Izin');
   // For status display: show active session or last completed
   const todayRecord = activeSession || todayRecords[0];
-
-  // Sync selected location when geofences change or if currently null
-  useEffect(() => {
-    if (geofences.length > 0) {
-      const exists = geofences.some(g => g.id === selectedLocation?.id);
-      if (!exists || !selectedLocation) {
-        setSelectedLocation(geofences[2] || geofences[0] || null);
-      }
-    }
-  }, [geofences, selectedLocation]);
 
   // Real-time clock update
   useEffect(() => {
@@ -269,10 +258,6 @@ export default function EmployeeApp({
         setNearestGeofence(nearest);
         setDistanceToNearest(Math.round(minDistance));
         setIsWithinGeofence(nearest ? minDistance <= nearest.radius : false);
-        
-        if (nearest) {
-          setSelectedLocation(nearest);
-        }
       },
       (error) => {
         setIsLocating(false);
@@ -492,6 +477,90 @@ export default function EmployeeApp({
     }
   }, [isOnline, offlineQueue, onAddAttendance, currentUser.nip]);
 
+  // Face scan attendance processing (selfie-based, no QR)
+  const processAttendance = useCallback(() => {
+    if (!navigator.geolocation) {
+      setRejectMessage('GPS tidak tersedia di perangkat ini.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        const isNearAny = geofences.some(g =>
+          calculateDistance(latitude, longitude, g.lat, g.lng) <= g.radius
+        );
+        if (!isNearAny) {
+          setRejectMessage('Presensi ditolak! Anda tidak berada di area lokasi presensi.');
+          return;
+        }
+
+        const nearest = geofences.reduce<{ geo: Geofence | null; dist: number }>((best, g) => {
+          const d = calculateDistance(latitude, longitude, g.lat, g.lng);
+          return d < best.dist ? { geo: g, dist: d } : best;
+        }, { geo: null, dist: Infinity });
+
+        setIsScanning(true);
+        setScanSuccess(true);
+
+        const isCheckIn = !activeSession;
+        const currentHrsMins = formatClock(currentTime);
+
+        if (isCheckIn) {
+          const checkInHour = currentTime.getHours();
+          const checkInMinute = currentTime.getMinutes();
+          const [limitHour, limitMinute] = (limitTime || '07:00').split(':').map(Number);
+          const isLate = checkInHour > limitHour || (checkInHour === limitHour && checkInMinute > limitMinute);
+
+          const newRecord: AttendanceRecord = {
+            id: `rec-${Date.now()}`,
+            nip: currentUser.nip,
+            nama: currentUser.nama,
+            foto: currentUser.foto,
+            tanggal: todayStr,
+            masuk: currentHrsMins,
+            status: isLate ? 'Terlambat' : 'Tepat Waktu',
+            lokasi: nearest.geo?.nama || 'Lokasi Tidak Diketahui'
+          };
+
+          if (isOnline) {
+            onAddAttendance(newRecord);
+          } else {
+            const updatedQueue = [...offlineQueue, newRecord];
+            setOfflineQueue(updatedQueue);
+            localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
+          }
+        } else if (activeSession) {
+          const updatedRecord = { ...activeSession, keluar: currentHrsMins } as AttendanceRecord;
+
+          if (isOnline) {
+            onAddAttendance(updatedRecord);
+          } else {
+            const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && r.nip === currentUser.nip);
+            let updatedQueue: AttendanceRecord[];
+            if (queueIndex > -1) {
+              updatedQueue = [...offlineQueue];
+              updatedQueue[queueIndex] = updatedRecord;
+            } else {
+              updatedQueue = [...offlineQueue, updatedRecord];
+            }
+            setOfflineQueue(updatedQueue);
+            localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
+          }
+        }
+
+        setTimeout(() => {
+          setScanSuccess(false);
+        }, 3500);
+      },
+      () => {
+        setRejectMessage('Gagal mendapatkan lokasi GPS. Pastikan GPS aktif.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [geofences, calculateDistance, currentUser, activeSession, currentTime, limitTime, todayStr, isOnline, onAddAttendance, offlineQueue]);
+
   // Format time (WIB format)
   const formatClock = (date: Date) => {
     const hrs = String(date.getHours()).padStart(2, '0');
@@ -515,18 +584,16 @@ export default function EmployeeApp({
     setIsCameraActive(true);
   };
 
-  // Face scan uses front camera - when QR scanner detects nothing for 3s with face mode,
-  // we treat it as a face verification (selfie-based attendance)
+  // Face scan uses front camera - after 3s we treat it as face verification
   useEffect(() => {
     if (isCameraActive && scanMethod === 'wajah') {
       const timer = setTimeout(() => {
-        // After 3 seconds of front camera active, verify face presence
         setIsCameraActive(false);
-        processAttendance('FACE_VERIFIED_' + Date.now());
+        processAttendance();
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [isCameraActive, scanMethod]);
+  }, [isCameraActive, scanMethod, processAttendance]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] text-gray-900 pb-24 font-sans select-none transition-colors duration-300">

@@ -128,11 +128,7 @@ export default function AdminPanel({
   const handleGoogleLogin = async () => {
     try {
       setExportError(null);
-      const res = await googleSignIn();
-      if (res) {
-        setGoogleUser(res.user);
-        setGoogleToken(res.accessToken);
-      }
+      await googleSignIn();
     } catch (err: any) {
       console.error(err);
       setExportError(err.message || 'Gagal login dengan akun Google');
@@ -198,7 +194,6 @@ export default function AdminPanel({
   const [geoRadius, setGeoRadius] = useState('50');
 
   // State for QR generation
-  const [selectedQRLocation, setSelectedQRLocation] = useState<string>(geofences[0]?.nama || '');
   const [isQRGenerated, setIsQRGenerated] = useState(false);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
@@ -1101,7 +1096,7 @@ export default function AdminPanel({
                         type="text"
                         placeholder="Contoh: Masjid Al Hikmah"
                         value={customQrNama}
-                        onChange={(e) => setCustomQrNama(e.target.value)}
+                        onChange={(e) => { setCustomQrNama(e.target.value); setCustomQrGenerated(false); }}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                       />
                     </div>
@@ -1112,7 +1107,7 @@ export default function AdminPanel({
                           type="text"
                           placeholder="-6.945395"
                           value={customQrLat}
-                          onChange={(e) => setCustomQrLat(e.target.value)}
+                          onChange={(e) => { setCustomQrLat(e.target.value); setCustomQrGenerated(false); }}
                           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
                         />
                       </div>
@@ -1122,7 +1117,7 @@ export default function AdminPanel({
                           type="text"
                           placeholder="109.638433"
                           value={customQrLng}
-                          onChange={(e) => setCustomQrLng(e.target.value)}
+                          onChange={(e) => { setCustomQrLng(e.target.value); setCustomQrGenerated(false); }}
                           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
                         />
                       </div>
@@ -1133,7 +1128,7 @@ export default function AdminPanel({
                         type="number"
                         placeholder="100"
                         value={customQrRadius}
-                        onChange={(e) => setCustomQrRadius(e.target.value)}
+                        onChange={(e) => { setCustomQrRadius(e.target.value); setCustomQrGenerated(false); }}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
                       />
                     </div>
