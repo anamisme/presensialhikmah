@@ -7,12 +7,12 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCredential,
   GoogleAuthProvider, 
   onAuthStateChanged, 
   User 
 } from 'firebase/auth';
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -20,8 +20,10 @@ const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
 
-let isSigningIn = false;
 let cachedAccessToken: string | null = null;
+let pluginInitialized = false;
+
+const WEB_CLIENT_ID = '146025221328-me5hhrfvtd63p7nrd6pl0mon1inhh360.apps.googleusercontent.com';
 
 // Detect if running in Capacitor (Android/iOS)
 const isNativeApp = () => {
@@ -33,25 +35,9 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  // On native, check for redirect result (user returning from Google)
-  if (isNativeApp()) {
-    getRedirectResult(auth).then((result) => {
-      if (result) {
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        cachedAccessToken = credential?.accessToken || '';
-        if (onAuthSuccess) onAuthSuccess(result.user, cachedAccessToken);
-      }
-    }).catch(() => {});
-  }
-
   return onAuthStateChanged(auth, (user: User | null) => {
     if (user) {
-      if (cachedAccessToken || !isNativeApp()) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken || '');
-      } else if (!isSigningIn) {
-        cachedAccessToken = null;
-        if (onAuthFailure) onAuthFailure();
-      }
+      if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken || '');
     } else {
       cachedAccessToken = null;
       if (onAuthFailure) onAuthFailure();
@@ -63,15 +49,30 @@ export const initAuth = (
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
   try {
     if (isNativeApp()) {
-      // Native Android/iOS: use redirect to avoid "disallowed_useragent" error
-      cachedAccessToken = null;
-      isSigningIn = true;
-      await signInWithRedirect(auth, provider);
-      return null; // redirecting away — no immediate result
+      // Native Android/iOS: use Capacitor plugin for native account picker
+      if (!pluginInitialized) {
+        await GoogleSignIn.initialize({
+          clientId: WEB_CLIENT_ID,
+          scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
+        });
+        pluginInitialized = true;
+      }
+
+      const result = await GoogleSignIn.signIn();
+
+      if (!result.idToken) {
+        throw new Error('No ID token returned from Google Sign-In');
+      }
+
+      // Exchange the Google ID token for Firebase Auth
+      const credential = GoogleAuthProvider.credential(result.idToken);
+      const firebaseResult = await signInWithCredential(auth, credential);
+      cachedAccessToken = result.accessToken || '';
+
+      return { user: firebaseResult.user, accessToken: cachedAccessToken };
     }
 
     // Web browser: popup works fine
-    isSigningIn = true;
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     cachedAccessToken = credential?.accessToken || '';
@@ -79,8 +80,6 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
   } catch (error: any) {
     console.error('Sign in error:', error);
     throw error;
-  } finally {
-    isSigningIn = false;
   }
 };
 
@@ -91,4 +90,13 @@ export const getAccessToken = (): string | null => {
 export const logout = async () => {
   await auth.signOut();
   cachedAccessToken = null;
+  if (isNativeApp()) {
+    try {
+      await GoogleSignIn.signOut();
+    } catch (e) {
+      // Ignore sign-out errors from the plugin
+    }
+  }
 };
+
+export { isNativeApp };
