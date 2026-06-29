@@ -19,8 +19,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
-provider.addScope('https://www.googleapis.com/auth/spreadsheets');
-provider.addScope('https://www.googleapis.com/auth/drive.file');
+// Only request basic profile scopes (no sensitive scopes needed)
+// Sheets sync uses Apps Script webhook - no user token required
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;

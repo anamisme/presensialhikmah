@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "146025221328",
+    "project_id": "presensi-alhikmah",
+    "storage_bucket": "presensi-alhikmah.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146025221328:android:e2ceb3b73c3121f15862d5",
+        "android_client_info": {
+          "package_name": "com.yayasanbaitulhikmah.presensi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "146025221328-f0kp4mki2dqdc9s4v7m136mfan2k53fc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yayasanbaitulhikmah.presensi",
+            "certificate_hash": "c9884404494386442daf77d792b846ba22f22a5a"
+          }
+        },
+        {
+          "client_id": "146025221328-me5hhrfvtd63p7nrd6pl0mon1inhh360.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_BN4NilwVxeWK_wiJbNmKc3ICIQPBpdM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "146025221328-me5hhrfvtd63p7nrd6pl0mon1inhh360.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
