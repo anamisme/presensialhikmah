@@ -1038,14 +1038,7 @@ export default function AdminPanel({
                   ) : (
                     <div className="space-y-4">
                       {geofences.map((geo) => {
-                        const qrData = JSON.stringify({
-                          type: 'PRESENSI',
-                          id: geo.id,
-                          nama: geo.nama,
-                          lat: geo.lat,
-                          lng: geo.lng,
-                          radius: geo.radius
-                        });
+                        const qrData = `P|${geo.id}|${geo.nama}|${geo.lat.toFixed(4)}|${geo.lng.toFixed(4)}|${geo.radius}`;
                         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
                         
                         return (
@@ -1167,14 +1160,7 @@ export default function AdminPanel({
 
                     {/* QR Preview */}
                     {customQrGenerated && customQrNama && customQrLat && customQrLng && (() => {
-                      const qrData = JSON.stringify({
-                        type: 'PRESENSI',
-                        id: `custom-${Date.now()}`,
-                        nama: customQrNama.trim(),
-                        lat: parseFloat(customQrLat),
-                        lng: parseFloat(customQrLng),
-                        radius: parseInt(customQrRadius) || 100
-                      });
+                      const qrData = `P|custom-${Date.now()}|${customQrNama.trim()}|${parseFloat(customQrLat).toFixed(4)}|${parseFloat(customQrLng).toFixed(4)}|${customQrRadius || '100'}`;
                       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
 
                       return (

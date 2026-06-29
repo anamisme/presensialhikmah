@@ -92,6 +92,7 @@ export default function EmployeeApp({
   // Camera scanner state
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   // Online/Offline status and syncing state
   const [isOnlineReal, setIsOnlineReal] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -326,18 +327,18 @@ export default function EmployeeApp({
       // Determine location from QR data or GPS
       let locationName = selectedLocation?.nama || 'Lokasi Tidak Diketahui';
       
-      // Try to parse QR data (new JSON format or legacy PRESENSI: format)
+      // Parse QR data - supports: "P|id|nama|lat|lng|radius" or JSON format
       try {
-        const parsed = JSON.parse(qrData);
-        if (parsed.type === 'PRESENSI' && parsed.nama) {
-          locationName = parsed.nama;
-          // Optionally validate GPS proximity to QR's coordinates
-          if (parsed.lat && parsed.lng && userLocation) {
-            const distToQR = calculateDistance(userLocation.lat, userLocation.lng, parsed.lat, parsed.lng);
-            if (distToQR > (parsed.radius || 100) * 2) {
-              // Too far from QR location - warn but still allow
-              console.warn(`Jarak ke lokasi QR: ${Math.round(distToQR)}m (radius: ${parsed.radius}m)`);
-            }
+        if (qrData.startsWith('P|')) {
+          // Short format: P|id|nama|lat|lng|radius
+          const parts = qrData.split('|');
+          if (parts.length >= 3) {
+            locationName = parts[2]; // nama
+          }
+        } else {
+          const parsed = JSON.parse(qrData);
+          if (parsed.type === 'PRESENSI' && parsed.nama) {
+            locationName = parsed.nama;
           }
         }
       } catch {
@@ -581,7 +582,10 @@ export default function EmployeeApp({
                     isActive={isCameraActive}
                     scanMethod="qr"
                     onScanSuccess={handleQRScanSuccess}
-                    onScanError={(err) => console.error('Scan error:', err)}
+                    onScanError={(err) => {
+                      console.error('Scan error:', err);
+                      setScanError(err);
+                    }}
                   />
 
                   {/* Viewfinder Frame Overlay */}
@@ -614,8 +618,11 @@ export default function EmployeeApp({
                   <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
                     <QrCode className="w-8 h-8 text-white/70" />
                   </div>
+                  {scanError && (
+                    <p className="text-rose-300 text-[10px] text-center mb-3 px-4">{scanError}</p>
+                  )}
                   <button
-                    onClick={() => setIsCameraActive(true)}
+                    onClick={() => { setScanError(null); setIsCameraActive(true); }}
                     className="bg-[#0058bc] text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
                   >
                     {activeSession ? 'Scan Keluar' : 'Scan Masuk'}
