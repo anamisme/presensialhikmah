@@ -18,6 +18,7 @@ import EmployeeApp from './components/EmployeeApp';
 import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
 import { syncAttendanceToSheet } from './googleSheets';
+import { logout as googleLogout } from './googleAuth';
 import { ThemeProvider } from './ThemeContext';
 
 export default function App() {
@@ -104,7 +105,8 @@ export default function App() {
     setCurrentView(newSession.role);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await googleLogout().catch(() => {});
     setSession(null);
     setStoredData('session', null);
   };
