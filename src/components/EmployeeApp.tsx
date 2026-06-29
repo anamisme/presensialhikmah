@@ -354,18 +354,34 @@ export default function EmployeeApp({
       }
     }
 
-    // GPS distance validation — block if too far from QR location
-    if (qrLat !== null && qrLng !== null && userLocation) {
+    // GPS distance validation — WAJIB dalam radius
+    if (qrLat !== null && qrLng !== null) {
+      if (!userLocation) {
+        setIsCameraActive(false);
+        alert('Lokasi GPS belum terdeteksi. Pastikan GPS aktif dan izinkan akses lokasi, lalu coba lagi.');
+        return;
+      }
       const distance = calculateDistance(userLocation.lat, userLocation.lng, qrLat, qrLng);
       if (distance > qrRadius) {
         setIsCameraActive(false);
-        alert(`Anda berada ${Math.round(distance)}m dari lokasi ${locationName}. Maksimal ${qrRadius}m untuk absen. Silakan mendekati lokasi.`);
+        alert(`Presensi ditolak! Anda berada ${Math.round(distance)}m dari ${locationName}. Jarak maksimal: ${qrRadius}m.`);
         return;
       }
-    } else if (!userLocation) {
-      setIsCameraActive(false);
-      alert('Lokasi GPS belum terdeteksi. Pastikan GPS aktif dan izinkan akses lokasi.');
-      return;
+    } else {
+      // QR tanpa koordinat — tetap cek apakah user dekat salah satu geofence
+      if (!userLocation) {
+        setIsCameraActive(false);
+        alert('Lokasi GPS belum terdeteksi. Pastikan GPS aktif dan izinkan akses lokasi.');
+        return;
+      }
+      const isNearAny = geofences.some(g => 
+        calculateDistance(userLocation.lat, userLocation.lng, g.lat, g.lng) <= g.radius
+      );
+      if (!isNearAny) {
+        setIsCameraActive(false);
+        alert('Presensi ditolak! Anda tidak berada di area lokasi presensi manapun.');
+        return;
+      }
     }
 
     setIsScanning(true);
@@ -473,10 +489,10 @@ export default function EmployeeApp({
   };
 
   const handleStartScan = () => {
-    // Only block if there's an izin for today
     if (todayRecords.some(r => r.status === 'Izin')) return;
     
-    // Both QR and face scan use real camera
+    // Refresh GPS before opening camera
+    getCurrentLocation();
     setIsCameraActive(true);
   };
 
