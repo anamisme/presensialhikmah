@@ -13,7 +13,6 @@ import {
   User 
 } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
-import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -22,7 +21,6 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 let cachedAccessToken: string | null = null;
-let pluginInitialized = false;
 
 const WEB_CLIENT_ID = '146025221328-me5hhrfvtd63p7nrd6pl0mon1inhh360.apps.googleusercontent.com';
 
@@ -49,13 +47,11 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
   try {
     if (isNativeApp()) {
       // Native Android/iOS: use Capacitor plugin for native account picker
-      if (!pluginInitialized) {
-        await GoogleSignIn.initialize({
-          clientId: WEB_CLIENT_ID,
-          scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
-        });
-        pluginInitialized = true;
-      }
+      const { GoogleSignIn } = await import('@capawesome/capacitor-google-sign-in');
+      await GoogleSignIn.initialize({
+        clientId: WEB_CLIENT_ID,
+        scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
+      });
 
       const result = await GoogleSignIn.signIn();
 
@@ -91,6 +87,7 @@ export const logout = async () => {
   cachedAccessToken = null;
   if (isNativeApp()) {
     try {
+      const { GoogleSignIn } = await import('@capawesome/capacitor-google-sign-in');
       await GoogleSignIn.signOut();
     } catch (e) {
       // Ignore sign-out errors from the plugin
