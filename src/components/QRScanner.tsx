@@ -56,9 +56,12 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
       await scanner.start(
         { facingMode: "environment" },
         {
-          fps: 60,
-          aspectRatio: 1.333,
-          // No qrbox = scan entire frame (fastest)
+          fps: 15,
+          videoConstraints: {
+            facingMode: "environment",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
         },
         (decodedText) => {
           if (!hasScannedRef.current) {
