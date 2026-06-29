@@ -46,16 +46,14 @@ export default function App() {
     role: "Super Admin"
   }));
 
-  // Admin emails list (can be managed from admin panel)
-  // Security: validate against hardcoded primary admin on load
+  // Admin emails list
   const PRIMARY_ADMIN = 'contact@yayasanbaitulhikmah.com';
+  const HARDCODED_ADMINS = ['contact@yayasanbaitulhikmah.com', 'anam@yayasanbaitulhikmah.com'];
   const [adminEmails, setAdminEmails] = useState<string[]>(() => {
-    const stored = getStoredData('admin_emails', [PRIMARY_ADMIN]);
-    // Ensure primary admin is always present
-    if (!stored.includes(PRIMARY_ADMIN)) {
-      return [PRIMARY_ADMIN, ...stored];
-    }
-    return stored;
+    const stored = getStoredData('admin_emails', HARDCODED_ADMINS);
+    // Merge hardcoded admins with stored ones
+    const merged = [...new Set([...HARDCODED_ADMINS, ...stored])];
+    return merged;
   });
 
   const handleAddAdminEmail = (email: string) => {
@@ -68,8 +66,8 @@ export default function App() {
   };
 
   const handleRemoveAdminEmail = (email: string) => {
-    // Cannot remove the primary admin
-    if (email === PRIMARY_ADMIN) return;
+    // Cannot remove hardcoded admins
+    if (HARDCODED_ADMINS.includes(email)) return;
     const updated = adminEmails.filter(e => e !== email);
     setAdminEmails(updated);
     setStoredData('admin_emails', updated);
