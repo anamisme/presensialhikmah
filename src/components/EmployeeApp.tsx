@@ -561,23 +561,13 @@ export default function EmployeeApp({
               </div>
             )}
 
-            {/* Segmented Control for Scan Method */}
+            {/* Scan Method */}
             <div className="bg-gray-200 dark:bg-zinc-800 p-1 rounded-xl flex shadow-inner transition-colors duration-300">
               <button 
                 onClick={() => setScanMethod('qr')}
-                className={`flex-1 py-2 font-medium text-sm rounded-lg transition-all ${
-                  scanMethod === 'qr' ? 'bg-white dark:bg-zinc-700 shadow-sm text-[#0058bc] dark:text-[#3b82f6] font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                }`}
+                className="flex-1 py-2 font-medium text-sm rounded-lg bg-white dark:bg-zinc-700 shadow-sm text-[#0058bc] dark:text-[#3b82f6] font-bold"
               >
                 QR Code
-              </button>
-              <button 
-                onClick={() => setScanMethod('wajah')}
-                className={`flex-1 py-2 font-medium text-sm rounded-lg transition-all ${
-                  scanMethod === 'wajah' ? 'bg-white dark:bg-zinc-700 shadow-sm text-[#0058bc] dark:text-[#3b82f6] font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-                }`}
-              >
-                Wajah
               </button>
             </div>
 

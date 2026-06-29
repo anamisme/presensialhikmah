@@ -60,6 +60,8 @@ interface AdminPanelProps {
   adminEmails?: string[];
   onAddAdminEmail?: (email: string) => void;
   onRemoveAdminEmail?: (email: string) => void;
+  darkMode?: boolean;
+  setDarkMode?: (val: boolean) => void;
 }
 
 export default function AdminPanel({
@@ -79,7 +81,9 @@ export default function AdminPanel({
   onLogout,
   adminEmails = [],
   onAddAdminEmail,
-  onRemoveAdminEmail
+  onRemoveAdminEmail,
+  darkMode = false,
+  setDarkMode
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'karyawan' | 'presensi' | 'pengaturan'>('dashboard');
   
@@ -402,10 +406,29 @@ export default function AdminPanel({
           {/* Quick toggle to Employee Mode */}
           <button 
             onClick={onBackToEmployee}
-            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Mode Pegawai
+          </button>
+
+          {/* Dark mode toggle */}
+          {setDarkMode && (
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
+            >
+              {darkMode ? <CheckCircle className="w-4 h-4 text-blue-500" /> : <Clock className="w-4 h-4" />}
+            </button>
+          )}
+
+          {/* Logout */}
+          <button 
+            onClick={onLogout}
+            className="p-2 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/40 transition-all active:scale-95"
+            title="Keluar"
+          >
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
@@ -842,35 +865,39 @@ export default function AdminPanel({
                 )}
               </div>
 
-              {/* Insight Mini Cards matching dashboard mockup bottom footer */}
+              {/* Insight Mini Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <CheckCircle className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Presence Rate</p>
-                    <p className="text-xl font-black text-gray-800">94.2%</p>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Tingkat Hadir</p>
+                    <p className="text-xl font-black text-gray-800 dark:text-gray-100">
+                      {attendanceRecords.length > 0 ? ((attendanceRecords.filter(r => r.status !== 'Alpa').length / attendanceRecords.length) * 100).toFixed(1) : '0'}%
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Late Arrivals</p>
-                    <p className="text-xl font-black text-gray-800">12 Absen</p>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Terlambat</p>
+                    <p className="text-xl font-black text-gray-800 dark:text-gray-100">
+                      {attendanceRecords.filter(r => r.status === 'Terlambat').length} Absen
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[#00418f]">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-[#00418f] dark:text-blue-400">
                     <Users className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Active Staff</p>
-                    <p className="text-xl font-black text-gray-800">156 Orang</p>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Pegawai</p>
+                    <p className="text-xl font-black text-gray-800 dark:text-gray-100">{employees.length} Orang</p>
                   </div>
                 </div>
               </div>

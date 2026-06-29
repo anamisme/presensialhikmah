@@ -258,10 +258,10 @@ export default function App() {
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
           limitTime={limitTime}
-          isAdmin={session.role === 'admin'}
-          onNavigateToAdmin={session.role === 'admin' ? () => setCurrentView('admin') : undefined}
+          isAdmin={session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')}
+          onNavigateToAdmin={(session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')) ? () => setCurrentView('admin') : undefined}
         />
-      ) : session.role === 'admin' ? (
+      ) : (session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')) ? (
         <AdminPanel 
           employees={employees}
           attendanceRecords={attendanceRecords}
@@ -280,6 +280,8 @@ export default function App() {
           adminEmails={adminEmails}
           onAddAdminEmail={handleAddAdminEmail}
           onRemoveAdminEmail={handleRemoveAdminEmail}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
         />
       ) : null}
     </div>
