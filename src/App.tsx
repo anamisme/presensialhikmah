@@ -156,14 +156,16 @@ export default function App() {
   };
 
   const handleAddAttendance = (record: AttendanceRecord) => {
-    // Check if record exists for update (checkout) or append (checkin)
-    const existsIdx = attendanceRecords.findIndex(r => r.id === record.id || (r.nip === record.nip && r.tanggal === record.tanggal));
+    // Find existing record by id only to avoid overwriting different records for same NIP+date
+    const existsIdx = attendanceRecords.findIndex(r => r.id === record.id);
     
     let updated: AttendanceRecord[];
     if (existsIdx > -1) {
+      // Update existing record (e.g., add checkout time)
       updated = [...attendanceRecords];
       updated[existsIdx] = record;
     } else {
+      // Append new record
       updated = [record, ...attendanceRecords];
     }
     
