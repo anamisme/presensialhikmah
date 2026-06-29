@@ -572,33 +572,56 @@ export default function EmployeeApp({
               )}
             </div>
 
-            {/* QR Scanner - always active viewfinder */}
+            {/* QR Scanner */}
             <section className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border-4 border-white shadow-lg bg-neutral-900">
               
-              {/* Always-on QR Scanner */}
-              <QRScanner
-                isActive={!todayRecords.some(r => r.status === 'Izin')}
-                scanMethod="qr"
-                onScanSuccess={handleQRScanSuccess}
-                onScanError={(err) => console.error('Scan error:', err)}
-              />
+              {isCameraActive ? (
+                <>
+                  <QRScanner
+                    isActive={isCameraActive}
+                    scanMethod="qr"
+                    onScanSuccess={handleQRScanSuccess}
+                    onScanError={(err) => console.error('Scan error:', err)}
+                  />
 
-              {/* Viewfinder Frame Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center p-10 pointer-events-none">
-                <div className="w-full h-full max-w-[250px] max-h-[250px] border-2 border-white/30 rounded-2xl relative">
-                  <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-[#0058bc] rounded-tl-lg" />
-                  <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-[#0058bc] rounded-tr-lg" />
-                  <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-[#0058bc] rounded-bl-lg" />
-                  <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-[#0058bc] rounded-br-lg" />
+                  {/* Viewfinder Frame Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center p-10 pointer-events-none">
+                    <div className="w-full h-full max-w-[250px] max-h-[250px] border-2 border-white/30 rounded-2xl relative">
+                      <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-[#0058bc] rounded-tl-lg" />
+                      <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-[#0058bc] rounded-tr-lg" />
+                      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-[#0058bc] rounded-bl-lg" />
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-[#0058bc] rounded-br-lg" />
+                    </div>
+                  </div>
+
+                  {/* Guidance text */}
+                  <div className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none z-10">
+                    <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1.5 rounded-full">
+                      Arahkan ke QR Code presensi
+                    </span>
+                  </div>
+
+                  {/* Close button */}
+                  <button
+                    onClick={() => setIsCameraActive(false)}
+                    className="absolute top-3 right-3 z-20 p-2 bg-black/60 backdrop-blur-md rounded-full text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+                  <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+                    <QrCode className="w-8 h-8 text-white/70" />
+                  </div>
+                  <button
+                    onClick={() => setIsCameraActive(true)}
+                    className="bg-[#0058bc] text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
+                  >
+                    {activeSession ? 'Scan Keluar' : 'Scan Masuk'}
+                  </button>
                 </div>
-              </div>
-
-              {/* Guidance text */}
-              <div className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none z-10">
-                <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1.5 rounded-full">
-                  Arahkan ke QR Code presensi
-                </span>
-              </div>
+              )}
 
               {/* Disabled overlay when izin */}
               {todayRecords.some(r => r.status === 'Izin') && (
@@ -649,7 +672,7 @@ export default function EmployeeApp({
                       transition={{ delay: 0.4 }}
                       className="text-emerald-200 text-xs mt-1"
                     >
-                      {todayRecord?.keluar ? 'Presensi keluar tercatat' : 'Presensi masuk tercatat'}
+                      {activeSession ? 'Presensi keluar tercatat' : 'Presensi masuk tercatat'}
                     </motion.p>
                   </motion.div>
                 )}
