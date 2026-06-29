@@ -19,7 +19,15 @@ const config: CapacitorConfig = {
   },
   plugins: {
     Camera: {},
-    Geolocation: {}
+    Geolocation: {},
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      backgroundColor: '#FFFFFF',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false
+    }
   },
   android: {
     allowMixedContent: true
