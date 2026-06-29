@@ -9,7 +9,6 @@ interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
   onScanError?: (error: string) => void;
   isActive: boolean;
-  scanMethod?: 'qr' | 'wajah';
 }
 
 export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRScannerProps) {

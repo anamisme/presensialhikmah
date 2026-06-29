@@ -186,7 +186,6 @@ export default function AdminPanel({
   const [newNama, setNewNama] = useState('');
   const [newJabatan, setNewJabatan] = useState('');
   const [newLembaga, setNewLembaga] = useState('Lembaga IT & Digital');
-  const [newPassword, setNewPassword] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -198,9 +197,6 @@ export default function AdminPanel({
   const [geoRadius, setGeoRadius] = useState('50');
 
   // State for QR generation
-  const [selectedQRLocation, setSelectedQRLocation] = useState<string>(geofences[0]?.nama || '');
-  const [isQRGenerated, setIsQRGenerated] = useState(false);
-  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   // Pagination for Attendance logs
   const [currentPage, setCurrentPage] = useState(1);
@@ -319,7 +315,6 @@ export default function AdminPanel({
     setNewNip('');
     setNewNama('');
     setNewJabatan('');
-    setNewPassword('');
     setNewEmail('');
     setIsAddEmployeeOpen(false);
   };
@@ -367,15 +362,6 @@ export default function AdminPanel({
     setGeoRadius('50');
     setIsAddGeofenceOpen(false);
   };
-
-  const triggerQRGeneration = () => {
-    setIsGeneratingQR(true);
-    setTimeout(() => {
-      setIsGeneratingQR(false);
-      setIsQRGenerated(true);
-    }, 1200);
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-[#F9F9FF] text-gray-900 font-sans pb-24 md:pb-0 select-none transition-colors duration-300">
       
@@ -1426,17 +1412,6 @@ export default function AdminPanel({
                     <p className="text-[10px] text-gray-400 leading-relaxed px-1">
                       Karyawan akan login menggunakan Akun Google ini. Pastikan domain email organisasi sesuai.
                     </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase">Password Akses (Sandi Alternatif)</label>
-                    <input 
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
-                      placeholder="••••••••"
-                    />
                   </div>
 
                   <div className="pt-4 flex gap-3">

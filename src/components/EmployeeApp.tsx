@@ -62,7 +62,6 @@ export default function EmployeeApp({
   onNavigateToAdmin
 }: EmployeeAppProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'stats' | 'profile'>('home');
-  const [scanMethod, setScanMethod] = useState<'qr' | 'wajah'>('qr');
   const [selectedLocation, setSelectedLocation] = useState<Geofence | null>(() => geofences[2] || geofences[0] || null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
@@ -92,7 +91,6 @@ export default function EmployeeApp({
 
   // Camera scanner state
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [rejectMessage, setRejectMessage] = useState<string | null>(null);
 
@@ -315,7 +313,6 @@ export default function EmployeeApp({
 
   // Handle QR scan success
   const handleQRScanSuccess = (decodedText: string) => {
-    setScanResult(decodedText);
     setIsCameraActive(false);
     
     // Check for mock/fake GPS first (native Android only)
@@ -461,7 +458,6 @@ export default function EmployeeApp({
 
       setTimeout(() => {
         setScanSuccess(false);
-        setScanResult(null);
       }, 3500);
     }, 500);
   };
@@ -514,19 +510,6 @@ export default function EmployeeApp({
     getCurrentLocation();
     setIsCameraActive(true);
   };
-
-  // Face scan uses front camera - when QR scanner detects nothing for 3s with face mode,
-  // we treat it as a face verification (selfie-based attendance)
-  useEffect(() => {
-    if (isCameraActive && scanMethod === 'wajah') {
-      const timer = setTimeout(() => {
-        // After 3 seconds of front camera active, verify face presence
-        setIsCameraActive(false);
-        processAttendance('FACE_VERIFIED_' + Date.now());
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isCameraActive, scanMethod]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] text-gray-900 pb-24 font-sans select-none transition-colors duration-300">
@@ -640,7 +623,6 @@ export default function EmployeeApp({
                 <>
                   <QRScanner
                     isActive={isCameraActive}
-                    scanMethod="qr"
                     onScanSuccess={handleQRScanSuccess}
                     onScanError={(err) => {
                       console.error('Scan error:', err);
