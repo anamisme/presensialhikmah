@@ -116,9 +116,13 @@ export default function EmployeeApp({
     self.findIndex(v => v.id === value.id) === index
   );
   
-  // Find today's record
+  // Find today's records (multiple sessions possible)
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayRecord = personalRecords.find(r => r.tanggal === todayStr);
+  const todayRecords = personalRecords.filter(r => r.tanggal === todayStr);
+  // Active session = last record without checkout time (currently working)
+  const activeSession = todayRecords.find(r => r.masuk !== '--:--' && !r.keluar && r.status !== 'Izin');
+  // For status display: show active session or last completed
+  const todayRecord = activeSession || todayRecords[0];
 
   // Sync selected location when geofences change or if currently null
   useEffect(() => {
@@ -310,14 +314,13 @@ export default function EmployeeApp({
 
   // Process attendance record after scan
   const processAttendance = (qrData: string) => {
-    if (todayRecord && todayRecord.keluar) return; // already fully checked out
-
     setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
       setScanSuccess(true);
       
-      const isCheckIn = !todayRecord;
+      // If there's an active session (checked in but not out), this is a checkout
+      const isCheckIn = !activeSession;
       const currentHrsMins = formatClock(currentTime);
 
       // Determine location from QR data or GPS
@@ -375,7 +378,7 @@ export default function EmployeeApp({
         }
       } else {
         const updatedRecord = {
-          ...todayRecord,
+          ...activeSession,
           keluar: currentHrsMins
         } as AttendanceRecord;
 
@@ -444,7 +447,8 @@ export default function EmployeeApp({
   };
 
   const handleStartScan = () => {
-    if (todayRecord && todayRecord.keluar) return;
+    // Only block if there's an izin for today
+    if (todayRecords.some(r => r.status === 'Izin')) return;
     
     // Both QR and face scan use real camera
     setIsCameraActive(true);
@@ -573,7 +577,7 @@ export default function EmployeeApp({
               
               {/* Always-on QR Scanner */}
               <QRScanner
-                isActive={!(todayRecord?.masuk && todayRecord?.keluar) && todayRecord?.status !== 'Izin'}
+                isActive={!todayRecords.some(r => r.status === 'Izin')}
                 scanMethod="qr"
                 onScanSuccess={handleQRScanSuccess}
                 onScanError={(err) => console.error('Scan error:', err)}
@@ -596,13 +600,11 @@ export default function EmployeeApp({
                 </span>
               </div>
 
-              {/* Disabled overlay when already checked in/out */}
-              {((todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin') && (
+              {/* Disabled overlay when izin */}
+              {todayRecords.some(r => r.status === 'Izin') && (
                 <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
                   <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-2" />
-                  <p className="text-white font-bold text-sm">
-                    {todayRecord?.status === 'Izin' ? 'Izin Hari Ini' : 'Absen Selesai'}
-                  </p>
+                  <p className="text-white font-bold text-sm">Izin Hari Ini</p>
                 </div>
               )}
 
@@ -658,49 +660,55 @@ export default function EmployeeApp({
             <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4 transition-colors duration-300">
               <div className="flex justify-center">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
-                  todayRecord?.status === 'Izin'
+                  todayRecords.some(r => r.status === 'Izin')
                     ? 'bg-sky-100 text-sky-700 border border-sky-100'
-                    : todayRecord?.keluar 
-                    ? 'bg-gray-100 text-gray-500'
-                    : todayRecord 
+                    : activeSession
                     ? 'bg-[#6ffb85]/20 text-[#00732a]'
+                    : todayRecords.length > 0
+                    ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-amber-100 text-amber-700'
                 }`}>
-                  {todayRecord?.status === 'Izin' ? 'Izin' : todayRecord?.keluar ? 'Sudah Absen' : todayRecord ? 'Sudah Absen' : 'Belum Absen'}
+                  {todayRecords.some(r => r.status === 'Izin') ? 'Izin' : activeSession ? 'Sedang Bekerja' : todayRecords.length > 0 ? 'Sudah Absen' : 'Belum Absen'}
                 </span>
               </div>
 
-              {todayRecord?.status === 'Izin' ? (
+              {todayRecords.some(r => r.status === 'Izin') ? (
                 <div className="bg-sky-50/50 p-4 rounded-xl border border-sky-100 text-left">
                   <div className="flex items-center gap-2 text-sky-800 font-bold text-sm mb-1.5">
                     <FileText className="w-4 h-4 shrink-0" />
                     <span>Izin/Sakit Terdaftar</span>
                   </div>
                   <p className="text-xs text-gray-600 font-medium">
-                    {todayRecord.keterangan || 'Tanpa keterangan'}
+                    {todayRecords.find(r => r.status === 'Izin')?.keterangan || 'Tanpa keterangan'}
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jam Masuk</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Masuk</p>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-emerald-600" />
                       <span className="font-bold text-lg text-emerald-600">
-                        {todayRecord ? todayRecord.masuk : '--:--'}
+                        {activeSession ? activeSession.masuk : todayRecords[0]?.masuk || '--:--'}
                       </span>
                     </div>
                   </div>
                   <div className="space-y-1 border-l border-gray-200 pl-4">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jam Keluar</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Keluar</p>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-gray-400" />
                       <span className="font-bold text-lg text-gray-700">
-                        {todayRecord?.keluar ? todayRecord.keluar : '--:--'}
+                        {activeSession ? '--:--' : todayRecords[0]?.keluar || '--:--'}
                       </span>
                     </div>
                   </div>
                 </div>
+              )}
+
+              {todayRecords.length > 1 && (
+                <p className="text-[10px] text-center text-gray-400 pt-2 border-t border-gray-100">
+                  {todayRecords.length} sesi kerja hari ini
+                </p>
               )}
 
               <div className="pt-3.5 border-t border-gray-100 flex items-center justify-center text-xs text-gray-500">
@@ -712,7 +720,7 @@ export default function EmployeeApp({
             </section>
 
             {/* Request Permit Banner */}
-            {!todayRecord && (
+            {!todayRecords.some(r => r.status === 'Izin') && todayRecords.length === 0 && (
               <div className="bg-sky-500/10 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
                 <div className="space-y-1">
                   <h4 className="text-xs font-black text-[#0058bc] uppercase tracking-wider">Berhalangan Hadir?</h4>
