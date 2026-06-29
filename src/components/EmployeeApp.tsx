@@ -308,13 +308,27 @@ export default function EmployeeApp({
     setScanResult(decodedText);
     setIsCameraActive(false);
     
-    // Validate QR code - expected format: "PRESENSI:{location_id}" or any valid QR
-    // Process attendance after successful scan
-    processAttendance(decodedText);
+    // Force get fresh GPS position before processing
+    if (!navigator.geolocation) {
+      alert('GPS tidak tersedia di perangkat ini.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Process with fresh GPS data
+        processAttendanceWithGPS(decodedText, latitude, longitude);
+      },
+      (error) => {
+        alert('Gagal mendapatkan lokasi GPS. Pastikan GPS aktif dan izinkan akses lokasi.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
-  // Process attendance record after scan
-  const processAttendance = (qrData: string) => {
+  // Process attendance with verified GPS position
+  const processAttendanceWithGPS = (qrData: string, gpsLat: number, gpsLng: number) => {
     // Parse QR data first to get location info
     let locationName = 'Lokasi Tidak Diketahui';
     let qrLat: number | null = null;
@@ -356,29 +370,17 @@ export default function EmployeeApp({
 
     // GPS distance validation — WAJIB dalam radius
     if (qrLat !== null && qrLng !== null) {
-      if (!userLocation) {
-        setIsCameraActive(false);
-        alert('Lokasi GPS belum terdeteksi. Pastikan GPS aktif dan izinkan akses lokasi, lalu coba lagi.');
-        return;
-      }
-      const distance = calculateDistance(userLocation.lat, userLocation.lng, qrLat, qrLng);
+      const distance = calculateDistance(gpsLat, gpsLng, qrLat, qrLng);
       if (distance > qrRadius) {
-        setIsCameraActive(false);
         alert(`Presensi ditolak! Anda berada ${Math.round(distance)}m dari ${locationName}. Jarak maksimal: ${qrRadius}m.`);
         return;
       }
     } else {
-      // QR tanpa koordinat — tetap cek apakah user dekat salah satu geofence
-      if (!userLocation) {
-        setIsCameraActive(false);
-        alert('Lokasi GPS belum terdeteksi. Pastikan GPS aktif dan izinkan akses lokasi.');
-        return;
-      }
+      // QR tanpa koordinat — cek apakah user dekat salah satu geofence
       const isNearAny = geofences.some(g => 
-        calculateDistance(userLocation.lat, userLocation.lng, g.lat, g.lng) <= g.radius
+        calculateDistance(gpsLat, gpsLng, g.lat, g.lng) <= g.radius
       );
       if (!isNearAny) {
-        setIsCameraActive(false);
         alert('Presensi ditolak! Anda tidak berada di area lokasi presensi manapun.');
         return;
       }
