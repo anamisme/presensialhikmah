@@ -479,21 +479,6 @@ export default function EmployeeApp({
         
         {/* User avatar with mini settings portal */}
         <div className="flex items-center gap-2">
-          {/* Connection status indicator */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[9px] font-black tracking-wider transition-all duration-300 shadow-sm ${
-              isOnline 
-                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
-                : 'bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400 animate-pulse'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full relative flex">
-              {isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400" />}
-              <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-            </span>
-            <span>{isOnline ? 'ONLINE' : 'OFFLINE'}</span>
-          </div>
-
           {/* Dark mode toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}

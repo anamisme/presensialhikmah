@@ -34,7 +34,9 @@ import {
   ExternalLink,
   Check,
   X,
-  ShieldCheck
+  ShieldCheck,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
@@ -418,7 +420,7 @@ export default function AdminPanel({
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
             >
-              {darkMode ? <CheckCircle className="w-4 h-4 text-blue-500" /> : <Clock className="w-4 h-4" />}
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
           )}
 
@@ -437,7 +439,7 @@ export default function AdminPanel({
       <div className="flex-grow flex">
         
         {/* Left Sidebar for Desktop Viewports */}
-        <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 py-6 px-4 shrink-0 gap-1">
+        <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-[#1C1C1E] border-r border-gray-100 dark:border-zinc-800 py-6 px-4 shrink-0 gap-1">
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
@@ -506,25 +508,25 @@ export default function AdminPanel({
             >
               <div className="space-y-1">
                 <h2 className="text-xl md:text-2xl font-extrabold text-gray-800 tracking-tight">Ringkasan Kehadiran</h2>
-                <p className="text-xs text-gray-400">Statistik real-time monitoring kehadiran karyawan hari ini.</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Statistik real-time monitoring kehadiran karyawan hari ini.</p>
               </div>
 
               {/* 2x2 Stats Grid from HTML templates */}
               <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 
                 {/* Total Karyawan */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
                   <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                     <Users className="w-5 h-5" />
                   </div>
                   <div>
                     <p className="text-gray-400 font-semibold text-xs uppercase tracking-wider">Total Karyawan</p>
-                    <p className="text-2xl font-black text-gray-800">{totalEmployees}</p>
+                    <p className="text-2xl font-black text-gray-800 dark:text-gray-100">{totalEmployees}</p>
                   </div>
                 </div>
 
                 {/* Hadir Hari Ini */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
                   <div className="w-10 h-10 rounded-full bg-blue-50 text-[#00418f] flex items-center justify-center">
                     <CheckCircle className="w-5 h-5" />
                   </div>
@@ -535,7 +537,7 @@ export default function AdminPanel({
                 </div>
 
                 {/* Terlambat */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
                   <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center">
                     <Clock className="w-5 h-5" />
                   </div>
@@ -546,7 +548,7 @@ export default function AdminPanel({
                 </div>
 
                 {/* Belum Absen */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
+                <div className="bg-white dark:bg-[#1C1C1E] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col gap-2 hover:translate-y-[-2px] transition-transform duration-200">
                   <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
                     <UserX className="w-5 h-5" />
                   </div>
@@ -561,7 +563,7 @@ export default function AdminPanel({
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Kehadiran Hari Ini Card */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="lg:col-span-2 bg-white dark:bg-[#1C1C1E] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
                   <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 className="font-bold text-gray-800 text-sm">Kehadiran Hari Ini</h3>
                     <button 
@@ -602,7 +604,7 @@ export default function AdminPanel({
                 </div>
 
                 {/* Recent Activities Timeline */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5">
+                <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm p-5 space-y-5">
                   <h3 className="font-bold text-gray-800 text-sm">Aktivitas Terbaru</h3>
                   
                   <div className="space-y-5 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-200">
@@ -620,7 +622,7 @@ export default function AdminPanel({
                           )}
                         </div>
                         <div className="pt-0.5 space-y-0.5">
-                          <p className="text-xs text-gray-800">
+                          <p className="text-xs text-gray-800 dark:text-gray-100">
                             <strong className="font-bold">{act.nama}</strong> {act.keterangan}
                           </p>
                           <span className="text-[10px] text-gray-400 block">{act.waktu}</span>
@@ -643,7 +645,7 @@ export default function AdminPanel({
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl md:text-2xl font-extrabold text-gray-800 tracking-tight">Data Karyawan</h2>
-                  <p className="text-xs text-gray-400">Total terdaftar {employees.length} karyawan aktif. Karyawan otomatis terdaftar saat login pertama.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Total terdaftar {employees.length} karyawan aktif. Karyawan otomatis terdaftar saat login pertama.</p>
                 </div>
               </div>
 
@@ -654,7 +656,7 @@ export default function AdminPanel({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white border border-gray-200/80 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] transition-all text-sm outline-none placeholder:text-gray-400"
+                  className="w-full bg-white border border-gray-200/80 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] transition-all text-sm outline-none placeholder:text-gray-400 dark:text-gray-500"
                   placeholder="Cari nama atau NIP..."
                 />
               </div>
@@ -667,13 +669,13 @@ export default function AdminPanel({
                   </div>
                 ) : (
                   filteredEmployees.map((emp, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:translate-y-[-1px] transition-transform">
+                    <div key={idx} className="bg-white dark:bg-[#1C1C1E] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center gap-4 hover:translate-y-[-1px] transition-transform">
                       <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-100 shrink-0 bg-gray-50">
                         <img className="w-full h-full object-cover" src={emp.foto} alt={emp.nama} />
                       </div>
                       <div className="flex-grow min-w-0">
                         <h3 className="font-bold text-gray-800 text-sm truncate">{emp.nama}</h3>
-                        <p className="text-xs text-gray-500 truncate">{emp.jabatan} • <span className="text-gray-400">{emp.lembaga}</span></p>
+                        <p className="text-xs text-gray-500 truncate">{emp.jabatan} • <span className="text-gray-400 dark:text-gray-500">{emp.lembaga}</span></p>
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           <span className="text-[10px] font-bold text-[#00418f] tracking-wide">NIP: {emp.nip}</span>
                           {emp.email ? (
@@ -713,7 +715,7 @@ export default function AdminPanel({
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
                   <h2 className="text-xl md:text-2xl font-extrabold text-gray-800 tracking-tight">Data Presensi</h2>
-                  <p className="text-xs text-gray-400">Arsip pencatatan rekapitulasi harian kehadiran.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Arsip pencatatan rekapitulasi harian kehadiran.</p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-center">
@@ -761,11 +763,11 @@ export default function AdminPanel({
               </div>
 
               {/* Attendance Table */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-gray-50 border-b border-gray-100">
+                      <tr className="bg-gray-50 dark:bg-zinc-900 border-b border-gray-100">
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Tanggal</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">NIP</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama</th>
@@ -791,7 +793,7 @@ export default function AdminPanel({
                                 <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-50 shrink-0 border border-gray-100">
                                   <img className="w-full h-full object-cover" src={rec.foto} alt={rec.nama} />
                                 </div>
-                                <span className="text-xs font-bold text-gray-800">{rec.nama}</span>
+                                <span className="text-xs font-bold text-gray-800 dark:text-gray-100">{rec.nama}</span>
                               </div>
                             </td>
                             <td className="px-5 py-4 text-xs text-gray-800 font-semibold">{rec.masuk}</td>
@@ -815,7 +817,7 @@ export default function AdminPanel({
                               </span>
                               {rec.status === 'Izin' && rec.keterangan && (
                                 <div className="mt-1.5 max-w-[200px] text-left text-[10px] font-medium text-gray-500 leading-normal">
-                                  <p className="italic bg-gray-50 p-1.5 rounded-lg border border-gray-100">{rec.keterangan}</p>
+                                  <p className="italic bg-gray-50 dark:bg-zinc-800 p-1.5 rounded-lg border border-gray-100">{rec.keterangan}</p>
                                   {rec.lampiran && (
                                     <button
                                       onClick={() => {
@@ -915,7 +917,7 @@ export default function AdminPanel({
               <div className="space-y-6">
                 
                 {/* Pengaturan Waktu Kerja */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-[#00418f]" />
                     <h3 className="font-bold text-gray-800 text-sm">Pengaturan Waktu Kerja</h3>
@@ -928,7 +930,7 @@ export default function AdminPanel({
                         type="time" 
                         value={tempLimitTime}
                         onChange={(e) => setTempLimitTime(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                       />
                     </div>
                     <div>
@@ -937,7 +939,7 @@ export default function AdminPanel({
                         type="time" 
                         value={tempJamPulang}
                         onChange={(e) => setTempJamPulang(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                        className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                       />
                     </div>
                   </div>
@@ -960,7 +962,7 @@ export default function AdminPanel({
                           className={`py-2 px-1 rounded-lg text-[10px] font-bold border transition-all ${
                             hariLibur.includes(idx)
                               ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
-                              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                              : 'bg-gray-50 dark:bg-zinc-900 border-gray-200 text-gray-600 hover:bg-gray-100'
                           }`}
                         >
                           {day.slice(0, 3)}
@@ -988,7 +990,7 @@ export default function AdminPanel({
                 </section>
 
                 {/* Lokasi Gedung */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-[#00418f]" />
@@ -1047,7 +1049,7 @@ export default function AdminPanel({
                     <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm">QR Code Lokasi Presensi</h3>
                   </div>
 
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     Setiap lokasi gedung memiliki QR Code unik berisi data GPS. Cetak dan tempel di lokasi masing-masing.
                   </p>
 
@@ -1081,7 +1083,7 @@ export default function AdminPanel({
                               {/* Info */}
                               <div className="flex-1 space-y-2">
                                 <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">{geo.nama}</h4>
-                                <div className="space-y-1 text-[10px] text-gray-500 dark:text-gray-400">
+                                <div className="space-y-1 text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">
                                   <p className="flex items-center gap-1">
                                     <MapPin className="w-3 h-3" />
                                     {geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}
@@ -1109,7 +1111,7 @@ export default function AdminPanel({
                 </section>
 
                 {/* Kelola Admin */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-5 h-5 text-[#00418f]" />
                     <h3 className="font-bold text-gray-800 text-sm">Kelola Akun Admin</h3>
@@ -1152,7 +1154,7 @@ export default function AdminPanel({
                       placeholder="email@domain.com"
                       value={newAdminEmail}
                       onChange={(e) => setNewAdminEmail(e.target.value)}
-                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                      className="flex-1 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                     />
                     <button
                       onClick={() => {
@@ -1173,7 +1175,7 @@ export default function AdminPanel({
                 </section>
 
                 {/* Profil Administrator Customizer */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Settings className="w-5 h-5 text-[#00418f]" />
@@ -1253,7 +1255,7 @@ export default function AdminPanel({
                             placeholder="https://example.com/foto.jpg"
                             value={adminCustomPhotoUrl}
                             onChange={(e) => setAdminCustomPhotoUrl(e.target.value)}
-                            className="flex-grow bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                            className="flex-grow bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                           />
                           <button
                             onClick={() => {
@@ -1274,7 +1276,7 @@ export default function AdminPanel({
                       <div className="space-y-1 text-left">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Atau Unggah file gambar:</label>
                         <label className="flex items-center justify-center gap-2 border border-dashed border-gray-200 hover:border-[#00418f] rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all text-xs font-bold text-gray-600">
-                          <Download className="w-4 h-4 text-gray-400" />
+                          <Download className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                           <span>Cari Foto Saya</span>
                           <input
                             type="file"
@@ -1350,7 +1352,7 @@ export default function AdminPanel({
                       required
                       value={newNip}
                       onChange={(e) => setNewNip(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
+                      className="w-full bg-white border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
                       placeholder="Masukkan NIP (misal: 19951102)"
                     />
                   </div>
@@ -1362,7 +1364,7 @@ export default function AdminPanel({
                       required
                       value={newNama}
                       onChange={(e) => setNewNama(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
+                      className="w-full bg-white border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
                       placeholder="Masukkan nama lengkap"
                     />
                   </div>
@@ -1374,7 +1376,7 @@ export default function AdminPanel({
                       required
                       value={newJabatan}
                       onChange={(e) => setNewJabatan(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
+                      className="w-full bg-white border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
                       placeholder="Masukkan jabatan"
                     />
                   </div>
@@ -1384,7 +1386,7 @@ export default function AdminPanel({
                     <select 
                       value={newLembaga}
                       onChange={(e) => setNewLembaga(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none cursor-pointer"
+                      className="w-full bg-white border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none cursor-pointer"
                     >
                       <option value="Lembaga IT & Digital">Lembaga IT & Digital</option>
                       <option value="Keuangan">Keuangan</option>
@@ -1404,7 +1406,7 @@ export default function AdminPanel({
                       required
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      className="w-full bg-white border border-[#00418f]/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 font-medium text-gray-800"
+                      className="w-full bg-white border border-[#00418f]/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 font-medium text-gray-800 dark:text-gray-100"
                       placeholder="contoh: budi@yayasanbaitulhikmah.com"
                     />
                     <p className="text-[10px] text-gray-400 leading-relaxed px-1">
@@ -1418,7 +1420,7 @@ export default function AdminPanel({
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
+                      className="w-full bg-white border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300"
                       placeholder="••••••••"
                     />
                   </div>
@@ -1476,7 +1478,7 @@ export default function AdminPanel({
                     required
                     value={geoNama}
                     onChange={(e) => setGeoNama(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                    className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                     placeholder="misal: Gedung Rektorat Utama"
                   />
                 </div>
@@ -1490,7 +1492,7 @@ export default function AdminPanel({
                       required
                       value={geoLat}
                       onChange={(e) => setGeoLat(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                      className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                       placeholder="-6.1234"
                     />
                   </div>
@@ -1503,7 +1505,7 @@ export default function AdminPanel({
                       required
                       value={geoLng}
                       onChange={(e) => setGeoLng(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                      className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                       placeholder="106.5678"
                     />
                   </div>
@@ -1516,7 +1518,7 @@ export default function AdminPanel({
                     required
                     value={geoRadius}
                     onChange={(e) => setGeoRadius(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
+                    className="w-full bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
                     placeholder="50"
                   />
                 </div>
@@ -1683,7 +1685,7 @@ export default function AdminPanel({
                             disabled={isExportingSheets}
                             value={customSheetTitle}
                             onChange={(e) => setCustomSheetTitle(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none disabled:opacity-50"
+                            className="w-full bg-white border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none disabled:opacity-50"
                             placeholder="Rekap Presensi Karyawan"
                           />
                         </div>
