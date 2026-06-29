@@ -17,6 +17,7 @@ import { Employee, AttendanceRecord, Geofence, RecentActivity } from './types';
 import EmployeeApp from './components/EmployeeApp';
 import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
+import { syncAttendanceToSheet } from './googleSheets';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'employee' | 'admin'>(() => {
@@ -166,6 +167,20 @@ export default function App() {
     }
     
     updateAttendance(updated);
+
+    // Auto-sync to Google Sheets via webhook
+    const emp = employees.find(e => e.nip === record.nip);
+    syncAttendanceToSheet({
+      tanggal: record.tanggal,
+      nama: record.nama,
+      jabatan: emp?.jabatan || '',
+      lembaga: emp?.lembaga || '',
+      masuk: record.masuk,
+      keluar: record.keluar,
+      status: record.status,
+      lokasi: record.lokasi,
+      keterangan: record.keterangan,
+    });
 
     // Append to recent activities log
     const activityType = record.status === 'Izin' ? 'tambah' : record.keluar ? 'keluar' : 'masuk';

@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
-import { createAndPopulateSpreadsheet } from '../googleSheets';
+import { syncAttendanceToSheet } from '../googleSheets';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
 import { ASSETS, setStoredData } from '../data';
 
@@ -170,21 +170,8 @@ export default function AdminPanel({
     setExportSuccessUrl(null);
 
     try {
-      const headers = ['Tanggal', 'NIP', 'Nama', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
-      const rows = filteredAttendance.map(r => [
-        r.tanggal,
-        r.nip,
-        r.nama,
-        r.masuk,
-        r.keluar || '--:--',
-        r.status,
-        r.lokasi || 'Kantor Pusat'
-      ]);
-
-      const title = customSheetTitle.trim() || 'Rekap Presensi Karyawan';
-      const result = await createAndPopulateSpreadsheet(title, headers, rows, googleToken);
-      
-      setExportSuccessUrl(result.spreadsheetUrl);
+      // Data otomatis sync ke Sheets via webhook saat absen
+      setExportSuccessUrl('https://docs.google.com/spreadsheets/d/1y2LsZUg56C5pDMA-V2lzHmfv3TBjT_HCes0960RcSnQ');
     } catch (err: any) {
       console.error(err);
       setExportError(err.message || 'Gagal mengekspor ke Google Sheets');
