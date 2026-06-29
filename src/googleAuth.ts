@@ -6,7 +6,9 @@
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   onAuthStateChanged, 
   User 
@@ -17,24 +19,40 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
-// Add required Google Workspace scopes for Google Sheets and Google Drive (creating files)
 provider.addScope('https://www.googleapis.com/auth/spreadsheets');
 provider.addScope('https://www.googleapis.com/auth/drive.file');
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
 
-// Initialize auth state listener. Call this on app load.
+// Detect if running in Capacitor (Android/iOS)
+const isNativeApp = () => {
+  return window.location.protocol === 'capacitor:' || 
+         window.location.hostname === 'localhost' ||
+         (window as any).Capacitor !== undefined;
+};
+
+// Initialize auth state listener
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
+  // Check for redirect result (for native app flow)
+  getRedirectResult(auth).then((result) => {
+    if (result) {
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        cachedAccessToken = credential.accessToken;
+        if (onAuthSuccess) onAuthSuccess(result.user, cachedAccessToken);
+      }
+    }
+  }).catch(() => {});
+
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
       if (cachedAccessToken) {
         if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
       } else if (!isSigningIn) {
-        // Clear if not in transition
         cachedAccessToken = null;
         if (onAuthFailure) onAuthFailure();
       }
@@ -45,10 +63,18 @@ export const initAuth = (
   });
 };
 
-// Sign in with Google Popup
+// Sign in with Google
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
   try {
     isSigningIn = true;
+    
+    if (isNativeApp()) {
+      // Use redirect for native app (WebView doesn't support popup well)
+      await signInWithRedirect(auth, provider);
+      return null; // Result handled in getRedirectResult above
+    }
+    
+    // Use popup for web browser
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (!credential?.accessToken) {

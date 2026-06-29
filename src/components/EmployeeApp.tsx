@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { checkMockLocation } from '../mockLocationCheck';
 import { 
   Home, 
   History, 
@@ -317,23 +318,30 @@ export default function EmployeeApp({
     setScanResult(decodedText);
     setIsCameraActive(false);
     
-    // Force get fresh GPS position before processing
-    if (!navigator.geolocation) {
-      setRejectMessage('GPS tidak tersedia di perangkat ini.');
-      return;
-    }
+    // Check for mock/fake GPS first (native Android only)
+    checkMockLocation().then(({ isMocked, reason }) => {
+      if (isMocked) {
+        setRejectMessage(`Fake GPS terdeteksi! ${reason}`);
+        return;
+      }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        // Process with fresh GPS data
-        processAttendanceWithGPS(decodedText, latitude, longitude);
-      },
-      (error) => {
-        setRejectMessage('Gagal mendapatkan lokasi GPS. Pastikan GPS aktif.');
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+      // Force get fresh GPS position before processing
+      if (!navigator.geolocation) {
+        setRejectMessage('GPS tidak tersedia di perangkat ini.');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          processAttendanceWithGPS(decodedText, latitude, longitude);
+        },
+        () => {
+          setRejectMessage('Gagal mendapatkan lokasi GPS. Pastikan GPS aktif.');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
   };
 
   // Process attendance with verified GPS position
