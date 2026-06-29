@@ -213,25 +213,9 @@ export default function LoginScreen({
       <header className="w-full bg-[#FCF8FB]/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50 transition-colors duration-300">
         <div className="max-w-5xl mx-auto h-16 px-6 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Digital Clock di pojok kiri atas */}
-            <div className="flex items-center gap-2 py-1.5 px-4 rounded-full stitch-inset">
-              <Clock className="w-3.5 h-3.5 text-gray-500" />
-              <span className="text-[12px] font-bold text-gray-600 tabular-nums">
-                {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
-              </span>
-            </div>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Status Badge */}
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider ${
-              isOnline 
-                ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-                : 'bg-rose-50 border-rose-100 text-rose-700 animate-pulse'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-              <span>{isOnline ? 'Online' : 'Offline'}</span>
-            </div>
           </div>
         </div>
       </header>
@@ -266,11 +250,11 @@ export default function LoginScreen({
             </h1>
           </div>
 
-          {/* Access Restriction Info */}
+          {/* Clock */}
           <div className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-full stitch-inset mb-8">
-            <ShieldCheck className="w-4 h-4 text-[#004494]" />
-            <span className="text-xs text-gray-500 font-bold tracking-wide">
-              Google Workspace Access Only
+            <Clock className="w-4 h-4 text-[#004494]" />
+            <span className="text-xs text-gray-600 font-bold tabular-nums">
+              {currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB
             </span>
           </div>
 
