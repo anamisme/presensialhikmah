@@ -315,42 +315,67 @@ export default function EmployeeApp({
 
   // Process attendance record after scan
   const processAttendance = (qrData: string) => {
+    // Parse QR data first to get location info
+    let locationName = 'Lokasi Tidak Diketahui';
+    let qrLat: number | null = null;
+    let qrLng: number | null = null;
+    let qrRadius: number = 100;
+
+    try {
+      if (qrData.startsWith('P|')) {
+        const parts = qrData.split('|');
+        if (parts.length >= 3) {
+          locationName = parts[2];
+          if (parts.length >= 6) {
+            qrLat = parseFloat(parts[3]);
+            qrLng = parseFloat(parts[4]);
+            qrRadius = parseInt(parts[5]) || 100;
+          }
+        }
+      } else {
+        const parsed = JSON.parse(qrData);
+        if (parsed.type === 'PRESENSI' && parsed.nama) {
+          locationName = parsed.nama;
+          qrLat = parsed.lat;
+          qrLng = parsed.lng;
+          qrRadius = parsed.radius || 100;
+        }
+      }
+    } catch {
+      if (qrData.startsWith('PRESENSI:')) {
+        const locId = qrData.replace('PRESENSI:', '');
+        const matchedGeo = geofences.find(g => g.id === locId || g.nama === locId);
+        if (matchedGeo) {
+          locationName = matchedGeo.nama;
+          qrLat = matchedGeo.lat;
+          qrLng = matchedGeo.lng;
+          qrRadius = matchedGeo.radius;
+        }
+      }
+    }
+
+    // GPS distance validation — block if too far from QR location
+    if (qrLat !== null && qrLng !== null && userLocation) {
+      const distance = calculateDistance(userLocation.lat, userLocation.lng, qrLat, qrLng);
+      if (distance > qrRadius) {
+        setIsCameraActive(false);
+        alert(`Anda berada ${Math.round(distance)}m dari lokasi ${locationName}. Maksimal ${qrRadius}m untuk absen. Silakan mendekati lokasi.`);
+        return;
+      }
+    } else if (!userLocation) {
+      setIsCameraActive(false);
+      alert('Lokasi GPS belum terdeteksi. Pastikan GPS aktif dan izinkan akses lokasi.');
+      return;
+    }
+
     setIsScanning(true);
+    setIsCameraActive(false);
     setTimeout(() => {
       setIsScanning(false);
       setScanSuccess(true);
       
-      // If there's an active session (checked in but not out), this is a checkout
       const isCheckIn = !activeSession;
       const currentHrsMins = formatClock(currentTime);
-
-      // Determine location from QR data or GPS
-      let locationName = selectedLocation?.nama || 'Lokasi Tidak Diketahui';
-      
-      // Parse QR data - supports: "P|id|nama|lat|lng|radius" or JSON format
-      try {
-        if (qrData.startsWith('P|')) {
-          // Short format: P|id|nama|lat|lng|radius
-          const parts = qrData.split('|');
-          if (parts.length >= 3) {
-            locationName = parts[2]; // nama
-          }
-        } else {
-          const parsed = JSON.parse(qrData);
-          if (parsed.type === 'PRESENSI' && parsed.nama) {
-            locationName = parsed.nama;
-          }
-        }
-      } catch {
-        // Legacy format: PRESENSI:locationName
-        if (qrData.startsWith('PRESENSI:')) {
-          const locId = qrData.replace('PRESENSI:', '');
-          const matchedGeo = geofences.find(g => g.id === locId || g.nama === locId);
-          if (matchedGeo) {
-            locationName = matchedGeo.nama;
-          }
-        }
-      }
 
       if (isCheckIn) {
         const checkInHour = currentTime.getHours();
