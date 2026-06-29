@@ -123,14 +123,14 @@ export default function LoginScreen({
       }, 1000);
     } else {
       // 4. Dynamic Auto-Registration for new organization emails
-      const generatedNip = `YBH-${Math.floor(10000000 + Math.random() * 90000000)}`;
+      const generatedNip = `${Date.now()}`;
       const newEmpName = googleUser.displayName || emailLower.split('@')[0].replace(/[^a-zA-Z]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       
       const newEmp: Employee = {
         nip: generatedNip,
         nama: newEmpName,
-        jabatan: "Staf Organisasi",
-        lembaga: "Lembaga IT & Digital",
+        jabatan: "Pendidik",
+        lembaga: "Yayasan Baitul Hikmah",
         foto: googleUser.photoURL || ASSETS.genericAvatar,
         email: emailLower
       };

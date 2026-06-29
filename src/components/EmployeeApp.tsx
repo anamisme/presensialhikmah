@@ -1150,24 +1150,83 @@ export default function EmployeeApp({
               <div>
                 <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{currentUser.nama}</h2>
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{currentUser.jabatan}</p>
-                <span className="inline-block mt-2 text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 font-medium px-3 py-1 rounded-full">
-                  NIP: {currentUser.nip}
-                </span>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{currentUser.lembaga}</p>
               </div>
             </div>
 
-            {/* Detail Group Card */}
+            {/* Edit Jabatan & Lembaga */}
+            <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 p-4 space-y-4 transition-colors duration-300">
+              <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Profil Kepegawaian</h3>
+              
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Jabatan</label>
+                <select
+                  value={currentUser.jabatan}
+                  onChange={(e) => {
+                    const updated = { ...currentUser, jabatan: e.target.value };
+                    onChangeProfilePicture(currentUser.nip, currentUser.foto); // trigger re-render
+                    // Update employee data via localStorage
+                    const employees = JSON.parse(localStorage.getItem('baitul_hikmah_employees') || '[]');
+                    const idx = employees.findIndex((emp: any) => emp.nip === currentUser.nip);
+                    if (idx > -1) {
+                      employees[idx].jabatan = e.target.value;
+                      localStorage.setItem('baitul_hikmah_employees', JSON.stringify(employees));
+                    }
+                    // Update session
+                    const session = JSON.parse(localStorage.getItem('baitul_hikmah_session') || '{}');
+                    if (session?.user?.nip === currentUser.nip) {
+                      session.user.jabatan = e.target.value;
+                      localStorage.setItem('baitul_hikmah_session', JSON.stringify(session));
+                    }
+                    window.location.reload();
+                  }}
+                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
+                >
+                  <option value="Pendidik">Pendidik</option>
+                  <option value="Tenaga Kependidikan">Tenaga Kependidikan</option>
+                  <option value="Kepala Lembaga">Kepala Lembaga</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Lembaga</label>
+                <select
+                  value={currentUser.lembaga}
+                  onChange={(e) => {
+                    // Update employee data via localStorage
+                    const employees = JSON.parse(localStorage.getItem('baitul_hikmah_employees') || '[]');
+                    const idx = employees.findIndex((emp: any) => emp.nip === currentUser.nip);
+                    if (idx > -1) {
+                      employees[idx].lembaga = e.target.value;
+                      localStorage.setItem('baitul_hikmah_employees', JSON.stringify(employees));
+                    }
+                    // Update session
+                    const session = JSON.parse(localStorage.getItem('baitul_hikmah_session') || '{}');
+                    if (session?.user?.nip === currentUser.nip) {
+                      session.user.lembaga = e.target.value;
+                      localStorage.setItem('baitul_hikmah_session', JSON.stringify(session));
+                    }
+                    window.location.reload();
+                  }}
+                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
+                >
+                  <option value="Yayasan Baitul Hikmah">Yayasan Baitul Hikmah</option>
+                  <option value="MTS Al-Hikmah">MTS Al-Hikmah</option>
+                  <option value="MIS Al-Hikmah">MIS Al-Hikmah</option>
+                  <option value="PKBM Al-Hikmah">PKBM Al-Hikmah</option>
+                  <option value="KB Al-Hikmah">KB Al-Hikmah</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Info Card */}
             <div className="bg-white dark:bg-[#1C1C1E] rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 divide-y divide-gray-100 dark:divide-zinc-800 transition-colors duration-300">
               <div className="p-4 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Lembaga</span>
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{currentUser.lembaga}</span>
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</span>
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{currentUser.email || '-'}</span>
               </div>
               <div className="p-4 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Status Pegawai</span>
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Tetap (Aktif)</span>
-              </div>
-              <div className="p-4 flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Batas Absen</span>
+                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Jam Kerja</span>
                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">{limitTime} WIB</span>
               </div>
             </div>
