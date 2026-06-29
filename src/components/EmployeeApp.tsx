@@ -325,14 +325,30 @@ export default function EmployeeApp({
       const currentHrsMins = formatClock(currentTime);
 
       // Determine location from QR data or GPS
-      let locationName = selectedLocation?.nama || 'Kantor Pusat';
+      let locationName = selectedLocation?.nama || 'Lokasi Tidak Diketahui';
       
-      // Try to parse QR data for location info
-      if (qrData.startsWith('PRESENSI:')) {
-        const locId = qrData.replace('PRESENSI:', '');
-        const matchedGeo = geofences.find(g => g.id === locId || g.nama === locId);
-        if (matchedGeo) {
-          locationName = matchedGeo.nama;
+      // Try to parse QR data (new JSON format or legacy PRESENSI: format)
+      try {
+        const parsed = JSON.parse(qrData);
+        if (parsed.type === 'PRESENSI' && parsed.nama) {
+          locationName = parsed.nama;
+          // Optionally validate GPS proximity to QR's coordinates
+          if (parsed.lat && parsed.lng && userLocation) {
+            const distToQR = calculateDistance(userLocation.lat, userLocation.lng, parsed.lat, parsed.lng);
+            if (distToQR > (parsed.radius || 100) * 2) {
+              // Too far from QR location - warn but still allow
+              console.warn(`Jarak ke lokasi QR: ${Math.round(distToQR)}m (radius: ${parsed.radius}m)`);
+            }
+          }
+        }
+      } catch {
+        // Legacy format: PRESENSI:locationName
+        if (qrData.startsWith('PRESENSI:')) {
+          const locId = qrData.replace('PRESENSI:', '');
+          const matchedGeo = geofences.find(g => g.id === locId || g.nama === locId);
+          if (matchedGeo) {
+            locationName = matchedGeo.nama;
+          }
         }
       }
 

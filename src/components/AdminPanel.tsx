@@ -1040,94 +1040,72 @@ export default function AdminPanel({
               {/* Right Column: Generate QR & Info */}
               <div className="space-y-6">
                 
-                {/* Generate QR Code Lokasi */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4">
+                {/* Generate QR Code per Lokasi Gedung */}
+                <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
                     <QrCode className="w-5 h-5 text-[#00418f]" />
-                    <h3 className="font-bold text-gray-800 text-sm">Generate QR Code Lokasi</h3>
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm">QR Code Lokasi Presensi</h3>
                   </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-400 block mb-1">Pilih Lokasi</label>
-                      <select 
-                        value={selectedQRLocation}
-                        onChange={(e) => {
-                          setSelectedQRLocation(e.target.value);
-                          setIsQRGenerated(false); // Reset preview on location swap
-                        }}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none"
-                      >
-                        {geofences.map((geo, idx) => (
-                          <option key={idx} value={geo.nama}>{geo.nama}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Setiap lokasi gedung memiliki QR Code unik berisi data GPS. Cetak dan tempel di lokasi masing-masing.
+                  </p>
 
-                    <button 
-                      onClick={triggerQRGeneration}
-                      disabled={isGeneratingQR}
-                      className="w-full bg-[#00418f] text-white flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-colors active:scale-95 shadow-md"
-                    >
-                      {isGeneratingQR ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <QrCode className="w-4 h-4" />
-                          Generate QR Code
-                        </>
-                      )}
-                    </button>
-
-                    {/* QR Code Preview Box */}
-                    <div className="mt-6 flex flex-col items-center bg-gray-50 p-6 rounded-xl border border-dashed border-gray-200">
-                      <div className="relative w-44 h-44 bg-white p-3 rounded-lg shadow-sm mb-4">
-                        {isQRGenerated ? (
-                          <img 
-                            className="w-full h-full object-contain"
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent('PRESENSI:' + selectedQRLocation)}`} 
-                            alt={`QR Code - ${selectedQRLocation}`} 
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                            <p className="text-gray-400 text-[10px] font-semibold text-center px-4 leading-normal">
-                              Pilih lokasi dan tekan generate untuk pratinjau QR Code
-                            </p>
+                  {geofences.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-4">Belum ada lokasi. Tambahkan di menu "Lokasi Gedung".</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {geofences.map((geo) => {
+                        const qrData = JSON.stringify({
+                          type: 'PRESENSI',
+                          id: geo.id,
+                          nama: geo.nama,
+                          lat: geo.lat,
+                          lng: geo.lng,
+                          radius: geo.radius
+                        });
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
+                        
+                        return (
+                          <div key={geo.id} className="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4 border border-gray-100 dark:border-zinc-700">
+                            <div className="flex items-start gap-4">
+                              {/* QR Code */}
+                              <div className="w-28 h-28 bg-white p-2 rounded-lg shadow-sm shrink-0">
+                                <img 
+                                  src={qrUrl}
+                                  alt={`QR - ${geo.nama}`}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              
+                              {/* Info */}
+                              <div className="flex-1 space-y-2">
+                                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">{geo.nama}</h4>
+                                <div className="space-y-1 text-[10px] text-gray-500 dark:text-gray-400">
+                                  <p className="flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" />
+                                    {geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}
+                                  </p>
+                                  <p>Radius: {geo.radius}m</p>
+                                </div>
+                                
+                                <a 
+                                  href={qrUrl.replace('400x400', '800x800')}
+                                  download={`QR_Presensi_${geo.nama.replace(/\s+/g, '_')}.png`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#00418f] dark:text-blue-400 bg-[#00418f]/10 dark:bg-blue-950/30 px-3 py-1.5 rounded-lg hover:bg-[#00418f]/20 transition-all"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  Download QR
+                                </a>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                      </div>
-
-                      {isQRGenerated && (
-                        <p className="text-[10px] text-gray-500 mb-3 text-center font-mono bg-gray-100 px-3 py-1 rounded-lg">
-                          PRESENSI:{selectedQRLocation}
-                        </p>
-                      )}
-
-                      {isQRGenerated ? (
-                        <a 
-                          href={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent('PRESENSI:' + selectedQRLocation)}`}
-                          download={`qr_code_${selectedQRLocation.replace(/\s+/g, '_')}.png`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 text-xs font-bold text-[#00418f] hover:underline"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download Image (.png)
-                        </a>
-                      ) : (
-                        <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-300 cursor-not-allowed">
-                          <Download className="w-4 h-4" />
-                          Download Image (.png)
-                        </span>
-                      )}
+                        );
+                      })}
                     </div>
-                  </div>
+                  )}
                 </section>
 
                 {/* Kelola Admin */}
