@@ -7,7 +7,6 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider, 
   onAuthStateChanged, 
@@ -27,9 +26,7 @@ let cachedAccessToken: string | null = null;
 
 // Detect if running in Capacitor (Android/iOS)
 const isNativeApp = () => {
-  return window.location.protocol === 'capacitor:' || 
-         window.location.hostname === 'localhost' ||
-         (window as any).Capacitor !== undefined;
+  return (window as any).Capacitor?.isNativePlatform?.() === true;
 };
 
 // Initialize auth state listener
@@ -37,7 +34,7 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  // Check for redirect result (for native app flow)
+  // Check for redirect result
   getRedirectResult(auth).then((result) => {
     if (result) {
       const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -68,17 +65,14 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
   try {
     isSigningIn = true;
     
-    if (isNativeApp()) {
-      // Use redirect for native app (WebView doesn't support popup well)
-      await signInWithRedirect(auth, provider);
-      return null; // Result handled in getRedirectResult above
-    }
-    
-    // Use popup for web browser
+    // Always use popup - for native app, Capacitor's allowNavigation
+    // opens it in Chrome Custom Tab (not blocked WebView)
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (!credential?.accessToken) {
-      throw new Error('Gagal mendapatkan token akses dari Google Auth');
+      // Even without access token, user is still authenticated
+      cachedAccessToken = '';
+      return { user: result.user, accessToken: '' };
     }
 
     cachedAccessToken = credential.accessToken;

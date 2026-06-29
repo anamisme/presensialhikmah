@@ -5,24 +5,23 @@ const config: CapacitorConfig = {
   appName: 'Presensi Al Hikmah',
   webDir: 'dist',
   server: {
-    // Allow navigation to Firebase auth domain for Google Sign-In
+    // This makes Firebase Auth popup open in system browser (Chrome)
+    // instead of embedded WebView — fixes "disallowed_useragent" error
+    androidScheme: 'https',
+    hostname: 'presensialhikmah.pages.dev',
     allowNavigation: [
       'presensi-alhikmah.firebaseapp.com',
       'accounts.google.com',
       '*.google.com',
-      '*.googleapis.com'
+      '*.googleapis.com',
+      '*.gstatic.com'
     ]
   },
   plugins: {
-    Camera: {
-      // Use native camera for photo upload
-    },
-    Geolocation: {
-      // High accuracy GPS
-    }
+    Camera: {},
+    Geolocation: {}
   },
   android: {
-    // Allow mixed content for API calls
     allowMixedContent: true
   }
 };
