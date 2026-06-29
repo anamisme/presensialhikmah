@@ -93,6 +93,7 @@ export default function EmployeeApp({
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [rejectMessage, setRejectMessage] = useState<string | null>(null);
 
   // Online/Offline status and syncing state
   const [isOnlineReal, setIsOnlineReal] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -303,6 +304,14 @@ export default function EmployeeApp({
     }
   }, [activeTab]);
 
+  // Auto-dismiss reject message
+  useEffect(() => {
+    if (rejectMessage) {
+      const timer = setTimeout(() => setRejectMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [rejectMessage]);
+
   // Handle QR scan success
   const handleQRScanSuccess = (decodedText: string) => {
     setScanResult(decodedText);
@@ -310,7 +319,7 @@ export default function EmployeeApp({
     
     // Force get fresh GPS position before processing
     if (!navigator.geolocation) {
-      alert('GPS tidak tersedia di perangkat ini.');
+      setRejectMessage('GPS tidak tersedia di perangkat ini.');
       return;
     }
 
@@ -321,7 +330,7 @@ export default function EmployeeApp({
         processAttendanceWithGPS(decodedText, latitude, longitude);
       },
       (error) => {
-        alert('Gagal mendapatkan lokasi GPS. Pastikan GPS aktif dan izinkan akses lokasi.');
+        setRejectMessage('Gagal mendapatkan lokasi GPS. Pastikan GPS aktif.');
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -372,7 +381,7 @@ export default function EmployeeApp({
     if (qrLat !== null && qrLng !== null) {
       const distance = calculateDistance(gpsLat, gpsLng, qrLat, qrLng);
       if (distance > qrRadius) {
-        alert(`Presensi ditolak! Anda berada ${Math.round(distance)}m dari ${locationName}. Jarak maksimal: ${qrRadius}m.`);
+        setRejectMessage(`Presensi ditolak! Anda berada ${Math.round(distance)}m dari ${locationName}. Maksimal ${qrRadius}m.`);
         return;
       }
     } else {
@@ -381,7 +390,7 @@ export default function EmployeeApp({
         calculateDistance(gpsLat, gpsLng, g.lat, g.lng) <= g.radius
       );
       if (!isNearAny) {
-        alert('Presensi ditolak! Anda tidak berada di area lokasi presensi manapun.');
+        setRejectMessage('Presensi ditolak! Anda tidak berada di area lokasi presensi.');
         return;
       }
     }
@@ -728,6 +737,31 @@ export default function EmployeeApp({
                 )}
               </AnimatePresence>
             </section>
+
+            {/* Reject Message Popup */}
+            <AnimatePresence>
+              {rejectMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                    <ShieldAlert className="w-5 h-5 text-rose-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-rose-700">{rejectMessage}</p>
+                  </div>
+                  <button
+                    onClick={() => setRejectMessage(null)}
+                    className="p-1 text-rose-400 hover:text-rose-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Attendance Status Card */}
             <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4 transition-colors duration-300">
