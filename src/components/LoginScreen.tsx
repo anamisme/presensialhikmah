@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Employee } from '../types';
 import { ASSETS } from '../data';
-import { googleSignIn, initAuth, isNativeApp } from '../googleAuth';
+import { googleSignIn, initAuth } from '../googleAuth';
 import ThemeToggle from './ThemeToggle';
 
 interface LoginScreenProps {
@@ -171,10 +171,7 @@ export default function LoginScreen({
     try {
       const res = await googleSignIn();
       if (res?.user) {
-        if (!isNativeApp()) {
-          handleLoginSuccessWithDetails(res.user);
-        }
-        // Native: signInWithCredential triggers onAuthStateChanged → initAuth handles it
+        handleLoginSuccessWithDetails(res.user);
       }
     } catch (err: any) {
       console.error(err);

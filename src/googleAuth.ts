@@ -12,6 +12,7 @@ import {
   onAuthStateChanged, 
   User 
 } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -26,9 +27,7 @@ let pluginInitialized = false;
 const WEB_CLIENT_ID = '146025221328-me5hhrfvtd63p7nrd6pl0mon1inhh360.apps.googleusercontent.com';
 
 // Detect if running in Capacitor (Android/iOS)
-const isNativeApp = () => {
-  return (window as any).Capacitor?.isNativePlatform?.() === true;
-};
+const isNativeApp = () => Capacitor.isNativePlatform();
 
 // Initialize auth state listener
 export const initAuth = (
