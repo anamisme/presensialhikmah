@@ -503,11 +503,11 @@ export default function EmployeeApp({
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Admin panel button - only for admins viewing employee mode */}
+          {/* Admin panel button - only for admins */}
           {isAdmin && onNavigateToAdmin && (
             <button
               onClick={onNavigateToAdmin}
-              className="hidden sm:flex items-center gap-1 text-[10px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all active:scale-95"
+              className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-all active:scale-95"
             >
               <ShieldAlert className="w-3 h-3" />
               Admin
@@ -577,84 +577,69 @@ export default function EmployeeApp({
               </div>
             )}
 
-            {/* Scan Method */}
-            <div className="bg-gray-200 dark:bg-zinc-800 p-1 rounded-xl flex shadow-inner transition-colors duration-300">
-              <button 
-                onClick={() => setScanMethod('qr')}
-                className="flex-1 py-2 font-medium text-sm rounded-lg bg-white dark:bg-zinc-700 shadow-sm text-[#0058bc] dark:text-[#3b82f6] font-bold"
-              >
-                QR Code
-              </button>
+            {/* Lokasi Terkini - di atas scanner */}
+            <div className="text-center">
+              {nearestGeofence && isWithinGeofence ? (
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                  📍 {nearestGeofence.nama}
+                </p>
+              ) : nearestGeofence ? (
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                  📍 {nearestGeofence.nama} ({distanceToNearest}m)
+                </p>
+              ) : userLocation ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  📍 {userLocation.lat.toFixed(5)}, {userLocation.lng.toFixed(5)}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-400">📍 Mendeteksi lokasi...</p>
+              )}
             </div>
 
-            {/* Real Camera QR Scanner */}
-            <section className="relative aspect-square w-full overflow-hidden rounded-3xl border-4 border-white dark:border-zinc-800 shadow-lg bg-neutral-900 group">
+            {/* QR Scanner - always active viewfinder */}
+            <section className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border-4 border-white dark:border-zinc-800 shadow-lg bg-neutral-900">
               
-              {isCameraActive ? (
-                <>
-                  {/* Real QR Scanner using device camera */}
-                  <QRScanner
-                    isActive={isCameraActive}
-                    scanMethod={scanMethod}
-                    onScanSuccess={handleQRScanSuccess}
-                    onScanError={(err) => console.error('Scan error:', err)}
-                  />
-                  
-                  {/* Close camera button */}
-                  <button
-                    onClick={() => setIsCameraActive(false)}
-                    className="absolute top-4 right-4 z-20 p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-black/80 transition-all"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+              {/* Always-on QR Scanner */}
+              <QRScanner
+                isActive={!(todayRecord?.masuk && todayRecord?.keluar) && todayRecord?.status !== 'Izin'}
+                scanMethod="qr"
+                onScanSuccess={handleQRScanSuccess}
+                onScanError={(err) => console.error('Scan error:', err)}
+              />
 
-                  {/* Viewfinder Frame Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center p-12 pointer-events-none">
-                    <div className="w-full h-full border-2 border-white/30 rounded-2xl relative">
-                      <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-[#0058bc] rounded-tl-lg" />
-                      <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-[#0058bc] rounded-tr-lg" />
-                      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-[#0058bc] rounded-bl-lg" />
-                      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-[#0058bc] rounded-br-lg" />
-                    </div>
-                  </div>
+              {/* Viewfinder Frame Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center p-10 pointer-events-none">
+                <div className="w-full h-full max-w-[250px] max-h-[250px] border-2 border-white/30 rounded-2xl relative">
+                  <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-[#0058bc] rounded-tl-lg" />
+                  <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-[#0058bc] rounded-tr-lg" />
+                  <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-[#0058bc] rounded-bl-lg" />
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-[#0058bc] rounded-br-lg" />
+                </div>
+              </div>
 
-                  {/* Guidance text */}
-                  <div className="absolute bottom-6 left-0 right-0 text-center px-4 pointer-events-none z-10">
-                    <span className="bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-2 shadow-sm">
-                      <Camera className="w-3.5 h-3.5 text-[#005bc1]" />
-                      Arahkan kamera ke QR Code presensi
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Idle state - show preview/placeholder */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 flex flex-col items-center justify-center p-8">
-                    <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mb-4">
-                      {scanMethod === 'qr' ? (
-                        <QrCode className="w-10 h-10 text-white/70" />
-                      ) : (
-                        <User className="w-10 h-10 text-white/70" />
-                      )}
-                    </div>
-                    <p className="text-white/80 text-sm font-semibold text-center">
-                      {scanMethod === 'qr' ? 'Tekan tombol di bawah untuk membuka kamera' : 'Tekan tombol untuk verifikasi wajah'}
-                    </p>
-                    <p className="text-white/50 text-xs mt-2 text-center max-w-[250px]">
-                      {scanMethod === 'qr' 
-                        ? 'Kamera akan aktif dan memindai QR code secara otomatis'
-                        : 'Kamera depan akan aktif untuk verifikasi identitas'}
-                    </p>
-                  </div>
+              {/* Guidance text */}
+              <div className="absolute bottom-4 left-0 right-0 text-center px-4 pointer-events-none z-10">
+                <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1.5 rounded-full">
+                  Arahkan ke QR Code presensi
+                </span>
+              </div>
 
-                  {/* Scanning animation (when processing) */}
-                  {isScanning && (
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-3" />
-                      <p className="text-white text-sm font-semibold">Memproses...</p>
-                    </div>
-                  )}
-                </>
+              {/* Disabled overlay when already checked in/out */}
+              {((todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin') && (
+                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
+                  <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-2" />
+                  <p className="text-white font-bold text-sm">
+                    {todayRecord?.status === 'Izin' ? 'Izin Hari Ini' : 'Absen Selesai'}
+                  </p>
+                </div>
+              )}
+
+              {/* Processing overlay */}
+              {isScanning && (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-20">
+                  <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-3" />
+                  <p className="text-white text-sm font-semibold">Memproses...</p>
+                </div>
               )}
 
               {/* Success Screen Overlay */}
@@ -670,92 +655,32 @@ export default function EmployeeApp({
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.15, type: 'spring' }}
-                      className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 mb-4"
+                      className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-xl mb-3"
                     >
-                      <CheckCircle2 className="w-12 h-12 stroke-[2.5]" />
+                      <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
                     </motion.div>
                     
                     <motion.h2 
                       initial={{ y: 10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.3 }}
-                      className="text-white text-xl font-bold drop-shadow-sm"
+                      className="text-white text-lg font-bold"
                     >
-                      {scanMethod === 'qr' ? 'QR Terverifikasi' : 'Wajah Terverifikasi'}
+                      Presensi Berhasil
                     </motion.h2>
                     
                     <motion.p 
                       initial={{ y: 10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
-                      className="text-emerald-200 text-sm mt-1 max-w-[200px]"
+                      className="text-emerald-200 text-xs mt-1"
                     >
-                      Data absen {todayRecord?.keluar ? 'keluar' : 'masuk'} telah tersimpan
+                      {todayRecord?.keluar ? 'Presensi keluar tercatat' : 'Presensi masuk tercatat'}
                     </motion.p>
-
-                    {scanResult && (
-                      <motion.p 
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                        className="text-emerald-300/60 text-[10px] mt-3 font-mono"
-                      >
-                        ID: {scanResult.substring(0, 30)}
-                      </motion.p>
-                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </section>
-
-            {/* Check-In / Check-Out Action Button - langsung di bawah QR scanner */}
-            <div>
-              <button
-                disabled={isScanning || isCameraActive || (todayRecord?.masuk && todayRecord?.keluar) || todayRecord?.status === 'Izin' || !!gpsWarning}
-                onClick={handleStartScan}
-                className={`w-full h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] ${
-                  isScanning || isCameraActive
-                    ? 'bg-gray-400 dark:bg-zinc-600 text-white cursor-not-allowed'
-                    : todayRecord?.status === 'Izin'
-                    ? 'bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800/30 cursor-not-allowed'
-                    : (todayRecord?.masuk && todayRecord?.keluar)
-                    ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    : todayRecord
-                    ? 'bg-amber-500 dark:bg-amber-600 text-white hover:bg-amber-600 dark:hover:bg-amber-700'
-                    : 'bg-[#005bc1] dark:bg-blue-600 text-white hover:bg-[#0070eb] dark:hover:bg-blue-700'
-                }`}
-              >
-                {isScanning ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Memverifikasi...
-                  </>
-                ) : todayRecord?.status === 'Izin' ? (
-                  <>
-                    <FileText className="w-5 h-5" />
-                    Izin Hari Ini Terdaftar
-                  </>
-                ) : (todayRecord?.masuk && todayRecord?.keluar) ? (
-                  <>
-                    <UserCheck className="w-5 h-5" />
-                    Absen Selesai Hari Ini
-                  </>
-                ) : todayRecord ? (
-                  <>
-                    <LogOut className="w-5 h-5" />
-                    Scan Keluar (Pulang)
-                  </>
-                ) : (
-                  <>
-                    <QrCode className="w-5 h-5" />
-                    Scan Masuk Sekarang
-                  </>
-                )}
-              </button>
-            </div>
 
             {/* Attendance Status Card */}
             <section className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 flex flex-col gap-4 transition-colors duration-300">
