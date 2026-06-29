@@ -396,15 +396,6 @@ export default function AdminPanel({
           </button>
 
           <ThemeToggle className="ml-2" />
-
-          {/* Logout */}
-          <button 
-            onClick={onLogout}
-            className="p-2 rounded-full bg-rose-50 text-rose-500 hover:bg-rose-100 transition-all active:scale-95 dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/50"
-            title="Keluar"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
@@ -1222,13 +1213,6 @@ export default function AdminPanel({
                     <div className="flex-grow min-w-0 text-left">
                       <h4 className="font-bold text-gray-800 text-sm dark:text-gray-100">{adminProfile.nama}</h4>
                       <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold dark:text-gray-500">{adminProfile.role}</p>
-                      <button
-                        onClick={onLogout}
-                        className="mt-2 flex items-center gap-1 text-[10px] text-red-600 font-bold hover:underline dark:text-red-400"
-                      >
-                        <LogOut className="w-3 h-3" />
-                        Keluar dari Sesi
-                      </button>
                     </div>
                   </div>
 
