@@ -36,7 +36,7 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive, scanMe
         if (mountedRef.current) {
           startScanner();
         }
-      }, 300);
+      }, 100);
       return () => clearTimeout(timer);
     } else {
       stopScanner();
@@ -70,9 +70,13 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive, scanMe
       await scanner.start(
         cameraConfig,
         {
-          fps: 10,
-          qrbox: { width: 220, height: 220 },
+          fps: 30,
+          qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            return { width: Math.floor(minEdge * 0.8), height: Math.floor(minEdge * 0.8) };
+          },
           aspectRatio: 1.0,
+          disableFlip: false,
         },
         (decodedText) => {
           if (!hasScannedRef.current) {
