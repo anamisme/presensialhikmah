@@ -20,7 +20,7 @@ import LoginScreen from './components/LoginScreen';
 import { syncAttendanceToSheet } from './googleSheets';
 import { logout as googleLogout } from './googleAuth';
 import { ThemeProvider } from './ThemeContext';
-import { listenSettings, stopListening, saveSetting } from './firebaseDB';
+import { listenSettings, stopListening, saveSetting, listenOwnAttendance, listenAllAttendance, saveAttendanceByNip } from './firebaseDB';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'employee' | 'admin'>(() => {
@@ -71,11 +71,6 @@ export default function App() {
         setGeofences(geos);
         setStoredData('geofences', geos);
       }
-      if (data.attendance) {
-        const att = data.attendance as AttendanceRecord[];
-        setAttendanceRecords(att);
-        setStoredData('attendance', att);
-      }
       if (data.activities) {
         const acts = data.activities as RecentActivity[];
         setRecentActivities(acts);
@@ -105,6 +100,28 @@ export default function App() {
     });
     return () => stopListening();
   }, []);
+
+  // Attendance listener (per-user: karyawan dengar data sendiri, admin dengar semua)
+  useEffect(() => {
+    if (!session) return;
+
+    if (session.role === 'employee') {
+      const nip = session.user?.nip;
+      if (!nip) return;
+      const off = listenOwnAttendance(nip, (records) => {
+        setAttendanceRecords(records);
+        setStoredData('attendance', records);
+      });
+      return off;
+    }
+
+    // Admin: aggregate semua absensi
+    const off = listenAllAttendance((records) => {
+      setAttendanceRecords(records);
+      setStoredData('attendance', records);
+    });
+    return off;
+  }, [session]);
 
   const handleAddAdminEmail = (email: string) => {
     const sanitized = email.toLowerCase().trim();
@@ -140,7 +157,7 @@ export default function App() {
   const updateAttendance = (newAttendance: AttendanceRecord[]) => {
     setAttendanceRecords(newAttendance);
     setStoredData('attendance', newAttendance);
-    saveSetting('attendance', newAttendance);
+    saveAttendanceByNip(newAttendance);
   };
 
   const updateActivities = (newActivities: RecentActivity[]) => {
