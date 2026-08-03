@@ -131,7 +131,7 @@ export default function AdminPanel({
   const handleGoogleLogin = async () => {
     try {
       setExportError(null);
-      const res = await googleSignIn();
+      const res = await googleSignIn(['https://www.googleapis.com/auth/spreadsheets']);
       if (res) {
         setGoogleUser(res.user);
         setGoogleToken(res.accessToken);

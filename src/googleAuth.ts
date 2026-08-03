@@ -43,14 +43,17 @@ export const initAuth = (
 };
 
 // Sign in with Google
-export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
+// scopes opsional: jika diisi, plugin akan membuka alur OAuth browser tambahan
+// (diperlukan hanya untuk akses token Google API seperti export Sheets).
+// Login standar cukup tanpa scopes -> hanya Credential Manager, tanpa browser.
+export const googleSignIn = async (scopes?: string[]): Promise<{ user: User; accessToken: string } | null> => {
   try {
     if (isNativeApp()) {
       // Native Android/iOS: use Capacitor plugin for native account picker
       const { GoogleSignIn } = await import('@capawesome/capacitor-google-sign-in');
       await GoogleSignIn.initialize({
         clientId: WEB_CLIENT_ID,
-        scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
+        scopes,
       });
 
       const result = await GoogleSignIn.signIn();
