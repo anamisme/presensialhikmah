@@ -18,32 +18,22 @@ import {
   ChevronRight,
   MapPin,
   QrCode,
-  Info,
-  Sliders,
   LogOut,
   LayoutDashboard,
-  Map,
   FileText,
-  BadgeAlert,
-  Database,
   ArrowLeft,
   Settings,
-  Edit,
   UserPlus,
   FileSpreadsheet,
   ExternalLink,
   Check,
   X,
-  ShieldCheck,
-  Sun,
-  Moon,
   AlertTriangle
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
-import { syncAttendanceToSheet } from '../googleSheets';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
-import { ASSETS, setStoredData } from '../data';
+import { ASSETS } from '../data';
 import ThemeToggle from './ThemeToggle';
 
 interface AdminPanelProps {
@@ -52,7 +42,11 @@ interface AdminPanelProps {
   geofences: Geofence[];
   recentActivities: RecentActivity[];
   limitTime: string;
+  jamPulang: string;
+  hariLibur: number[];
   onSetLimitTime: (time: string) => void;
+  onSetJamPulang: (time: string) => void;
+  onSetHariLibur: (days: number[]) => void;
   onAddEmployee: (emp: Employee) => void;
   onDeleteEmployee: (nip: string) => void;
   onAddGeofence: (geo: Geofence) => void;
@@ -72,7 +66,11 @@ export default function AdminPanel({
   geofences,
   recentActivities,
   limitTime,
+  jamPulang: jamPulangProp,
+  hariLibur: hariLiburProp,
   onSetLimitTime,
+  onSetJamPulang,
+  onSetHariLibur,
   onAddEmployee,
   onDeleteEmployee,
   onAddGeofence,
@@ -213,18 +211,8 @@ export default function AdminPanel({
 
   // Set Waktu input state
   const [tempLimitTime, setTempLimitTime] = useState(limitTime);
-  const [tempJamPulang, setTempJamPulang] = useState(() => {
-    try {
-      const stored = localStorage.getItem('baitul_hikmah_jam_pulang');
-      return stored ? JSON.parse(stored) : '17:00';
-    } catch { return '17:00'; }
-  });
-  const [hariLibur, setHariLibur] = useState<number[]>(() => {
-    try {
-      const stored = localStorage.getItem('baitul_hikmah_hari_libur');
-      return stored ? JSON.parse(stored) : [6]; // Default: Minggu (index 6)
-    } catch { return [6]; }
-  });
+  const [tempJamPulang, setTempJamPulang] = useState(jamPulangProp);
+  const [hariLibur, setHariLibur] = useState<number[]>(hariLiburProp);
 
   // CSV Exporter
   // CSV Exporter with injection prevention
@@ -452,13 +440,6 @@ export default function AdminPanel({
             Pengaturan
           </button>
 
-          <div className="mt-auto p-4 bg-gray-50 rounded-2xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide dark:text-gray-500">Sistem Info</h4>
-            <div className="flex items-center gap-2 mt-2 text-xs text-gray-600 dark:text-gray-400">
-              <Database className="w-3.5 h-3.5 text-[#00418f]" />
-              <span>Drizzle ORM + Cloud SQL</span>
-            </div>
-          </div>
         </aside>
 
         {/* Content Canvas */}
@@ -918,9 +899,13 @@ export default function AdminPanel({
                           type="button"
                           onClick={() => {
                             if (hariLibur.includes(idx)) {
-                              setHariLibur(hariLibur.filter(d => d !== idx));
+                              const updated = hariLibur.filter(d => d !== idx);
+                              setHariLibur(updated);
+                              onSetHariLibur(updated);
                             } else {
-                              setHariLibur([...hariLibur, idx]);
+                              const updated = [...hariLibur, idx];
+                              setHariLibur(updated);
+                              onSetHariLibur(updated);
                             }
                           }}
                           className={`py-2 px-1 rounded-lg text-[10px] font-bold border transition-all ${
@@ -943,8 +928,8 @@ export default function AdminPanel({
                   <button 
                     onClick={() => {
                       onSetLimitTime(tempLimitTime);
-                      setStoredData('jam_pulang', tempJamPulang);
-                      setStoredData('hari_libur', hariLibur);
+                      onSetJamPulang(tempJamPulang);
+                      onSetHariLibur(hariLibur);
                       alert(`Pengaturan waktu kerja berhasil disimpan!\nJam Masuk: ${tempLimitTime}\nJam Pulang: ${tempJamPulang}\nHari Libur: ${hariLibur.length > 0 ? hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ') : 'Tidak ada'}`);
                     }}
                     className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md dark:bg-blue-700"

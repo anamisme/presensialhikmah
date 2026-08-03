@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   getStoredData, 
   setStoredData, 
@@ -20,6 +20,7 @@ import LoginScreen from './components/LoginScreen';
 import { syncAttendanceToSheet } from './googleSheets';
 import { logout as googleLogout } from './googleAuth';
 import { ThemeProvider } from './ThemeContext';
+import { listenSettings, stopListening, saveSetting } from './firebaseDB';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'employee' | 'admin'>(() => {
@@ -33,6 +34,8 @@ export default function App() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => getStoredData('attendance', INITIAL_ATTENDANCE));
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(() => getStoredData('activities', INITIAL_ACTIVITIES));
   const [limitTime, setLimitTime] = useState<string>(() => getStoredData('limit_time', '07:00'));
+  const [jamPulang, setJamPulang] = useState<string>(() => getStoredData('jam_pulang', '17:00'));
+  const [hariLibur, setHariLibur] = useState<number[]>(() => getStoredData('hari_libur', [6]));
 
   // Session state (null means logged out, shows Login screen)
   const [session, setSession] = useState<{ role: 'employee' | 'admin'; user: any } | null>(() => {
@@ -51,10 +54,57 @@ export default function App() {
   const HARDCODED_ADMINS = ['contact@yayasanbaitulhikmah.com', 'anam@yayasanbaitulhikmah.com'];
   const [adminEmails, setAdminEmails] = useState<string[]>(() => {
     const stored = getStoredData('admin_emails', HARDCODED_ADMINS);
-    // Merge hardcoded admins with stored ones
     const merged = [...new Set([...HARDCODED_ADMINS, ...stored])];
     return merged;
   });
+
+  // Firebase Realtime Database sync
+  useEffect(() => {
+    listenSettings((data) => {
+      if (data.employees) {
+        const emps = data.employees as Employee[];
+        setEmployees(emps);
+        setStoredData('employees', emps);
+      }
+      if (data.geofences) {
+        const geos = data.geofences as Geofence[];
+        setGeofences(geos);
+        setStoredData('geofences', geos);
+      }
+      if (data.attendance) {
+        const att = data.attendance as AttendanceRecord[];
+        setAttendanceRecords(att);
+        setStoredData('attendance', att);
+      }
+      if (data.activities) {
+        const acts = data.activities as RecentActivity[];
+        setRecentActivities(acts);
+        setStoredData('activities', acts);
+      }
+      if (data.limit_time) {
+        const lt = data.limit_time as string;
+        setLimitTime(lt);
+        setStoredData('limit_time', lt);
+      }
+      if (data.jam_pulang) {
+        const jp = data.jam_pulang as string;
+        setJamPulang(jp);
+        setStoredData('jam_pulang', jp);
+      }
+      if (data.hari_libur) {
+        const hl = data.hari_libur as number[];
+        setHariLibur(hl);
+        setStoredData('hari_libur', hl);
+      }
+      if (data.admin_emails) {
+        const emails = data.admin_emails as string[];
+        const merged = [...new Set([...HARDCODED_ADMINS, ...emails])];
+        setAdminEmails(merged);
+        setStoredData('admin_emails', merged);
+      }
+    });
+    return () => stopListening();
+  }, []);
 
   const handleAddAdminEmail = (email: string) => {
     const sanitized = email.toLowerCase().trim();
@@ -63,40 +113,58 @@ export default function App() {
     const updated = [...adminEmails, sanitized];
     setAdminEmails(updated);
     setStoredData('admin_emails', updated);
+    saveSetting('admin_emails', updated);
   };
 
   const handleRemoveAdminEmail = (email: string) => {
-    // Cannot remove hardcoded admins
     if (HARDCODED_ADMINS.includes(email)) return;
     const updated = adminEmails.filter(e => e !== email);
     setAdminEmails(updated);
     setStoredData('admin_emails', updated);
+    saveSetting('admin_emails', updated);
   };
 
-  // Sync state to localStorage on update
+  // Sync state to localStorage and Firebase on update
   const updateEmployees = (newEmployees: Employee[]) => {
     setEmployees(newEmployees);
     setStoredData('employees', newEmployees);
+    saveSetting('employees', newEmployees);
   };
 
   const updateGeofences = (newGeofences: Geofence[]) => {
     setGeofences(newGeofences);
     setStoredData('geofences', newGeofences);
+    saveSetting('geofences', newGeofences);
   };
 
   const updateAttendance = (newAttendance: AttendanceRecord[]) => {
     setAttendanceRecords(newAttendance);
     setStoredData('attendance', newAttendance);
+    saveSetting('attendance', newAttendance);
   };
 
   const updateActivities = (newActivities: RecentActivity[]) => {
     setRecentActivities(newActivities);
     setStoredData('activities', newActivities);
+    saveSetting('activities', newActivities);
   };
 
   const updateLimitTimeValue = (newTime: string) => {
     setLimitTime(newTime);
     setStoredData('limit_time', newTime);
+    saveSetting('limit_time', newTime);
+  };
+
+  const updateJamPulang = (newTime: string) => {
+    setJamPulang(newTime);
+    setStoredData('jam_pulang', newTime);
+    saveSetting('jam_pulang', newTime);
+  };
+
+  const updateHariLibur = (newDays: number[]) => {
+    setHariLibur(newDays);
+    setStoredData('hari_libur', newDays);
+    saveSetting('hari_libur', newDays);
   };
 
   const handleLoginSuccess = (newSession: { role: 'employee' | 'admin'; user: any }) => {
@@ -273,7 +341,11 @@ export default function App() {
           geofences={geofences}
           recentActivities={recentActivities}
           limitTime={limitTime}
+          jamPulang={jamPulang}
+          hariLibur={hariLibur}
           onSetLimitTime={updateLimitTimeValue}
+          onSetJamPulang={updateJamPulang}
+          onSetHariLibur={updateHariLibur}
           onAddEmployee={handleAddEmployee}
           onDeleteEmployee={handleDeleteEmployee}
           onAddGeofence={handleAddGeofence}

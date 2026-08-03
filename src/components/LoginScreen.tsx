@@ -6,21 +6,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Fingerprint, 
-  Sparkles, 
   Moon, 
   Sun,
-  Building2,
-  Mail,
   ShieldAlert,
-  Wifi,
   WifiOff,
   Clock,
-  ShieldCheck,
-  ArrowRight,
-  Lock,
-  Globe,
-  ExternalLink
 } from 'lucide-react';
 import { Employee } from '../types';
 import { ASSETS } from '../data';

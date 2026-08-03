@@ -96,3 +96,4 @@ export const logout = async () => {
 };
 
 export { isNativeApp };
+export { app, auth };
