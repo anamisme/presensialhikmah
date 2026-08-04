@@ -233,6 +233,7 @@ export default function LoginScreen({
       <header className="w-full bg-[#FCF8FB]/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-50 transition-colors duration-300">
         <div className="max-w-5xl mx-auto h-16 px-6 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <img src={logoUrl} alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 object-contain" />
           </div>
 
           <div className="flex items-center gap-4">
