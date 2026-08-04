@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "146025221328",
+    "firebase_url": "https://presensi-alhikmah-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "presensi-alhikmah",
     "storage_bucket": "presensi-alhikmah.firebasestorage.app"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "146025221328-8ntbnh3sqgt04folpm35btuq9el4agks.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yayasanbaitulhikmah.presensi",
+            "certificate_hash": "7401bf8116c6487b6d2b87c4f5b7e8660457d04f"
+          }
+        },
         {
           "client_id": "146025221328-f0kp4mki2dqdc9s4v7m136mfan2k53fc.apps.googleusercontent.com",
           "client_type": 1,
