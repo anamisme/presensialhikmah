@@ -361,7 +361,7 @@ export default function AdminPanel({
       {/* Admin Top App Bar */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100/50 flex justify-between items-center px-4 md:px-6 h-16 shadow-sm dark:bg-gray-900/80 dark:border-gray-800/50">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 object-contain" />
+            <img src="/logo.png" alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 rounded-full object-cover" />
           <h1 className="font-bold text-lg text-gray-800 tracking-tight">Admin Panel</h1>
         </div>
         

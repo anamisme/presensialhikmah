@@ -253,10 +253,10 @@ export default function LoginScreen({
           className="w-full max-w-[440px] stitch-card p-8 sm:p-12 rounded-[2.5rem] flex flex-col items-center transition-all duration-300"
         >
           {/* Logo Section */}
-          <div className="mb-8 p-4 rounded-full stitch-pill">
+          <div className="mb-8 w-24 h-24 rounded-full bg-white dark:bg-gray-800 shadow-lg overflow-hidden flex items-center justify-center border-2 border-white/50 dark:border-gray-700">
             <img 
               alt="Yayasan Baitul Hikmah Logo" 
-              className="w-16 h-16 object-contain" 
+              className="w-full h-full object-cover rounded-full" 
               src={logoUrl} 
               referrerPolicy="no-referrer"
             />
