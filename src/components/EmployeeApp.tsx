@@ -1156,34 +1156,6 @@ export default function EmployeeApp({
                 </div>
               </div>
               
-              {/* Circular summary progress */}
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center gap-4 transition-colors duration-300">
-                <div className="relative w-32 h-32 flex items-center justify-center">
-                  {/* SVG circular track */}
-                  <svg className="absolute w-full h-full transform -rotate-90">
-                    <circle cx="64" cy="64" r="54" strokeWidth="8" stroke="#f3f4f6" className="dark:stroke-zinc-800" fill="transparent" />
-                    <circle cx="64" cy="64" r="54" strokeWidth="8" stroke="#0058bc" className="dark:stroke-[#3b82f6]" fill="transparent" 
-                            strokeDasharray={339.3}
-                            strokeDashoffset={339.3 - (339.3 * (personalRecords.length > 0 ? (personalRecords.filter(r => r.status === 'Tepat Waktu').length / personalRecords.length) * 100 : 0)) / 100}
-                            strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="text-center">
-                    <span className="text-2xl font-black text-gray-800 dark:text-gray-100">
-                      {personalRecords.length > 0 ? ((personalRecords.filter(r => r.status === 'Tepat Waktu').length / personalRecords.length) * 100).toFixed(1) : '0'}%
-                    </span>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Hadir Tepat</p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-gray-800 dark:text-gray-100">
-                    {personalRecords.length > 0 ? 'Performa Kehadiran Bagus' : 'Belum Ada Data Kehadiran'}
-                  </h3>
-                </div>
-              </div>
-
-
             {/* Metrics Breakdown Grid */}
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
