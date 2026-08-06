@@ -27,7 +27,8 @@ import {
   Check,
   X,
   AlertTriangle,
-  Printer
+  Printer,
+  Edit3
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
 import { ASSETS, localDateString } from '../data';
@@ -52,6 +53,7 @@ interface AdminPanelProps {
   onAddEmployee: (emp: Employee) => void;
   onDeleteEmployee: (nip: string) => void;
   onAddGeofence: (geo: Geofence) => void;
+  onUpdateGeofence: (id: string, updates: Partial<Geofence>) => void;
   onDeleteGeofence: (id: string) => void;
   onBackToEmployee: () => void;
   adminProfile: { nama: string; foto: string; role: string };
@@ -80,6 +82,7 @@ export default function AdminPanel({
   onAddEmployee,
   onDeleteEmployee,
   onAddGeofence,
+  onUpdateGeofence,
   onDeleteGeofence,
   onBackToEmployee,
   adminProfile,
@@ -103,6 +106,13 @@ export default function AdminPanel({
   const [customQrDataUrl, setCustomQrDataUrl] = useState('');
   const [customQrImgError, setCustomQrImgError] = useState(false);
   const customQrRef = useRef<HTMLDivElement>(null);
+
+  // State for editing existing QR/location
+  const [editingGeoId, setEditingGeoId] = useState<string | null>(null);
+  const [editQrNama, setEditQrNama] = useState('');
+  const [editQrLat, setEditQrLat] = useState('');
+  const [editQrLng, setEditQrLng] = useState('');
+  const [editQrRadius, setEditQrRadius] = useState('');
 
   // Admin custom profile picture states
   const [adminCustomPhotoUrl, setAdminCustomPhotoUrl] = useState('');
@@ -1117,6 +1127,19 @@ export default function AdminPanel({
                                     <Download className="w-3 h-3" />
                                     Download QR
                                   </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingGeoId(geo.id);
+                                      setEditQrNama(geo.nama);
+                                      setEditQrLat(String(geo.lat));
+                                      setEditQrLng(String(geo.lng));
+                                      setEditQrRadius(String(geo.radius));
+                                    }}
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-all dark:text-indigo-400 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50"
+                                  >
+                                    <Edit3 className="w-3 h-3" />
+                                    Edit QR
+                                  </button>
                                   <button 
                                     onClick={() => {
                                       if (confirm(`Hapus lokasi ${geo.nama} beserta QR-nya?`)) {
@@ -1129,6 +1152,77 @@ export default function AdminPanel({
                                     Hapus
                                   </button>
                                 </div>
+                                {editingGeoId === geo.id && (
+                                  <div className="mt-3 space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-900 dark:bg-indigo-950/30">
+                                    <div>
+                                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Nama Gedung / Lokasi</label>
+                                      <input
+                                        type="text"
+                                        value={editQrNama}
+                                        onChange={(e) => setEditQrNama(e.target.value)}
+                                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-900 dark:border-gray-700"
+                                      />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Latitude</label>
+                                        <input
+                                          type="text"
+                                          value={editQrLat}
+                                          onChange={(e) => setEditQrLat(e.target.value)}
+                                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none dark:bg-gray-900 dark:border-gray-700"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Longitude</label>
+                                        <input
+                                          type="text"
+                                          value={editQrLng}
+                                          onChange={(e) => setEditQrLng(e.target.value)}
+                                          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none dark:bg-gray-900 dark:border-gray-700"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Radius (meter)</label>
+                                      <input
+                                        type="number"
+                                        value={editQrRadius}
+                                        onChange={(e) => setEditQrRadius(e.target.value)}
+                                        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none dark:bg-gray-900 dark:border-gray-700"
+                                      />
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => {
+                                          if (!editQrNama.trim() || !editQrLat.trim() || !editQrLng.trim()) {
+                                            alert('Lengkapi nama, latitude, dan longitude.');
+                                            return;
+                                          }
+                                          const lat = parseFloat(editQrLat);
+                                          const lng = parseFloat(editQrLng);
+                                          if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                                            alert('Koordinat tidak valid.');
+                                            return;
+                                          }
+                                          const radius = parseInt(editQrRadius, 10) || 100;
+                                          onUpdateGeofence(geo.id, { nama: editQrNama.trim(), lat, lng, radius });
+                                          setEditingGeoId(null);
+                                        }}
+                                        className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-[#00418f] px-3 py-2 rounded-lg hover:brightness-110 active:scale-95 transition-all dark:bg-blue-700"
+                                      >
+                                        <Check className="w-3.5 h-3.5" />
+                                        Simpan Perubahan
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingGeoId(null)}
+                                        className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-gray-600 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all dark:text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                                      >
+                                        Batal
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>

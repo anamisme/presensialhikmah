@@ -376,6 +376,11 @@ export default function App() {
     updateGeofences(updated);
   };
 
+  const handleUpdateGeofence = (id: string, updates: Partial<Geofence>) => {
+    const updated = geofences.map(g => g.id === id ? { ...g, ...updates } : g);
+    updateGeofences(updated);
+  };
+
   const handleDeleteGeofence = (id: string) => {
     const updated = geofences.filter(g => g.id !== id);
     updateGeofences(updated);
@@ -435,6 +440,7 @@ export default function App() {
           onAddEmployee={handleAddEmployee}
           onDeleteEmployee={handleDeleteEmployee}
           onAddGeofence={handleAddGeofence}
+          onUpdateGeofence={handleUpdateGeofence}
           onDeleteGeofence={handleDeleteGeofence}
           onBackToEmployee={() => setCurrentView('employee')}
           adminProfile={adminProfile}
