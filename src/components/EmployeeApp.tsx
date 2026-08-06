@@ -643,7 +643,7 @@ export default function EmployeeApp({
               <div>
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{getGreeting()}, {currentUser.nama}</span>
                 <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                  {new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }).format(currentTime)}
+                  {new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(currentTime)}
                 </h1>
               </div>
               <div className="text-right">
@@ -1004,7 +1004,7 @@ export default function EmployeeApp({
                             <button
                               onClick={() => {
                                 setViewingAttachment(r.lampiran || null);
-                                setAttachmentTitle(`Lampiran Izin - ${new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' }).format(new Date(r.tanggal))}`);
+                                setAttachmentTitle(`Lampiran Izin - ${new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long' }).format(new Date(r.tanggal))}`);
                               }}
                               className="text-[10px] text-sky-500 hover:underline flex items-center gap-1 cursor-pointer"
                             >
