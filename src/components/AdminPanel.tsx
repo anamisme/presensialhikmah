@@ -765,8 +765,11 @@ export default function AdminPanel({
                                 }`} />
                                 {rec.status}
                               </span>
-                              {rec.status === 'Izin' && rec.keterangan && (
+                              {rec.status === 'Izin' && (rec.keterangan || rec.izinMulai) && (
                                 <div className="mt-1.5 max-w-[200px] text-left text-[10px] font-medium text-gray-500 leading-normal dark:text-gray-400">
+                                  {rec.izinMulai && rec.izinSelesai && (
+                                    <p className="font-bold text-sky-700 dark:text-sky-400 mb-1">Izin Parsial {rec.izinMulai} - {rec.izinSelesai}</p>
+                                  )}
                                   <p className="italic bg-gray-50 p-1.5 rounded-lg border border-gray-100 dark:bg-gray-800 dark:border-gray-700">{rec.keterangan}</p>
                                   {rec.lampiran && (
                                     <button

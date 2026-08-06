@@ -78,6 +78,8 @@ export default function EmployeeApp({
   const [permitType, setPermitType] = useState<'Izin' | 'Sakit' | 'Dinas Luar'>('Izin');
   const [permitReason, setPermitReason] = useState('');
   const [permitFile, setPermitFile] = useState<string | null>(null);
+  const [permitStart, setPermitStart] = useState('');
+  const [permitEnd, setPermitEnd] = useState('');
 
   // New States for Profile Picture Editing
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
@@ -561,7 +563,8 @@ export default function EmployeeApp({
   };
 
   const handleStartScan = () => {
-    if (todayRecords.some(r => r.status === 'Izin')) return;
+    // Hanya izin full day yang memblokir absen QR; izin parsial (berdasarkan jam) tidak
+    if (todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai)) return;
     
     // Refresh GPS before opening camera
     getCurrentLocation();
@@ -739,8 +742,8 @@ export default function EmployeeApp({
                 </div>
               )}
 
-              {/* Disabled overlay when izin */}
-              {todayRecords.some(r => r.status === 'Izin') && (
+              {/* Disabled overlay when izin full day */}
+              {todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) && (
                 <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
                   <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-2" />
                   <p className="text-white font-bold text-sm">Izin Hari Ini</p>
@@ -824,7 +827,7 @@ export default function EmployeeApp({
             <section className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col gap-4 transition-colors duration-300">
               <div className="flex justify-center">
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
-                  todayRecords.some(r => r.status === 'Izin')
+                  todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai)
                     ? 'bg-sky-100 text-sky-700 border border-sky-100'
                     : activeSession
                     ? 'bg-[#6ffb85]/20 text-[#00732a]'
@@ -832,11 +835,11 @@ export default function EmployeeApp({
                     ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
                     : 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
                 }`}>
-                  {todayRecords.some(r => r.status === 'Izin') ? 'Izin' : activeSession ? 'Sedang Bekerja' : sessionTodayRecords.length > 0 ? `Sudah Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}` : `Belum Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}`}
+                  {todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) ? 'Izin' : activeSession ? 'Sedang Bekerja' : sessionTodayRecords.length > 0 ? `Sudah Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}` : `Belum Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}`}
                 </span>
               </div>
 
-              {todayRecords.some(r => r.status === 'Izin') ? (
+              {todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) ? (
                 <div className="bg-sky-50/50 p-4 rounded-xl border border-sky-100 text-left">
                   <div className="flex items-center gap-2 text-sky-800 font-bold text-sm mb-1.5">
                     <FileText className="w-4 h-4 shrink-0" />
@@ -847,26 +850,39 @@ export default function EmployeeApp({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Masuk</p>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-emerald-600" />
-                      <span className="font-bold text-lg text-emerald-600">
-                        {activeSession ? activeSession.masuk : todayRecord?.masuk || '--:--'}
-                      </span>
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Masuk</p>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-emerald-600" />
+                        <span className="font-bold text-lg text-emerald-600">
+                          {activeSession ? activeSession.masuk : todayRecord?.masuk || '--:--'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 border-l border-gray-200 dark:border-gray-700 pl-4">
+                      <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Keluar</p>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="font-bold text-lg text-gray-700 dark:text-gray-300">
+                          {activeSession ? '--:--' : todayRecord?.keluar || '--:--'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-1 border-l border-gray-200 dark:border-gray-700 pl-4">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Keluar</p>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                      <span className="font-bold text-lg text-gray-700 dark:text-gray-300">
-                        {activeSession ? '--:--' : todayRecord?.keluar || '--:--'}
-                      </span>
+                  {todayRecords.some(r => r.status === 'Izin' && (r.izinMulai || r.izinSelesai)) && (
+                    <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100 text-left">
+                      <div className="flex items-center gap-2 text-sky-800 font-bold text-xs mb-1">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>Izin Parsial: {todayRecords.find(r => r.status === 'Izin')?.izinMulai || '??:??'} - {todayRecords.find(r => r.status === 'Izin')?.izinSelesai || '??:??'} WIB</span>
+                      </div>
+                      <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">
+                        {todayRecords.find(r => r.status === 'Izin')?.keterangan || 'Tanpa keterangan'} — selain jam tersebut tetap absen normal via QR.
+                      </p>
                     </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
 
               {todayRecords.length > 1 && (
@@ -884,7 +900,7 @@ export default function EmployeeApp({
             </section>
 
             {/* Request Permit Banner */}
-            {!todayRecords.some(r => r.status === 'Izin') && !activeSession && (
+            {!todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) && !activeSession && (
               <div className="bg-sky-500/10 rounded-2xl p-4 border border-sky-500/20 flex items-center justify-between gap-3 text-left transition-all duration-300">
                 <div className="space-y-1">
                   <h4 className="text-xs font-black text-[#0058bc] dark:text-[#3b82f6] uppercase tracking-wider">Berhalangan Hadir?</h4>
@@ -982,7 +998,7 @@ export default function EmployeeApp({
                         <div className="flex flex-col gap-1">
                           <span className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-semibold">
                             <span className="w-2 h-2 rounded-full bg-sky-500" />
-                            Izin: {r.keterangan || 'Tanpa Keterangan'}
+                            {r.izinMulai && r.izinSelesai ? `Izin Parsial ${r.izinMulai}-${r.izinSelesai}: ${r.keterangan || 'Tanpa Keterangan'}` : `Izin: ${r.keterangan || 'Tanpa Keterangan'}`}
                           </span>
                           {r.lampiran && (
                             <button
@@ -1478,6 +1494,34 @@ export default function EmployeeApp({
                   </div>
                 </div>
 
+                {/* Partial permit hours (opsional - bila diisi = izin sebagian hari) */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Izin (Opsional — Kosongkan = Izin Penuh Hari)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 block mb-1">Dari</label>
+                      <input
+                        type="time"
+                        value={permitStart}
+                        onChange={(e) => setPermitStart(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs font-semibold text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#0058bc]/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-gray-500 block mb-1">Sampai</label>
+                      <input
+                        type="time"
+                        value={permitEnd}
+                        onChange={(e) => setPermitEnd(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs font-semibold text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#0058bc]/20"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-gray-400 dark:text-gray-500">
+                    Isi jam mulai & selesai untuk izin sebagian hari (contoh: 08:00 - 10:00). Kosongkan jika izin penuh hari.
+                  </p>
+                </div>
+
                 {/* Reason/Keterangan */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Alasan / Keterangan Tambahan</label>
@@ -1554,6 +1598,11 @@ export default function EmployeeApp({
                       return;
                     }
                     const todayStr = localDateString();
+                    const isPartial = Boolean(permitStart && permitEnd);
+                    if (isPartial && permitStart >= permitEnd) {
+                      alert('Jam selesai harus lebih lambat dari jam mulai izin.');
+                      return;
+                    }
                     const fullKeterangan = `${permitType}: ${permitReason}`;
                     const newRecord: AttendanceRecord = {
                       id: `rec-${Date.now()}`,
@@ -1566,7 +1615,9 @@ export default function EmployeeApp({
                       status: 'Izin',
                       lokasi: currentUser.lembaga || 'Umum',
                       keterangan: fullKeterangan,
-                      lampiran: permitFile || undefined
+                      lampiran: permitFile || undefined,
+                      izinMulai: isPartial ? permitStart : undefined,
+                      izinSelesai: isPartial ? permitEnd : undefined
                     };
 
                     if (isOnline) {
@@ -1580,7 +1631,9 @@ export default function EmployeeApp({
                     setIsPermitModalOpen(false);
                     setPermitReason('');
                     setPermitFile(null);
-                    setSuccessMessage(isOnline ? 'Izin berhasil dikirim!' : 'Izin tersimpan offline, akan disinkronkan saat online.');
+                    setPermitStart('');
+                    setPermitEnd('');
+                    setSuccessMessage(isOnline ? (isPartial ? 'Izin parsial berhasil dikirim!' : 'Izin berhasil dikirim!') : 'Izin tersimpan offline, akan disinkronkan saat online.');
                     setTimeout(() => setSuccessMessage(null), 3000);
                   }}
                   className="flex-1 py-3 text-xs font-bold rounded-xl bg-sky-600 hover:bg-sky-700 text-white shadow-md transition-colors"

@@ -25,6 +25,8 @@ export interface AttendanceRecord {
   keterangan?: string; // reason for permit
   lampiran?: string; // base64 or photo URL for permit proof
   sesi?: 'siang' | 'malam'; // attendance session
+  izinMulai?: string; // partial permit start "HH:MM" (izin sebagian hari)
+  izinSelesai?: string; // partial permit end "HH:MM"
 }
 
 export interface Geofence {
