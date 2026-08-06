@@ -563,7 +563,7 @@ export default function EmployeeApp({
   };
 
   const handleStartScan = () => {
-    // Hanya izin full day yang memblokir absen QR; izin parsial (berdasarkan jam) tidak
+    // Hanya izin full day yang memblokir absen QR; izin jam tertentu tidak
     if (todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai)) return;
     
     // Refresh GPS before opening camera
@@ -875,7 +875,7 @@ export default function EmployeeApp({
                     <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100 text-left">
                       <div className="flex items-center gap-2 text-sky-800 font-bold text-xs mb-1">
                         <Clock className="w-3.5 h-3.5 shrink-0" />
-                        <span>Izin Parsial: {todayRecords.find(r => r.status === 'Izin')?.izinMulai || '??:??'} - {todayRecords.find(r => r.status === 'Izin')?.izinSelesai || '??:??'} WIB</span>
+                        <span>Izin Jam Tertentu: {todayRecords.find(r => r.status === 'Izin')?.izinMulai || '??:??'} - {todayRecords.find(r => r.status === 'Izin')?.izinSelesai || '??:??'} WIB</span>
                       </div>
                       <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium">
                         {todayRecords.find(r => r.status === 'Izin')?.keterangan || 'Tanpa keterangan'} — selain jam tersebut tetap absen normal via QR.
@@ -998,7 +998,7 @@ export default function EmployeeApp({
                         <div className="flex flex-col gap-1">
                           <span className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-semibold">
                             <span className="w-2 h-2 rounded-full bg-sky-500" />
-                            {r.izinMulai && r.izinSelesai ? `Izin Parsial ${r.izinMulai}-${r.izinSelesai}: ${r.keterangan || 'Tanpa Keterangan'}` : `Izin: ${r.keterangan || 'Tanpa Keterangan'}`}
+                            {r.izinMulai && r.izinSelesai ? `Izin Jam Tertentu ${r.izinMulai}-${r.izinSelesai}: ${r.keterangan || 'Tanpa Keterangan'}` : `Izin: ${r.keterangan || 'Tanpa Keterangan'}`}
                           </span>
                           {r.lampiran && (
                             <button
@@ -1633,7 +1633,7 @@ export default function EmployeeApp({
                     setPermitFile(null);
                     setPermitStart('');
                     setPermitEnd('');
-                    setSuccessMessage(isOnline ? (isPartial ? 'Izin parsial berhasil dikirim!' : 'Izin berhasil dikirim!') : 'Izin tersimpan offline, akan disinkronkan saat online.');
+                    setSuccessMessage(isOnline ? (isPartial ? 'Izin jam tertentu berhasil dikirim!' : 'Izin berhasil dikirim!') : 'Izin tersimpan offline, akan disinkronkan saat online.');
                     setTimeout(() => setSuccessMessage(null), 3000);
                   }}
                   className="flex-1 py-3 text-xs font-bold rounded-xl bg-sky-600 hover:bg-sky-700 text-white shadow-md transition-colors"
