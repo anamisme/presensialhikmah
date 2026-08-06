@@ -34,6 +34,7 @@ import { User } from 'firebase/auth';
 import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
 import { ASSETS } from '../data';
+import { downloadImage } from '../downloadQR';
 import ThemeToggle from './ThemeToggle';
 
 interface AdminPanelProps {
@@ -200,13 +201,6 @@ export default function AdminPanel({
   const [newEmail, setNewEmail] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // State for adding geofence modal
-  const [isAddGeofenceOpen, setIsAddGeofenceOpen] = useState(false);
-  const [geoNama, setGeoNama] = useState('');
-  const [geoLat, setGeoLat] = useState('');
-  const [geoLng, setGeoLng] = useState('');
-  const [geoRadius, setGeoRadius] = useState('50');
-
   // State for QR generation
 
   // Pagination for Attendance logs
@@ -323,49 +317,6 @@ export default function AdminPanel({
     setIsAddEmployeeOpen(false);
   };
 
-  const handleAddNewGeofence = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!geoNama || !geoLat || !geoLng) return;
-
-    const lat = parseFloat(geoLat);
-    const lng = parseFloat(geoLng);
-    const radius = parseInt(geoRadius, 10);
-
-    // Validate coordinates
-    if (isNaN(lat) || isNaN(lng) || isNaN(radius)) {
-      alert('Koordinat atau radius tidak valid.');
-      return;
-    }
-    if (lat < -90 || lat > 90) {
-      alert('Latitude harus antara -90 dan 90.');
-      return;
-    }
-    if (lng < -180 || lng > 180) {
-      alert('Longitude harus antara -180 dan 180.');
-      return;
-    }
-    if (radius < 10 || radius > 5000) {
-      alert('Radius harus antara 10m dan 5000m.');
-      return;
-    }
-
-    const newGeo: Geofence = {
-      id: `geo-${Date.now()}`,
-      nama: geoNama.trim(),
-      lat,
-      lng,
-      radius
-    };
-
-    onAddGeofence(newGeo);
-    
-    // Clear & close
-    setGeoNama('');
-    setGeoLat('');
-    setGeoLng('');
-    setGeoRadius('50');
-    setIsAddGeofenceOpen(false);
-  };
   return (
     <div className="flex flex-col min-h-screen bg-[#F9F9FF] text-gray-900 font-sans pb-24 md:pb-0 select-none transition-colors duration-300 dark:bg-gray-950 dark:text-gray-100">
       
@@ -995,13 +946,6 @@ export default function AdminPanel({
                       <MapPin className="w-5 h-5 text-[#00418f] dark:text-blue-400" />
                       <h3 className="font-bold text-gray-800 text-sm dark:text-gray-100">Lokasi Gedung</h3>
                     </div>
-                    <button 
-                      onClick={() => setIsAddGeofenceOpen(true)}
-                      className="flex items-center gap-1 text-xs font-bold uppercase bg-[#00418f]/10 text-[#00418f] px-3 py-1.5 rounded-full hover:bg-[#00418f]/20 transition-all active:scale-95 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-                    >
-                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                      Tambah
-                    </button>
                   </div>
 
                   <div className="space-y-3">
@@ -1083,16 +1027,13 @@ export default function AdminPanel({
                                   <p>Radius: {geo.radius}m</p>
                                 </div>
                                 
-                                <a 
-                                  href={qrUrl.replace('400x400', '800x800')}
-                                  download={`QR_Presensi_${geo.nama.replace(/\s+/g, '_')}.png`}
-                                  target="_blank"
-                                  rel="noreferrer"
+                                <button
+                                  onClick={() => downloadImage(qrUrl.replace('400x400', '800x800'), `QR_Presensi_${geo.nama.replace(/\s+/g, '_')}.png`).catch((err) => alert(err.message || 'Gagal mengunduh QR Code.'))}
                                   className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#00418f] bg-[#00418f]/10 px-3 py-1.5 rounded-lg hover:bg-[#00418f]/20 transition-all dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
                                 >
                                   <Download className="w-3 h-3" />
                                   Download QR
-                                </a>
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1204,16 +1145,13 @@ export default function AdminPanel({
                           <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{customQrNama}</p>
                           <p className="text-[10px] text-gray-500 dark:text-gray-400">{customQrLat}, {customQrLng} • Radius: {customQrRadius || '100'}m</p>
                         </div>
-                        <a
-                          href={customQrDataUrl.replace('400x400', '800x800')}
-                          download={`QR_${customQrNama.replace(/\s+/g, '_')}.png`}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          onClick={() => downloadImage(customQrDataUrl.replace('400x400', '800x800'), `QR_${customQrNama.replace(/\s+/g, '_')}.png`).catch((err) => alert(err.message || 'Gagal mengunduh QR Code.'))}
                           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00418f] bg-[#00418f]/10 px-4 py-2 rounded-lg hover:bg-[#00418f]/20 transition-all dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
                         >
                           <Download className="w-3.5 h-3.5" />
                           Download QR Code
-                        </a>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1469,103 +1407,6 @@ export default function AdminPanel({
                   </div>
                 </form>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Adding Geofence Modal */}
-      <AnimatePresence>
-        {isAddGeofenceOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAddGeofenceOpen(false)}
-              className="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" 
-            />
-
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="fixed inset-4 max-w-md mx-auto my-auto h-fit z-[70] bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 dark:bg-gray-900 dark:border-gray-800"
-            >
-              <h2 className="text-base font-black text-gray-800 mb-4 flex items-center gap-2 dark:text-gray-100">
-                <MapPin className="w-5 h-5 text-[#00418f]" />
-                Tambah Lokasi Gedung Baru
-              </h2>
-              
-              <form onSubmit={handleAddNewGeofence} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 dark:text-gray-500">Nama Gedung/Lokasi</label>
-                  <input 
-                    type="text"
-                    required
-                    value={geoNama}
-                    onChange={(e) => setGeoNama(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
-                    placeholder="misal: Gedung Rektorat Utama"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 dark:text-gray-500">Latitude</label>
-                    <input 
-                      type="number"
-                      step="any"
-                      required
-                      value={geoLat}
-                      onChange={(e) => setGeoLat(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
-                      placeholder="-6.1234"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 dark:text-gray-500">Longitude</label>
-                    <input 
-                      type="number"
-                      step="any"
-                      required
-                      value={geoLng}
-                      onChange={(e) => setGeoLng(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
-                      placeholder="106.5678"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 dark:text-gray-500">Radius (Meter)</label>
-                  <input 
-                    type="number"
-                    required
-                    value={geoRadius}
-                    onChange={(e) => setGeoRadius(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
-                    placeholder="50"
-                  />
-                </div>
-
-                <div className="pt-4 flex gap-3">
-                  <button 
-                    type="button"
-                    onClick={() => setIsAddGeofenceOpen(false)}
-                    className="flex-1 py-3 rounded-xl text-xs font-bold uppercase text-[#00418f] bg-[#00418f]/10 active:scale-95 transition-transform dark:text-blue-400 dark:bg-blue-900/30"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    type="submit"
-                    className="flex-1 py-3 rounded-xl text-xs font-bold uppercase text-white bg-[#00418f] shadow-md hover:brightness-110 active:scale-95 transition-transform dark:bg-blue-700"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              </form>
             </motion.div>
           </>
         )}

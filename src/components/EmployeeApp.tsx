@@ -16,7 +16,6 @@ import {
   Camera, 
   CheckCircle2, 
   Clock, 
-  Compass, 
   ShieldAlert, 
   LogOut,
   Sparkles,
@@ -27,8 +26,7 @@ import {
   Upload,
   X,
   Calendar,
-  Image as ImageIcon,
-  Navigation
+  Image as ImageIcon
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence } from '../types';
 import { ASSETS } from '../data';
@@ -850,75 +848,8 @@ export default function EmployeeApp({
               </div>
             )}
 
-            {/* Real GPS Location Status */}
+            {/* Zona Presensi Terdaftar */}
             <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 space-y-3 transition-colors duration-300">
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                <span className="flex items-center gap-1 font-medium">
-                  <MapPin className="w-3.5 h-3.5 text-[#005bc1] dark:text-[#3b82f6]" />
-                  Lokasi GPS Perangkat
-                </span>
-                {isLocating ? (
-                  <span className="text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-900/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Mencari...
-                  </span>
-                ) : isWithinGeofence ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-                    Dalam Radius
-                  </span>
-                ) : userLocation ? (
-                  <span className="text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 dark:bg-rose-400" />
-                    Di Luar Radius
-                  </span>
-                ) : (
-                  <span className="text-gray-500 dark:text-gray-400 font-bold bg-gray-50 px-2 py-0.5 rounded-full">
-                    Belum Terdeteksi
-                  </span>
-                )}
-              </div>
-              
-              {locationError && (
-                <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 p-3 rounded-lg text-xs text-rose-600 dark:text-rose-400 flex gap-2">
-                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold">Error Lokasi</p>
-                    <p>{locationError}</p>
-                  </div>
-                </div>
-              )}
-
-              {gpsWarning && (
-                <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 p-3 rounded-lg text-xs text-amber-700 dark:text-amber-400 flex gap-2">
-                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-                  <div>
-                    <p className="font-bold">⚠️ Peringatan GPS</p>
-                    <p>{gpsWarning}</p>
-                    <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-500">Presensi tidak dapat dilakukan dengan lokasi palsu.</p>
-                  </div>
-                </div>
-              )}
-
-              {userLocation && (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-lg transition-colors duration-300">
-                  <Navigation className="w-4 h-4 text-[#005bc1] dark:text-[#3b82f6] shrink-0" />
-                  <span className="truncate">
-                    Posisi: <strong className="text-gray-700 dark:text-gray-300">{userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</strong>
-                  </span>
-                </div>
-              )}
-
-              {nearestGeofence && distanceToNearest !== null && (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-lg transition-colors duration-300">
-                  <Compass className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
-                  <span className="truncate">
-                    Terdekat: <strong className="text-gray-700 dark:text-gray-300">{nearestGeofence.nama}</strong> 
-                    {' '}({distanceToNearest}m dari radius {nearestGeofence.radius}m)
-                  </span>
-                </div>
-              )}
-
               {/* Refresh location button */}
               <button
                 onClick={getCurrentLocation}
