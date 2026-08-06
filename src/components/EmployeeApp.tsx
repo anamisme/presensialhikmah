@@ -148,11 +148,6 @@ export default function EmployeeApp({
   // For status display: show active session or last completed on current session
   const todayRecord = activeSession || sessionTodayRecords[sessionTodayRecords.length - 1] || todayRecords[0];
 
-  // Zona presensi yang terjangkau oleh lokasi GPS karyawan saat ini
-  const reachableGeofences = userLocation
-    ? geofences.filter(g => calculateDistance(userLocation.lat, userLocation.lng, g.lat, g.lng) <= g.radius)
-    : [];
-
   // Sync selected location when geofences change or if currently null
   useEffect(() => {
     if (geofences.length > 0) {
@@ -196,6 +191,12 @@ export default function EmployeeApp({
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }, []);
+
+  // Zona presensi yang terjangkau oleh lokasi GPS karyawan saat ini
+  // (dideklarasikan setelah calculateDistance agar tidak ReferenceError)
+  const reachableGeofences = userLocation
+    ? geofences.filter(g => calculateDistance(userLocation.lat, userLocation.lng, g.lat, g.lng) <= g.radius)
+    : [];
 
   // Anti-Fake GPS: Track location history for anomaly detection
   const locationHistoryRef = useRef<{ lat: number; lng: number; timestamp: number; accuracy: number }[]>([]);
@@ -1030,7 +1031,7 @@ export default function EmployeeApp({
           ];
           const currentMonthName = `${indonesianMonths[currentTime.getMonth()]} ${currentTime.getFullYear()}`;
 
-          const monthlyRecords = personalRecords.filter(r => r.tanggal.startsWith(currentYearMonth));
+          const monthlyRecords = personalRecords.filter(r => r.tanggal?.startsWith(currentYearMonth));
           const monthlyTepatWaktu = monthlyRecords.filter(r => r.status === 'Tepat Waktu').length;
           const monthlyTerlambat = monthlyRecords.filter(r => r.status === 'Terlambat').length;
           const monthlyIzin = monthlyRecords.filter(r => r.status === 'Izin').length;

@@ -281,9 +281,9 @@ export default function AdminPanel({
   // Filter attendance records
   const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   const filteredAttendance = attendanceRecords.filter(rec => {
-    // Basic date parsing
-    const recYear = rec.tanggal.split('-')[0];
-    const recMonthNum = rec.tanggal.split('-')[1]; // "06"
+    // Basic date parsing (guard record tanpa tanggal agar tidak crash)
+    const recYear = rec.tanggal?.split('-')[0];
+    const recMonthNum = rec.tanggal?.split('-')[1]; // "06"
     
     const recMonthName = monthNames[parseInt(recMonthNum, 10) - 1] || '';
 
