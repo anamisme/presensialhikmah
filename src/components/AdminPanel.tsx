@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
 import { ASSETS, localDateString } from '../data';
-import { downloadImage } from '../downloadQR';
+import { downloadImage, saveTextFile } from '../downloadQR';
 import ThemeToggle from './ThemeToggle';
 
 interface AdminPanelProps {
@@ -160,7 +160,11 @@ export default function AdminPanel({
     return field;
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    if (filteredAttendance.length === 0) {
+      alert('Tidak ada data presensi yang cocok dengan filter untuk diexport.');
+      return;
+    }
     const headers = ['Tanggal', 'NIP', 'Nama', 'Sesi', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
     const rows = filteredAttendance.map(r => [
       r.tanggal,
@@ -174,15 +178,12 @@ export default function AdminPanel({
     ]);
     
     const csvContent = [headers, ...rows].map(e => e.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `rekap_presensi_${monthFilter}_${yearFilter}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      await saveTextFile(csvContent, `rekap_presensi_${monthFilter}_${yearFilter}.csv`, 'text/csv');
+    } catch (err: any) {
+      console.error('Gagal export CSV:', err);
+      alert(err?.message || 'Gagal mengekspor CSV.');
+    }
   };
 
   const handlePrint = () => {

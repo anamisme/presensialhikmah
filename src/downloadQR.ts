@@ -17,14 +17,18 @@ export async function downloadImage(url: string, filename: string): Promise<void
 
   if (Capacitor.isNativePlatform()) {
     const base64 = await blobToBase64(blob);
-    const saved = await Filesystem.writeFile({
+    await Filesystem.writeFile({
       path: filename,
       data: base64,
       directory: Directory.Cache,
       recursive: true,
     });
+    const fileUri = await Filesystem.getUri({
+      path: filename,
+      directory: Directory.Cache,
+    });
     await Share.share({
-      url: saved.uri,
+      url: fileUri.uri,
       title: filename,
       dialogTitle: 'Simpan / Bagikan QR Code',
     });
@@ -51,4 +55,43 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
+}
+
+/**
+ * Save/download a text file (CSV, TXT, dll).
+ * - Web: triggers a normal browser download.
+ * - Capacitor (APK): writes to app cache then opens the share sheet so the
+ *   user can save/share the file.
+ */
+export async function saveTextFile(content: string, filename: string, mimeType = 'text/csv'): Promise<void> {
+  const blob = new Blob([content], { type: `${mimeType};charset=utf-8;` });
+
+  if (Capacitor.isNativePlatform()) {
+    const base64 = await blobToBase64(blob);
+    await Filesystem.writeFile({
+      path: filename,
+      data: base64,
+      directory: Directory.Cache,
+      recursive: true,
+    });
+    const fileUri = await Filesystem.getUri({
+      path: filename,
+      directory: Directory.Cache,
+    });
+    await Share.share({
+      url: fileUri.uri,
+      title: filename,
+      dialogTitle: 'Simpan / Bagikan File',
+    });
+  } else {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
 }
