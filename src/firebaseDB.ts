@@ -33,13 +33,6 @@ export const saveSetting = (key: string, value: unknown) => {
   });
 };
 
-export const saveAllSettings = (settings: Record<string, unknown>) => {
-  return set(settingsRef, settings).catch((err) => {
-    console.error('Gagal menyimpan semua settings ke Firebase:', err);
-    throw err;
-  });
-};
-
 // --- Attendance (disimpan per NIP karyawan) ---
 
 const attendanceBase = () => ref(db, 'presensi-settings/attendance');

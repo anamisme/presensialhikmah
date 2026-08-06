@@ -81,10 +81,6 @@ export const googleSignIn = async (scopes?: string[]): Promise<{ user: User; acc
   }
 };
 
-export const getAccessToken = (): string | null => {
-  return cachedAccessToken;
-};
-
 export const logout = async () => {
   await auth.signOut();
   cachedAccessToken = null;
