@@ -1177,9 +1177,6 @@ export default function EmployeeApp({
 
                 <div>
                   <h3 className="font-bold text-gray-800 dark:text-gray-100">Performa Kehadiran Bagus</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[280px] mt-1">
-                    Pertahankan catatan kehadiran Anda untuk mempertahankan kompensasi optimal dan poin kinerja lembaga.
-                  </p>
                 </div>
               </div>
 

@@ -346,14 +346,6 @@ export default function AdminPanel({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Admin Profile Badge */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-            <div className="w-5 h-5 rounded-full overflow-hidden border border-[#00418f]/20 dark:border-blue-400/30">
-              <img src={adminProfile.foto} className="w-full h-full object-cover" alt="Admin" />
-            </div>
-            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{adminProfile.nama.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')}</span>
-          </div>
-
           {/* Quick toggle to Employee Mode */}
           <button 
             onClick={onBackToEmployee}
