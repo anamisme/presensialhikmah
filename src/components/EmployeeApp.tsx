@@ -148,6 +148,11 @@ export default function EmployeeApp({
   // For status display: show active session or last completed on current session
   const todayRecord = activeSession || sessionTodayRecords[sessionTodayRecords.length - 1] || todayRecords[0];
 
+  // Zona presensi yang terjangkau oleh lokasi GPS karyawan saat ini
+  const reachableGeofences = userLocation
+    ? geofences.filter(g => calculateDistance(userLocation.lat, userLocation.lng, g.lat, g.lng) <= g.radius)
+    : [];
+
   // Sync selected location when geofences change or if currently null
   useEffect(() => {
     if (geofences.length > 0) {
@@ -291,8 +296,15 @@ export default function EmployeeApp({
         setDistanceToNearest(Math.round(minDistance));
         setIsWithinGeofence(nearest ? minDistance <= nearest.radius : false);
         
+        // Jangan timpa pilihan user bila zona yang dipilih masih terjangkau
         if (nearest) {
-          setSelectedLocation(nearest);
+          const currentReachable = selectedLocation && geofences.some(g =>
+            g.id === selectedLocation.id &&
+            calculateDistance(latitude, longitude, g.lat, g.lng) <= g.radius
+          );
+          if (!currentReachable) {
+            setSelectedLocation(nearest);
+          }
         }
       },
       (error) => {
@@ -368,6 +380,7 @@ export default function EmployeeApp({
   const processAttendanceWithGPS = (qrData: string, gpsLat: number, gpsLng: number) => {
     // Parse QR data first to get location info
     let locationName = 'Lokasi Tidak Diketahui';
+    let qrGeoId: string | null = null;
     let qrLat: number | null = null;
     let qrLng: number | null = null;
     let qrRadius: number = 100;
@@ -376,6 +389,7 @@ export default function EmployeeApp({
       if (qrData.startsWith('P|')) {
         const parts = qrData.split('|');
         if (parts.length >= 3) {
+          qrGeoId = parts[1] || null;
           locationName = parts[2];
           if (parts.length >= 6) {
             qrLat = parseFloat(parts[3]);
@@ -386,6 +400,7 @@ export default function EmployeeApp({
       } else {
         const parsed = JSON.parse(qrData);
         if (parsed.type === 'PRESENSI' && parsed.nama) {
+          qrGeoId = parsed.geoId || parsed.id || null;
           locationName = parsed.nama;
           qrLat = parsed.lat;
           qrLng = parsed.lng;
@@ -397,11 +412,22 @@ export default function EmployeeApp({
         const locId = qrData.replace('PRESENSI:', '');
         const matchedGeo = geofences.find(g => g.id === locId || g.nama === locId);
         if (matchedGeo) {
+          qrGeoId = matchedGeo.id;
           locationName = matchedGeo.nama;
           qrLat = matchedGeo.lat;
           qrLng = matchedGeo.lng;
           qrRadius = matchedGeo.radius;
         }
+      }
+    }
+
+    // QR harus milik zona yang dipilih karyawan
+    if (selectedLocation) {
+      const qrZone = qrGeoId ? geofences.find(g => g.id === qrGeoId || g.nama === qrGeoId) : null;
+      const qrBelongsToSelected = qrZone ? qrZone.id === selectedLocation.id : qrLat !== null;
+      if (!qrBelongsToSelected) {
+        setRejectMessage(`Presensi ditolak! QR ini untuk ${locationName}, bukan zona ${selectedLocation.nama} yang Anda pilih.`);
+        return;
       }
     }
 
@@ -413,11 +439,12 @@ export default function EmployeeApp({
         return;
       }
     } else {
-      // QR tanpa koordinat — cek apakah user dekat salah satu geofence
+      // QR tanpa koordinat — cek apakah user dekat zona yang dipilih / zona terdaftar
+      const isNearSelected = selectedLocation && calculateDistance(gpsLat, gpsLng, selectedLocation.lat, selectedLocation.lng) <= selectedLocation.radius;
       const isNearAny = geofences.some(g => 
         calculateDistance(gpsLat, gpsLng, g.lat, g.lng) <= g.radius
       );
-      if (!isNearAny) {
+      if (!isNearSelected && !isNearAny) {
         setRejectMessage('Presensi ditolak! Anda tidak berada di area lokasi presensi.');
         return;
       }
@@ -539,6 +566,10 @@ export default function EmployeeApp({
     setIsCameraActive(true);
   };
 
+  const handleSelectZone = (geo: Geofence) => {
+    setSelectedLocation(geo);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-gray-950 text-gray-900 dark:text-gray-100 pb-24 font-sans select-none transition-colors duration-300">
       
@@ -561,15 +592,6 @@ export default function EmployeeApp({
               Admin
             </button>
           )}
-          
-          <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
-            <img 
-              alt={currentUser.nama} 
-              className="w-full h-full object-cover" 
-              src={currentUser.foto} 
-              referrerPolicy="no-referrer"
-            />
-          </div>
         </div>
       </nav>
 
@@ -872,26 +894,40 @@ export default function EmployeeApp({
                 {isLocating ? 'Memuat lokasi...' : 'Perbarui Lokasi GPS'}
               </button>
 
-              {/* Geofence list for reference */}
-              {geofences.length > 0 && (
+              {/* Geofence list — hanya zona yang terjangkau yang ditampilkan & dapat dipilih */}
+              {reachableGeofences.length > 0 && (
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Zona Presensi Terdaftar</p>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Pilih Zona Presensi</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {geofences.map(g => (
-                      <div
-                        key={g.id}
-                        className={`text-center p-2 rounded-lg text-[10px] font-medium border transition-all ${
-                          nearestGeofence?.id === g.id && isWithinGeofence
-                            ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-bold'
-                            : nearestGeofence?.id === g.id
-                            ? 'border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400'
-                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                        }`}
-                      >
-                        {g.nama} ({g.radius}m)
-                      </div>
-                    ))}
+                    {reachableGeofences.map(g => {
+                      const isSelected = selectedLocation?.id === g.id;
+                      return (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => handleSelectZone(g)}
+                          className={`text-center p-2 rounded-lg text-[10px] font-medium border transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-[#0058bc] dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-[#0058bc] dark:text-blue-400 font-bold ring-2 ring-[#0058bc]/20'
+                              : 'border-emerald-400 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:brightness-95'
+                          }`}
+                        >
+                          {g.nama} ({g.radius}m)
+                        </button>
+                      );
+                    })}
                   </div>
+                  <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-2 text-center">
+                    Pilih zona yang terjangkau lokasi Anda.
+                  </p>
+                </div>
+              )}
+              {geofences.length > 0 && reachableGeofences.length === 0 && (
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Pilih Zona Presensi</p>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center py-2">
+                    Tidak ada zona yang terjangkau. Perbarui lokasi GPS atau mendekat ke area presensi.
+                  </p>
                 </div>
               )}
             </div>
