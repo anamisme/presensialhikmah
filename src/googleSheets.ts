@@ -20,6 +20,7 @@ export async function syncAttendanceToSheet(record: {
   status: string;
   lokasi?: string;
   keterangan?: string;
+  sesi?: string;
 }): Promise<boolean> {
   try {
     const res = await fetch(APPS_SCRIPT_URL, {

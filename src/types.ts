@@ -24,6 +24,7 @@ export interface AttendanceRecord {
   lokasi?: string;  // geofence name or "Izin"
   keterangan?: string; // reason for permit
   lampiran?: string; // base64 or photo URL for permit proof
+  sesi?: 'siang' | 'malam'; // attendance session
 }
 
 export interface Geofence {

@@ -34,7 +34,9 @@ export default function App() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => getStoredData('attendance', INITIAL_ATTENDANCE));
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(() => getStoredData('activities', INITIAL_ACTIVITIES));
   const [limitTime, setLimitTime] = useState<string>(() => getStoredData('limit_time', '07:00'));
-  const [jamPulang, setJamPulang] = useState<string>(() => getStoredData('jam_pulang', '17:00'));
+  const [jamPulang, setJamPulang] = useState<string>(() => getStoredData('jam_pulang', '14:00'));
+  const [jamMalamMasuk, setJamMalamMasuk] = useState<string>(() => getStoredData('jam_malam_masuk', '18:30'));
+  const [jamMalamPulang, setJamMalamPulang] = useState<string>(() => getStoredData('jam_malam_pulang', '22:00'));
   const [hariLibur, setHariLibur] = useState<number[]>(() => getStoredData('hari_libur', [6]));
 
   // Session state (null means logged out, shows Login screen)
@@ -85,6 +87,16 @@ export default function App() {
         const jp = data.jam_pulang as string;
         setJamPulang(jp);
         setStoredData('jam_pulang', jp);
+      }
+      if (data.jam_malam_masuk) {
+        const jmm = data.jam_malam_masuk as string;
+        setJamMalamMasuk(jmm);
+        setStoredData('jam_malam_masuk', jmm);
+      }
+      if (data.jam_malam_pulang) {
+        const jmp = data.jam_malam_pulang as string;
+        setJamMalamPulang(jmp);
+        setStoredData('jam_malam_pulang', jmp);
       }
       if (data.hari_libur) {
         const hl = data.hari_libur as number[];
@@ -176,6 +188,18 @@ export default function App() {
     setJamPulang(newTime);
     setStoredData('jam_pulang', newTime);
     saveSetting('jam_pulang', newTime);
+  };
+
+  const updateJamMalamMasuk = (newTime: string) => {
+    setJamMalamMasuk(newTime);
+    setStoredData('jam_malam_masuk', newTime);
+    saveSetting('jam_malam_masuk', newTime);
+  };
+
+  const updateJamMalamPulang = (newTime: string) => {
+    setJamMalamPulang(newTime);
+    setStoredData('jam_malam_pulang', newTime);
+    saveSetting('jam_malam_pulang', newTime);
   };
 
   const updateHariLibur = (newDays: number[]) => {
@@ -270,6 +294,7 @@ export default function App() {
       status: record.status,
       lokasi: record.lokasi,
       keterangan: record.keterangan,
+      sesi: record.sesi || 'siang',
     });
 
     // Append to recent activities log
@@ -348,6 +373,9 @@ export default function App() {
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
           limitTime={limitTime}
+          jamPulang={jamPulang}
+          jamMalamMasuk={jamMalamMasuk}
+          jamMalamPulang={jamMalamPulang}
           isAdmin={session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')}
           onNavigateToAdmin={(session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')) ? () => setCurrentView('admin') : undefined}
         />
@@ -359,9 +387,13 @@ export default function App() {
           recentActivities={recentActivities}
           limitTime={limitTime}
           jamPulang={jamPulang}
+          jamMalamMasuk={jamMalamMasuk}
+          jamMalamPulang={jamMalamPulang}
           hariLibur={hariLibur}
           onSetLimitTime={updateLimitTimeValue}
           onSetJamPulang={updateJamPulang}
+          onSetJamMalamMasuk={updateJamMalamMasuk}
+          onSetJamMalamPulang={updateJamMalamPulang}
           onSetHariLibur={updateHariLibur}
           onAddEmployee={handleAddEmployee}
           onDeleteEmployee={handleDeleteEmployee}

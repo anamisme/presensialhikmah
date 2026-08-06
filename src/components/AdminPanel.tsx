@@ -43,9 +43,13 @@ interface AdminPanelProps {
   recentActivities: RecentActivity[];
   limitTime: string;
   jamPulang: string;
+  jamMalamMasuk: string;
+  jamMalamPulang: string;
   hariLibur: number[];
   onSetLimitTime: (time: string) => void;
   onSetJamPulang: (time: string) => void;
+  onSetJamMalamMasuk: (time: string) => void;
+  onSetJamMalamPulang: (time: string) => void;
   onSetHariLibur: (days: number[]) => void;
   onAddEmployee: (emp: Employee) => void;
   onDeleteEmployee: (nip: string) => void;
@@ -67,9 +71,13 @@ export default function AdminPanel({
   recentActivities,
   limitTime,
   jamPulang: jamPulangProp,
+  jamMalamMasuk: jamMalamMasukProp,
+  jamMalamPulang: jamMalamPulangProp,
   hariLibur: hariLiburProp,
   onSetLimitTime,
   onSetJamPulang,
+  onSetJamMalamMasuk,
+  onSetJamMalamPulang,
   onSetHariLibur,
   onAddEmployee,
   onDeleteEmployee,
@@ -212,6 +220,8 @@ export default function AdminPanel({
   // Set Waktu input state
   const [tempLimitTime, setTempLimitTime] = useState(limitTime);
   const [tempJamPulang, setTempJamPulang] = useState(jamPulangProp);
+  const [tempJamMalamMasuk, setTempJamMalamMasuk] = useState(jamMalamMasukProp);
+  const [tempJamMalamPulang, setTempJamMalamPulang] = useState(jamMalamPulangProp);
   const [hariLibur, setHariLibur] = useState<number[]>(hariLiburProp);
 
   // CSV Exporter
@@ -229,11 +239,12 @@ export default function AdminPanel({
   };
 
   const handleExportCSV = () => {
-    const headers = ['Tanggal', 'NIP', 'Nama', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
+    const headers = ['Tanggal', 'NIP', 'Nama', 'Sesi', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
     const rows = attendanceRecords.map(r => [
       r.tanggal,
       r.nip,
       sanitizeCSVField(r.nama),
+      r.sesi || 'siang',
       r.masuk,
       r.keluar || '--:--',
       r.status,
@@ -716,6 +727,7 @@ export default function AdminPanel({
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Tanggal</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">NIP</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Nama</th>
+                        <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Sesi</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Masuk</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Keluar</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Status</th>
@@ -724,7 +736,7 @@ export default function AdminPanel({
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                       {paginatedAttendance.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-12 text-gray-400 text-xs dark:text-gray-500">
+                          <td colSpan={7} className="text-center py-12 text-gray-400 text-xs dark:text-gray-500">
                             Tidak ada arsip presensi yang cocok dengan filter yang dipilih.
                           </td>
                         </tr>
@@ -740,6 +752,20 @@ export default function AdminPanel({
                                 </div>
                                 <span className="text-xs font-bold text-gray-800 dark:text-gray-100">{rec.nama}</span>
                               </div>
+                            </td>
+                            <td className="px-5 py-4">
+                              {rec.sesi ? (
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                  rec.sesi === 'malam'
+                                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800'
+                                }`}>
+                                  <span className={`w-1 h-1 rounded-full ${rec.sesi === 'malam' ? 'bg-indigo-500' : 'bg-amber-500'}`} />
+                                  {rec.sesi === 'malam' ? 'Malam' : 'Siang'}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400">-</span>
+                              )}
                             </td>
                             <td className="px-5 py-4 text-xs text-gray-800 font-semibold dark:text-gray-100">{rec.masuk}</td>
                             <td className="px-5 py-4 text-xs text-gray-500 font-semibold dark:text-gray-400">{rec.keluar || '--:--'}</td>
@@ -870,7 +896,7 @@ export default function AdminPanel({
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Jam Masuk</label>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Jam Masuk Siang</label>
                       <input 
                         type="time" 
                         value={tempLimitTime}
@@ -879,11 +905,33 @@ export default function AdminPanel({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Jam Pulang</label>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Jam Pulang Siang</label>
                       <input 
                         type="time" 
                         value={tempJamPulang}
                         onChange={(e) => setTempJamPulang(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Jam Malam */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Jam Masuk Malam</label>
+                      <input 
+                        type="time" 
+                        value={tempJamMalamMasuk}
+                        onChange={(e) => setTempJamMalamMasuk(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Jam Pulang Malam</label>
+                      <input 
+                        type="time" 
+                        value={tempJamMalamPulang}
+                        onChange={(e) => setTempJamMalamPulang(e.target.value)}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
                       />
                     </div>
@@ -929,8 +977,10 @@ export default function AdminPanel({
                     onClick={() => {
                       onSetLimitTime(tempLimitTime);
                       onSetJamPulang(tempJamPulang);
+                      onSetJamMalamMasuk(tempJamMalamMasuk);
+                      onSetJamMalamPulang(tempJamMalamPulang);
                       onSetHariLibur(hariLibur);
-                      alert(`Pengaturan waktu kerja berhasil disimpan!\nJam Masuk: ${tempLimitTime}\nJam Pulang: ${tempJamPulang}\nHari Libur: ${hariLibur.length > 0 ? hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ') : 'Tidak ada'}`);
+                      alert(`Pengaturan waktu kerja berhasil disimpan!\nJam Siang: ${tempLimitTime} - ${tempJamPulang}\nJam Malam: ${tempJamMalamMasuk} - ${tempJamMalamPulang}\nHari Libur: ${hariLibur.length > 0 ? hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ') : 'Tidak ada'}`);
                     }}
                     className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md dark:bg-blue-700"
                   >

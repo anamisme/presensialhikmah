@@ -43,6 +43,9 @@ interface EmployeeAppProps {
   onLogout: () => void;
   onChangeProfilePicture: (nip: string, newFoto: string) => void;
   limitTime?: string;
+  jamPulang?: string;
+  jamMalamMasuk?: string;
+  jamMalamPulang?: string;
   isAdmin?: boolean;
   onNavigateToAdmin?: () => void;
 }
@@ -55,6 +58,9 @@ export default function EmployeeApp({
   onLogout,
   onChangeProfilePicture,
   limitTime = '07:00',
+  jamPulang = '14:00',
+  jamMalamMasuk = '18:30',
+  jamMalamPulang = '22:00',
   isAdmin = false,
   onNavigateToAdmin
 }: EmployeeAppProps) {
@@ -117,10 +123,23 @@ export default function EmployeeApp({
   // Find today's records (multiple sessions possible)
   const todayStr = new Date().toISOString().split('T')[0];
   const todayRecords = personalRecords.filter(r => r.tanggal === todayStr);
-  // Active session = last record without checkout time (currently working)
-  const activeSession = todayRecords.find(r => r.masuk !== '--:--' && !r.keluar && r.status !== 'Izin');
-  // For status display: show active session or last completed
-  const todayRecord = activeSession || todayRecords[0];
+
+  // Deteksi sesi saat ini: malam bila jam sekarang >= jam masuk malam
+  const currentSession: 'siang' | 'malam' = (() => {
+    const nightStart = (jamMalamMasuk || '18:30').split(':').map(Number);
+    const nowH = currentTime.getHours();
+    const nowM = currentTime.getMinutes();
+    return nowH > nightStart[0] || (nowH === nightStart[0] && nowM >= nightStart[1]) ? 'malam' : 'siang';
+  })();
+  const currentLimitTime = currentSession === 'malam' ? jamMalamMasuk : limitTime;
+  const currentJamPulang = currentSession === 'malam' ? jamMalamPulang : jamPulang;
+
+  // Active session = open record (without checkout) on the CURRENT session
+  const activeSession = todayRecords.find(r => r.masuk !== '--:--' && !r.keluar && r.status !== 'Izin' && (r.sesi ?? 'siang') === currentSession);
+  // Records on the current session (for status card display)
+  const sessionTodayRecords = todayRecords.filter(r => (r.sesi ?? 'siang') === currentSession);
+  // For status display: show active session or last completed on current session
+  const todayRecord = activeSession || sessionTodayRecords[sessionTodayRecords.length - 1] || todayRecords[0];
 
   // Sync selected location when geofences change or if currently null
   useEffect(() => {
@@ -409,8 +428,8 @@ export default function EmployeeApp({
       if (isCheckIn) {
         const checkInHour = currentTime.getHours();
         const checkInMinute = currentTime.getMinutes();
-        // Parse limit time from settings
-        const [limitHour, limitMinute] = (limitTime || '07:00').split(':').map(Number);
+        // Parse limit time from settings (per current session: siang/malam)
+        const [limitHour, limitMinute] = (currentLimitTime || '07:00').split(':').map(Number);
         const isLate = checkInHour > limitHour || (checkInHour === limitHour && checkInMinute > limitMinute);
         
         const newRecord: AttendanceRecord = {
@@ -421,7 +440,8 @@ export default function EmployeeApp({
           tanggal: todayStr,
           masuk: currentHrsMins,
           status: isLate ? 'Terlambat' : 'Tepat Waktu',
-          lokasi: locationName
+          lokasi: locationName,
+          sesi: currentSession
         };
 
         if (isOnline) {
@@ -665,7 +685,7 @@ export default function EmployeeApp({
                     onClick={() => { setScanError(null); setIsCameraActive(true); }}
                     className="bg-[#0058bc] text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
                   >
-                    {activeSession ? 'Scan Keluar' : 'Scan Masuk'}
+                    {activeSession ? 'Scan Keluar' : currentSession === 'malam' ? 'Scan Masuk Malam' : 'Scan Masuk Siang'}
                   </button>
                 </div>
               )}
@@ -759,11 +779,11 @@ export default function EmployeeApp({
                     ? 'bg-sky-100 text-sky-700 border border-sky-100'
                     : activeSession
                     ? 'bg-[#6ffb85]/20 text-[#00732a]'
-                    : todayRecords.length > 0
+                    : sessionTodayRecords.length > 0
                     ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
                     : 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
                 }`}>
-                  {todayRecords.some(r => r.status === 'Izin') ? 'Izin' : activeSession ? 'Sedang Bekerja' : todayRecords.length > 0 ? 'Sudah Absen' : 'Belum Absen'}
+                  {todayRecords.some(r => r.status === 'Izin') ? 'Izin' : activeSession ? 'Sedang Bekerja' : sessionTodayRecords.length > 0 ? `Sudah Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}` : `Belum Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}`}
                 </span>
               </div>
 
@@ -784,7 +804,7 @@ export default function EmployeeApp({
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-emerald-600" />
                       <span className="font-bold text-lg text-emerald-600">
-                        {activeSession ? activeSession.masuk : todayRecords[0]?.masuk || '--:--'}
+                        {activeSession ? activeSession.masuk : todayRecord?.masuk || '--:--'}
                       </span>
                     </div>
                   </div>
@@ -793,7 +813,7 @@ export default function EmployeeApp({
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       <span className="font-bold text-lg text-gray-700 dark:text-gray-300">
-                        {activeSession ? '--:--' : todayRecords[0]?.keluar || '--:--'}
+                        {activeSession ? '--:--' : todayRecord?.keluar || '--:--'}
                       </span>
                     </div>
                   </div>
@@ -809,7 +829,7 @@ export default function EmployeeApp({
               <div className="pt-3.5 border-t border-gray-100 dark:border-gray-800 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-[#0058bc] dark:text-[#3b82f6]" />
-                  Jam Kerja: <span className="font-semibold text-gray-700 dark:text-gray-300">{limitTime} - 17:00 WIB</span>
+                  Jam Kerja <span className="font-semibold">{currentSession === 'malam' ? 'Malam' : 'Siang'}</span>: <span className="font-semibold text-gray-700 dark:text-gray-300">{currentLimitTime} - {currentJamPulang} WIB</span>
                 </span>
               </div>
             </section>
@@ -993,6 +1013,13 @@ export default function EmployeeApp({
                               Out: {r.keluar}
                             </span>
                           )}
+                          <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                            (r.sesi ?? 'siang') === 'malam'
+                              ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300'
+                              : 'bg-amber-50 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300'
+                          }`}>
+                            {r.sesi ?? 'siang'}
+                          </span>
                         </>
                       )}
                     </div>
@@ -1193,7 +1220,7 @@ export default function EmployeeApp({
                   <span className="text-2xl font-black text-rose-500 text-left">
                     {personalRecords.filter(r => r.status === 'Terlambat').length} Hari
                   </span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 text-left">Datang setelah 07:00 WIB</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 text-left">Datang setelah {limitTime} WIB</span>
                 </div>
               </div>
 
