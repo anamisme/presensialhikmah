@@ -63,17 +63,17 @@ export default function App() {
   // Firebase Realtime Database sync
   useEffect(() => {
     listenSettings((data) => {
-      if (data.employees) {
+      if (Array.isArray(data.employees) && data.employees.length > 0) {
         const emps = data.employees as Employee[];
         setEmployees(emps);
         setStoredData('employees', emps);
       }
-      if (data.geofences) {
+      if (Array.isArray(data.geofences) && data.geofences.length > 0) {
         const geos = data.geofences as Geofence[];
         setGeofences(geos);
         setStoredData('geofences', geos);
       }
-      if (data.activities) {
+      if (Array.isArray(data.activities) && data.activities.length > 0) {
         const acts = data.activities as RecentActivity[];
         setRecentActivities(acts);
         setStoredData('activities', acts);
@@ -246,6 +246,26 @@ export default function App() {
     }
   };
 
+  const handleUpdateEmployeeProfile = (nip: string, updates: Partial<Employee>) => {
+    const updated = employees.map(emp => {
+      if (emp.nip === nip) {
+        return { ...emp, ...updates };
+      }
+      return emp;
+    });
+    updateEmployees(updated);
+
+    // Sync session if currently logged in as this employee
+    if (session && session.role === 'employee' && session.user.nip === nip) {
+      const updatedSession = {
+        ...session,
+        user: { ...session.user, ...updates }
+      };
+      setSession(updatedSession);
+      setStoredData('session', updatedSession);
+    }
+  };
+
   const handleChangeAdminProfilePicture = (newFoto: string) => {
     const updatedAdmin = { ...adminProfile, foto: newFoto };
     setAdminProfile(updatedAdmin);
@@ -273,53 +293,62 @@ export default function App() {
   };
 
   const handleAddAttendance = (record: AttendanceRecord) => {
-    // Find existing record by id only to avoid overwriting different records for same NIP+date
-    const existsIdx = attendanceRecords.findIndex(r => r.id === record.id);
-    
-    let updated: AttendanceRecord[];
-    if (existsIdx > -1) {
-      // Update existing record (e.g., add checkout time)
-      updated = [...attendanceRecords];
-      updated[existsIdx] = record;
-    } else {
-      // Append new record
-      updated = [record, ...attendanceRecords];
-    }
-    
-    updateAttendance(updated);
+    handleAddAttendanceBatch([record]);
+  };
 
-    // Auto-sync to Google Sheets via webhook
-    const emp = employees.find(e => e.nip === record.nip);
-    syncAttendanceToSheet({
-      tanggal: record.tanggal,
-      nama: record.nama,
-      jabatan: emp?.jabatan || '',
-      lembaga: emp?.lembaga || '',
-      masuk: record.masuk,
-      keluar: record.keluar,
-      status: record.status,
-      lokasi: record.lokasi,
-      keterangan: record.keterangan,
-      sesi: record.sesi || 'siang',
+  const handleAddAttendanceBatch = (records: AttendanceRecord[]) => {
+    let updated = [...attendanceRecords];
+    records.forEach(record => {
+      // Find existing record by id only to avoid overwriting different records for same NIP+date
+      const existsIdx = updated.findIndex(r => r.id === record.id);
+      if (existsIdx > -1) {
+        // Update existing record (e.g., add checkout time)
+        updated[existsIdx] = record;
+      } else {
+        // Append new record
+        updated = [record, ...updated];
+      }
     });
 
-    // Append to recent activities log
-    const activityType = record.status === 'Izin' ? 'tambah' : record.keluar ? 'keluar' : 'masuk';
-    const activityDesc = record.status === 'Izin' 
-      ? `mengajukan izin hadir (${record.keterangan})` 
-      : record.keluar 
-      ? 'melakukan presensi keluar' 
-      : 'melakukan presensi masuk';
+    updateAttendance(updated);
 
-    const newActivity: RecentActivity = {
-      id: `act-${Date.now()}`,
-      nip: record.nip,
-      nama: record.nama,
-      tipe: activityType,
-      waktu: 'Baru saja',
-      keterangan: activityDesc
-    };
-    updateActivities([newActivity, ...recentActivities]);
+    const newActivities: RecentActivity[] = [];
+    records.forEach(record => {
+      // Auto-sync to Google Sheets via webhook
+      const emp = employees.find(e => e.nip === record.nip);
+      syncAttendanceToSheet({
+        tanggal: record.tanggal,
+        nama: record.nama,
+        jabatan: emp?.jabatan || '',
+        lembaga: emp?.lembaga || '',
+        masuk: record.masuk,
+        keluar: record.keluar,
+        status: record.status,
+        lokasi: record.lokasi,
+        keterangan: record.keterangan,
+        sesi: record.sesi || 'siang',
+      });
+
+      // Append to recent activities log
+      const activityType = record.status === 'Izin' ? 'tambah' : record.keluar ? 'keluar' : 'masuk';
+      const activityDesc = record.status === 'Izin' 
+        ? `mengajukan izin hadir (${record.keterangan})` 
+        : record.keluar 
+        ? 'melakukan presensi keluar' 
+        : 'melakukan presensi masuk';
+
+      newActivities.push({
+        id: `act-${Date.now()}-${record.id}`,
+        nip: record.nip,
+        nama: record.nama,
+        tipe: activityType,
+        waktu: 'Baru saja',
+        keterangan: activityDesc
+      });
+    });
+    if (newActivities.length > 0) {
+      updateActivities([...newActivities, ...recentActivities]);
+    }
   };
 
   const handleAddEmployee = (newEmp: Employee) => {
@@ -376,8 +405,10 @@ export default function App() {
           geofences={geofences}
           attendanceRecords={attendanceRecords}
           onAddAttendance={handleAddAttendance}
+          onAddAttendanceBatch={handleAddAttendanceBatch}
           onLogout={handleLogout}
           onChangeProfilePicture={handleChangeProfilePicture}
+          onUpdateEmployeeProfile={handleUpdateEmployeeProfile}
           limitTime={limitTime}
           jamPulang={jamPulang}
           jamMalamMasuk={jamMalamMasuk}

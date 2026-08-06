@@ -26,10 +26,11 @@ import {
   Upload,
   X,
   Calendar,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Pencil
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence } from '../types';
-import { ASSETS } from '../data';
+import { ASSETS, localDateString } from '../data';
 import QRScanner from './QRScanner';
 import ThemeToggle from './ThemeToggle';
 
@@ -38,8 +39,10 @@ interface EmployeeAppProps {
   geofences: Geofence[];
   attendanceRecords: AttendanceRecord[];
   onAddAttendance: (record: AttendanceRecord) => void;
+  onAddAttendanceBatch?: (records: AttendanceRecord[]) => void;
   onLogout: () => void;
   onChangeProfilePicture: (nip: string, newFoto: string) => void;
+  onUpdateEmployeeProfile?: (nip: string, updates: Partial<Employee>) => void;
   limitTime?: string;
   jamPulang?: string;
   jamMalamMasuk?: string;
@@ -53,8 +56,10 @@ export default function EmployeeApp({
   geofences,
   attendanceRecords,
   onAddAttendance,
+  onAddAttendanceBatch,
   onLogout,
   onChangeProfilePicture,
+  onUpdateEmployeeProfile,
   limitTime = '07:00',
   jamPulang = '14:00',
   jamMalamMasuk = '18:30',
@@ -77,6 +82,10 @@ export default function EmployeeApp({
   // New States for Profile Picture Editing
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [customPhotoUrl, setCustomPhotoUrl] = useState('');
+
+  // New State for editing own name
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState('');
 
   // New State for viewing attachments
   const [viewingAttachment, setViewingAttachment] = useState<string | null>(null);
@@ -119,7 +128,7 @@ export default function EmployeeApp({
   );
   
   // Find today's records (multiple sessions possible)
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateString();
   const todayRecords = personalRecords.filter(r => r.tanggal === todayStr);
 
   // Deteksi sesi saat ini: malam bila jam sekarang >= jam masuk malam
@@ -458,7 +467,7 @@ export default function EmployeeApp({
         if (isOnline) {
           onAddAttendance(updatedRecord);
         } else {
-          const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && r.nip === currentUser.nip);
+          const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && r.nip === currentUser.nip && (r.sesi ?? 'siang') === currentSession);
           let updatedQueue: AttendanceRecord[];
           if (queueIndex > -1) {
             updatedQueue = [...offlineQueue];
@@ -483,10 +492,14 @@ export default function EmployeeApp({
       setSyncMessage(`Menyinkronkan ${offlineQueue.length} data presensi offline ke server...`);
       
       const timer = setTimeout(() => {
-        // Process each record in the queue
-        offlineQueue.forEach(record => {
-          onAddAttendance(record);
-        });
+        // Process all records in the queue in one batch to avoid stale-closure overwrites
+        if (onAddAttendanceBatch) {
+          onAddAttendanceBatch(offlineQueue);
+        } else {
+          offlineQueue.forEach(record => {
+            onAddAttendance(record);
+          });
+        }
         
         // Clear queue
         setOfflineQueue([]);
@@ -501,7 +514,7 @@ export default function EmployeeApp({
 
       return () => clearTimeout(timer);
     }
-  }, [isOnline, offlineQueue, onAddAttendance, currentUser.nip]);
+  }, [isOnline, offlineQueue, onAddAttendance, onAddAttendanceBatch, currentUser.nip]);
 
   // Format time (WIB format)
   const formatClock = (date: Date) => {
@@ -975,7 +988,7 @@ export default function EmployeeApp({
 
         {activeTab === 'stats' && (() => {
           // Calculate current month's stats dynamically
-          const currentYearMonth = currentTime.toISOString().slice(0, 7); // e.g., "2026-06"
+          const currentYearMonth = `${currentTime.getFullYear()}-${String(currentTime.getMonth() + 1).padStart(2, '0')}`;
           const indonesianMonths = [
             'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -1196,7 +1209,48 @@ export default function EmployeeApp({
                 </button>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{currentUser.nama}</h2>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Nama lengkap"
+                      className="w-44 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm text-center focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
+                    />
+                    <button
+                      onClick={() => {
+                        const name = editName.trim();
+                        if (!name) return;
+                        onUpdateEmployeeProfile?.(currentUser.nip, { nama: name });
+                        setIsEditingName(false);
+                      }}
+                      className="px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#0058bc] hover:bg-[#00418f] transition-colors"
+                    >
+                      Simpan
+                    </button>
+                    <button
+                      onClick={() => setIsEditingName(false)}
+                      className="px-2 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center justify-center gap-2">
+                    {currentUser.nama}
+                    <button
+                      onClick={() => {
+                        setEditName(currentUser.nama);
+                        setIsEditingName(true);
+                      }}
+                      className="p-1 text-gray-400 hover:text-[#0058bc] transition-colors cursor-pointer"
+                      title="Ganti Nama"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </h2>
+                )}
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{currentUser.jabatan}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{currentUser.lembaga}</p>
               </div>
@@ -1476,7 +1530,7 @@ export default function EmployeeApp({
                       alert('Harap isi alasan/keterangan pengajuan izin.');
                       return;
                     }
-                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayStr = localDateString();
                     const fullKeterangan = `${permitType}: ${permitReason}`;
                     const newRecord: AttendanceRecord = {
                       id: `rec-${Date.now()}`,

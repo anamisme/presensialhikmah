@@ -24,16 +24,13 @@ import {
   ArrowLeft,
   Settings,
   UserPlus,
-  FileSpreadsheet,
-  ExternalLink,
   Check,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Printer
 } from 'lucide-react';
-import { User } from 'firebase/auth';
-import { initAuth, googleSignIn, logout as googleLogout } from '../googleAuth';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
-import { ASSETS } from '../data';
+import { ASSETS, localDateString } from '../data';
 import { downloadImage } from '../downloadQR';
 import ThemeToggle from './ThemeToggle';
 
@@ -113,88 +110,9 @@ export default function AdminPanel({
   const [viewingAttachment, setViewingAttachment] = useState<string | null>(null);
   const [attachmentTitle, setAttachmentTitle] = useState('');
   
-  // Google Sheets integration state
-  const [googleUser, setGoogleUser] = useState<User | null>(null);
-  const [googleToken, setGoogleToken] = useState<string | null>(null);
-  const [isExportingSheets, setIsExportingSheets] = useState(false);
-  const [exportSuccessUrl, setExportSuccessUrl] = useState<string | null>(null);
-  const [exportError, setExportError] = useState<string | null>(null);
-  const [customSheetTitle, setCustomSheetTitle] = useState('');
-  const [isSheetsModalOpen, setIsSheetsModalOpen] = useState(false);
-
-  React.useEffect(() => {
-    // Initialize google auth listener
-    const unsubscribe = initAuth(
-      (user, token) => {
-        setGoogleUser(user);
-        setGoogleToken(token);
-      },
-      () => {
-        setGoogleUser(null);
-        setGoogleToken(null);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
-
-  const handleGoogleLogin = async () => {
-    try {
-      setExportError(null);
-      const res = await googleSignIn(['https://www.googleapis.com/auth/spreadsheets']);
-      if (res) {
-        setGoogleUser(res.user);
-        setGoogleToken(res.accessToken);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setExportError(err.message || 'Gagal login dengan akun Google');
-    }
-  };
-
-  const handleGoogleLogout = async () => {
-    try {
-      await googleLogout();
-      setGoogleUser(null);
-      setGoogleToken(null);
-      setExportSuccessUrl(null);
-    } catch (err: any) {
-      console.error(err);
-    }
-  };
-
-  const handleOpenSheetsExport = () => {
-    const monthText = monthFilter === 'Semua' ? 'Semua Bulan' : monthFilter;
-    const yearText = yearFilter === 'Semua' ? 'Semua Tahun' : yearFilter;
-    setCustomSheetTitle(`Rekap Presensi Karyawan - ${monthText} ${yearText}`);
-    setExportSuccessUrl(null);
-    setExportError(null);
-    setIsSheetsModalOpen(true);
-  };
-
-  const handleExportToGoogleSheets = async () => {
-    if (!googleToken) {
-      handleGoogleLogin();
-      return;
-    }
-
-    setIsExportingSheets(true);
-    setExportError(null);
-    setExportSuccessUrl(null);
-
-    try {
-      // Data otomatis sync ke Sheets via webhook saat absen
-      setExportSuccessUrl('https://docs.google.com/spreadsheets/d/1y2LsZUg56C5pDMA-V2lzHmfv3TBjT_HCes0960RcSnQ');
-    } catch (err: any) {
-      console.error(err);
-      setExportError(err.message || 'Gagal mengekspor ke Google Sheets');
-    } finally {
-      setIsExportingSheets(false);
-    }
-  };
-  
   // State for adding employees bottom sheet
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
-  const [newNip, setNewNip] = useState('');
+
   const [newNama, setNewNama] = useState('');
   const [newJabatan, setNewJabatan] = useState('');
   const [newLembaga, setNewLembaga] = useState('Lembaga IT & Digital');
@@ -234,7 +152,7 @@ export default function AdminPanel({
 
   const handleExportCSV = () => {
     const headers = ['Tanggal', 'NIP', 'Nama', 'Sesi', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
-    const rows = attendanceRecords.map(r => [
+    const rows = filteredAttendance.map(r => [
       r.tanggal,
       r.nip,
       sanitizeCSVField(r.nama),
@@ -257,11 +175,98 @@ export default function AdminPanel({
     document.body.removeChild(link);
   };
 
+  const handlePrint = () => {
+    if (filteredAttendance.length === 0) {
+      alert('Tidak ada data presensi yang cocok dengan filter untuk dicetak.');
+      return;
+    }
+
+    const title = `Rekap Presensi ${monthFilter === 'Semua' ? 'Semua Bulan' : monthFilter} ${yearFilter === 'Semua' ? 'Semua Tahun' : yearFilter}`;
+    const tableHeader = `<tr>
+      <th>Tanggal</th><th>NIP</th><th>Nama</th><th>Jabatan</th><th>Lembaga</th>
+      <th>Sesi</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>Lokasi</th>
+    </tr>`;
+    const tableBody = filteredAttendance.map(r => {
+      const emp = employees.find(e => e.nip === r.nip);
+      return `<tr>
+        <td>${r.tanggal}</td>
+        <td>${r.nip}</td>
+        <td>${r.nama}</td>
+        <td>${emp?.jabatan || ''}</td>
+        <td>${emp?.lembaga || ''}</td>
+        <td>${r.sesi || 'siang'}</td>
+        <td>${r.masuk}</td>
+        <td>${r.keluar || '--:--'}</td>
+        <td>${r.status}</td>
+        <td>${r.lokasi || 'Kantor Pusat'}</td>
+      </tr>`;
+    }).join('');
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (!printWindow) {
+      alert('Popup diblokir. Izinkan popup untuk mencetak rekap.');
+      return;
+    }
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; padding: 24px; color: #111; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 18px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+    .header h2 { font-size: 14px; font-weight: 600; margin-top: 4px; }
+    .header p { font-size: 11px; color: #555; margin-top: 4px; }
+    .meta { font-size: 11px; margin-bottom: 12px; display: flex; justify-content: space-between; }
+    table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+    th, td { border: 1px solid #999; padding: 5px 6px; text-align: left; }
+    th { background: #e2e8f0; font-weight: bold; text-transform: uppercase; font-size: 9.5px; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .footer { margin-top: 24px; display: flex; justify-content: space-between; font-size: 11px; }
+    .signature { text-align: center; }
+    .signature .name { margin-top: 56px; font-weight: bold; text-decoration: underline; }
+    @media print { body { padding: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Rekap Presensi Karyawan</h1>
+    <h2>Yayasan Baitul Hikmah</h2>
+    <p>${title}</p>
+  </div>
+  <div class="meta">
+    <span>Total Data: <strong>${filteredAttendance.length}</strong> baris</span>
+    <span>Dicetak: ${localDateString()}</span>
+  </div>
+  <table>
+    <thead>${tableHeader}</thead>
+    <tbody>${tableBody}</tbody>
+  </table>
+  <div class="footer">
+    <div class="signature">
+      <p>Mengetahui,<br/>Kepala Yayasan Baitul Hikmah</p>
+      <div class="name">(____________________)</div>
+    </div>
+    <div class="signature">
+      <p>Pekalongan, ${localDateString()}<br/>Admin Presensi</p>
+      <div class="name">(____________________)</div>
+    </div>
+  </div>
+  <script>window.onload = () => { window.print(); };</script>
+</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.focus();
+  };
+
   // Compute live dashboard metrics
   const totalEmployees = employees.length;
   
   // Attendance metrics matching the 2x2 grid
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = localDateString();
   const todayRecords = attendanceRecords.filter(r => r.tanggal === todayStr);
   const totalHadir = todayRecords.length;
   const totalTerlambat = todayRecords.filter(r => r.status === 'Terlambat').length;
@@ -274,12 +279,12 @@ export default function AdminPanel({
   );
 
   // Filter attendance records
+  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   const filteredAttendance = attendanceRecords.filter(rec => {
     // Basic date parsing
     const recYear = rec.tanggal.split('-')[0];
     const recMonthNum = rec.tanggal.split('-')[1]; // "06"
     
-    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const recMonthName = monthNames[parseInt(recMonthNum, 10) - 1] || '';
 
     const matchesYear = yearFilter === 'Semua' || recYear === yearFilter;
@@ -287,6 +292,12 @@ export default function AdminPanel({
 
     return matchesYear && matchesMonth;
   });
+
+  // Dynamic year/month options derived from actual attendance data
+  const availableYears = [...new Set(attendanceRecords.map(r => r.tanggal?.split('-')[0]).filter(Boolean))].sort().reverse();
+  const availableMonths = [...new Set(attendanceRecords.map(r => r.tanggal?.split('-')[1]).filter(Boolean))]
+    .map(m => ({ num: m, name: monthNames[parseInt(m, 10) - 1] || '' }))
+    .sort((a, b) => parseInt(a.num, 10) - parseInt(b.num, 10));
 
   // Paginated records
   const totalEntries = filteredAttendance.length;
@@ -296,21 +307,28 @@ export default function AdminPanel({
 
   const handleAddNewEmployee = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmail.trim() || !newNama) return;
+    const email = newEmail.trim().toLowerCase();
+    if (!email || !newNama.trim()) return;
+
+    // Cegah duplikat email agar login via email tetap cocok dengan 1 akun
+    if (employees.some(emp => emp.email?.toLowerCase() === email)) {
+      alert('Email sudah terdaftar atas nama karyawan lain.');
+      return;
+    }
+    const nip = `NIP-${Date.now()}`;
 
     const newEmp: Employee = {
-      nip: newNip.trim() || `NIP-${Date.now()}`,
-      nama: newNama,
+      nip,
+      nama: newNama.trim(),
       jabatan: newJabatan,
       lembaga: newLembaga,
       foto: ASSETS.genericAvatar,
-      email: newEmail.trim()
+      email
     };
 
     onAddEmployee(newEmp);
     
     // Clear inputs and close sheet
-    setNewNip('');
     setNewNama('');
     setNewJabatan('');
     setNewEmail('');
@@ -636,25 +654,26 @@ export default function AdminPanel({
                   <div className="relative">
                     <select 
                       value={monthFilter}
-                      onChange={(e) => setMonthFilter(e.target.value)}
+                      onChange={(e) => { setMonthFilter(e.target.value); setCurrentPage(1); }}
                       className="bg-white border border-gray-200/80 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold focus:ring-2 focus:ring-[#00418f]/10 focus:border-[#00418f] outline-none dark:bg-gray-900 dark:border-gray-700"
                     >
                       <option value="Semua">Semua Bulan</option>
-                      <option value="Juni">Juni</option>
-                      <option value="Oktober">Oktober</option>
-                      <option value="November">November</option>
+                      {monthNames.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="relative">
                     <select 
                       value={yearFilter}
-                      onChange={(e) => setYearFilter(e.target.value)}
+                      onChange={(e) => { setYearFilter(e.target.value); setCurrentPage(1); }}
                       className="bg-white border border-gray-200/80 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold focus:ring-2 focus:ring-[#00418f]/10 focus:border-[#00418f] outline-none dark:bg-gray-900 dark:border-gray-700"
                     >
                       <option value="Semua">Semua Tahun</option>
-                      <option value="2026">2026</option>
-                      <option value="2023">2023</option>
+                      {availableYears.map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -667,11 +686,11 @@ export default function AdminPanel({
                   </button>
 
                   <button 
-                    onClick={handleOpenSheetsExport}
-                    className="flex items-center gap-1.5 bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-emerald-800 active:scale-95 transition-all shadow-sm cursor-pointer"
+                    onClick={handlePrint}
+                    className="flex items-center gap-1.5 bg-sky-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-sky-700 active:scale-95 transition-all shadow-sm cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    Google Sheets
+                    <Printer className="w-3.5 h-3.5" />
+                    Cetak / PDF
                   </button>
                 </div>
               </div>
@@ -1353,17 +1372,6 @@ export default function AdminPanel({
                     </select>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">NIP <span className="text-gray-300 font-medium normal-case dark:text-gray-600">(opsional)</span></label>
-                    <input 
-                      type="text"
-                      value={newNip}
-                      onChange={(e) => setNewNip(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
-                      placeholder="Kosongkan untuk dibuat otomatis"
-                    />
-                  </div>
-
                   <div className="pt-4 flex gap-3">
                     <button 
                       type="button"
@@ -1380,200 +1388,6 @@ export default function AdminPanel({
                     </button>
                   </div>
                 </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Google Sheets Export Modal */}
-      <AnimatePresence>
-        {isSheetsModalOpen && (
-          <>
-            {/* Dark overlay backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                if (!isExportingSheets) setIsSheetsModalOpen(false);
-              }}
-              className="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" 
-            />
-
-            {/* Modal Container */}
-            <motion.div 
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-[70] bg-[#F2F2F7] rounded-t-[32px] shadow-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-950"
-            >
-              <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-4" />
-              
-              <div className="px-6 pb-12 max-w-md mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-black text-gray-800 flex items-center gap-2 dark:text-gray-100">
-                    <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                    Ekspor Google Sheets
-                  </h2>
-                  <button 
-                    onClick={() => setIsSheetsModalOpen(false)}
-                    disabled={isExportingSheets}
-                    className="text-xs font-bold text-gray-400 hover:text-gray-600 disabled:opacity-50 dark:text-gray-500 dark:hover:text-gray-300"
-                  >
-                    Tutup
-                  </button>
-                </div>
-
-                {!googleToken ? (
-                  /* User is not logged in to Google Workspace */
-                  <div className="text-center py-6 space-y-6">
-                    <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto shadow-sm dark:bg-emerald-900/30 dark:text-emerald-400">
-                      <FileSpreadsheet className="w-8 h-8" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-gray-800 text-sm dark:text-gray-100">Hubungkan Akun Google Anda</h3>
-                      <p className="text-xs text-gray-500 leading-relaxed dark:text-gray-400">
-                        Ekspor rekap data presensi karyawan secara instan langsung ke Google Sheets. Spreadsheet baru akan dibuat di Google Drive Anda dengan visualisasi tabel yang rapi dan terformat.
-                      </p>
-                    </div>
-                    
-                    {exportError && (
-                      <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-xs text-rose-600 text-left dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-400">
-                        {exportError}
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleGoogleLogin}
-                      className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-bold px-4 py-3.5 rounded-2xl border border-gray-200 shadow-sm transition-all active:scale-95 cursor-pointer text-sm dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
-                    >
-                      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5">
-                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                      </svg>
-                      Masuk dengan Google
-                    </button>
-                  </div>
-                ) : (
-                  /* User is connected with Google Workspace */
-                  <div className="space-y-6">
-                    {/* Logged in User Badge */}
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center justify-between shadow-sm dark:bg-gray-900 dark:border-gray-800">
-                      <div className="flex items-center gap-3 font-sans">
-                        <img 
-                          src={googleUser?.photoURL || ASSETS.genericAvatar} 
-                          alt="Google Profile" 
-                          className="w-10 h-10 rounded-full border border-gray-100 object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-gray-800 truncate dark:text-gray-100">{googleUser?.displayName}</p>
-                          <p className="text-[10px] text-gray-400 truncate dark:text-gray-500">{googleUser?.email}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={handleGoogleLogout}
-                        disabled={isExportingSheets}
-                        className="text-[10px] font-bold text-rose-500 hover:text-rose-600 disabled:opacity-50 cursor-pointer dark:text-rose-400 dark:hover:text-rose-500"
-                      >
-                        Putuskan
-                      </button>
-                    </div>
-
-                    {exportSuccessUrl ? (
-                      /* Export Success Message */
-                      <div className="bg-white border border-emerald-100 rounded-2xl p-5 text-center space-y-4 shadow-sm dark:bg-gray-900 dark:border-emerald-800">
-                        <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mx-auto dark:bg-emerald-900/30 dark:text-emerald-400">
-                          <Check className="w-6 h-6" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-gray-800 text-sm dark:text-gray-100">Ekspor Berhasil!</h4>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Spreadsheet baru berhasil dibuat dan ditambahkan ke Google Drive Anda.</p>
-                        </div>
-
-                        <div className="flex gap-2 pt-2">
-                          <a
-                            href={exportSuccessUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wide transition-all shadow-sm"
-                          >
-                            Buka Spreadsheet
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                          <button
-                            onClick={() => {
-                              setExportSuccessUrl(null);
-                              setExportError(null);
-                            }}
-                            className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold uppercase tracking-wide transition-all cursor-pointer dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-400"
-                          >
-                            Buat Lagi
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Main export configuration / action screen */
-                      <div className="space-y-4">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-gray-400 uppercase dark:text-gray-500">Nama File Spreadsheet</label>
-                          <input 
-                            type="text"
-                            required
-                            disabled={isExportingSheets}
-                            value={customSheetTitle}
-                            onChange={(e) => setCustomSheetTitle(e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none disabled:opacity-50 dark:bg-gray-900 dark:border-gray-700"
-                            placeholder="Rekap Presensi Karyawan"
-                          />
-                        </div>
-
-                        <div className="bg-white border border-gray-100 rounded-2xl p-4 text-xs text-gray-500 space-y-1">
-                          <p className="font-bold text-gray-700 mb-1">Informasi Ekspor:</p>
-                          <p>• Ekspor mencakup data presensi yang sedang aktif difilter: <strong className="text-gray-700 font-semibold">{monthFilter === 'Semua' ? 'Semua Bulan' : monthFilter} {yearFilter === 'Semua' ? 'Semua Tahun' : yearFilter}</strong>.</p>
-                          <p>• Total rekaman yang akan diekspor: <strong className="text-[#00418f] font-bold">{filteredAttendance.length} baris</strong>.</p>
-                          <p>• Header kolom tabel akan otomatis diwarnai hijau elegan khas Google Sheets dan ukuran kolom akan disesuaikan.</p>
-                        </div>
-
-                        {exportError && (
-                          <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-xs text-rose-600">
-                            {exportError}
-                          </div>
-                        )}
-
-                        <div className="flex gap-3 pt-2">
-                          <button
-                            type="button"
-                            disabled={isExportingSheets}
-                            onClick={() => setIsSheetsModalOpen(false)}
-                            className="flex-1 py-3.5 rounded-xl text-xs font-bold uppercase text-gray-500 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-all cursor-pointer"
-                          >
-                            Batal
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isExportingSheets || filteredAttendance.length === 0}
-                            onClick={handleExportToGoogleSheets}
-                            className="flex-1 py-3.5 rounded-xl text-xs font-bold uppercase text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
-                          >
-                            {isExportingSheets ? (
-                              <>
-                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Mengekspor...
-                              </>
-                            ) : (
-                              'Ekspor Sekarang'
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </motion.div>
           </>

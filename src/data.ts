@@ -37,6 +37,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
 // Initial Recent Activities (kosong)
 export const INITIAL_ACTIVITIES: RecentActivity[] = [];
 
+// Format tanggal lokal (WIB), bukan UTC — mencegah absen malam tersimpan di tanggal kemarin
+export const localDateString = (d: Date = new Date()): string => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 // LocalStorage Helper functions
 export const getStoredData = <T>(key: string, initialValue: T): T => {
   try {
