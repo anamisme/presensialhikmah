@@ -546,7 +546,6 @@ export default function EmployeeApp({
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 dark:bg-gray-900/80 dark:border-gray-800/50 flex justify-between items-center px-4 h-16 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Logo Yayasan Baitul Hikmah" className="w-9 h-9 rounded-full object-cover" />
-          <span className="font-bold text-lg tracking-tight text-[#0058bc] dark:text-[#3b82f6]">Baitul Hikmah</span>
         </div>
         
         {/* User avatar with mini settings portal */}

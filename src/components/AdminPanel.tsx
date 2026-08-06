@@ -114,8 +114,8 @@ export default function AdminPanel({
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
 
   const [newNama, setNewNama] = useState('');
-  const [newJabatan, setNewJabatan] = useState('');
-  const [newLembaga, setNewLembaga] = useState('Lembaga IT & Digital');
+  const [newJabatan, setNewJabatan] = useState('Pendidik');
+  const [newLembaga, setNewLembaga] = useState('MTS Al-Hikmah Tangkil Kulon');
   const [newEmail, setNewEmail] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -351,7 +351,7 @@ export default function AdminPanel({
             <div className="w-5 h-5 rounded-full overflow-hidden border border-[#00418f]/20 dark:border-blue-400/30">
               <img src={adminProfile.foto} className="w-full h-full object-cover" alt="Admin" />
             </div>
-            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{adminProfile.nama}</span>
+            <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{adminProfile.nama.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')}</span>
           </div>
 
           {/* Quick toggle to Employee Mode */}
@@ -1347,14 +1347,16 @@ export default function AdminPanel({
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">Jabatan</label>
-                    <input 
-                      type="text"
+                    <select 
                       required
                       value={newJabatan}
                       onChange={(e) => setNewJabatan(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
-                      placeholder="Masukkan jabatan"
-                    />
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none cursor-pointer dark:bg-gray-900 dark:border-gray-700"
+                    >
+                      <option value="Pendidik">Pendidik</option>
+                      <option value="Ketua Lembaga">Ketua Lembaga</option>
+                      <option value="Tenaga Pendidik">Tenaga Pendidik</option>
+                    </select>
                   </div>
 
                   <div className="space-y-1.5">
@@ -1364,11 +1366,10 @@ export default function AdminPanel({
                       onChange={(e) => setNewLembaga(e.target.value)}
                       className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none cursor-pointer dark:bg-gray-900 dark:border-gray-700"
                     >
-                      <option value="Lembaga IT & Digital">Lembaga IT & Digital</option>
-                      <option value="Keuangan">Keuangan</option>
-                      <option value="Logistik">Logistik</option>
-                      <option value="Sarana & Prasarana">Sarana & Prasarana</option>
-                      <option value="Rektorat">Rektorat</option>
+                      <option value="MTS Al-Hikmah Tangkil Kulon">MTS Al-Hikmah Tangkil Kulon</option>
+                      <option value="MIS Al-Hikmah Tangkil Kulon">MIS Al-Hikmah Tangkil Kulon</option>
+                      <option value="PKBM Al-Hikmah">PKBM Al-Hikmah</option>
+                      <option value="KB Al-Hikmah">KB Al-Hikmah</option>
                     </select>
                   </div>
 
