@@ -121,16 +121,20 @@ export default function App() {
       const nip = session.user?.nip;
       if (!nip) return;
       const off = listenOwnAttendance(nip, (records) => {
-        setAttendanceRecords(records);
-        setStoredData('attendance', records);
+        if (records.length > 0) {
+          setAttendanceRecords(records);
+          setStoredData('attendance', records);
+        }
       });
       return off;
     }
 
     // Admin: aggregate semua absensi
     const off = listenAllAttendance((records) => {
-      setAttendanceRecords(records);
-      setStoredData('attendance', records);
+      if (records.length > 0) {
+        setAttendanceRecords(records);
+        setStoredData('attendance', records);
+      }
     });
     return off;
   }, [session]);
@@ -169,7 +173,9 @@ export default function App() {
   const updateAttendance = (newAttendance: AttendanceRecord[]) => {
     setAttendanceRecords(newAttendance);
     setStoredData('attendance', newAttendance);
-    saveAttendanceByNip(newAttendance);
+    saveAttendanceByNip(newAttendance).catch((err) => {
+      console.error('Data absen tersimpan lokal, namun gagal disinkronkan ke Firebase:', err);
+    });
   };
 
   const updateActivities = (newActivities: RecentActivity[]) => {

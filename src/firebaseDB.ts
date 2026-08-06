@@ -27,11 +27,17 @@ export const stopListening = () => {
 
 export const saveSetting = (key: string, value: unknown) => {
   const settingRef = ref(db, `presensi-settings/${key}`);
-  return set(settingRef, value);
+  return set(settingRef, value).catch((err) => {
+    console.error(`Gagal menyimpan setting "${key}" ke Firebase:`, err);
+    throw err;
+  });
 };
 
 export const saveAllSettings = (settings: Record<string, unknown>) => {
-  return set(settingsRef, settings);
+  return set(settingsRef, settings).catch((err) => {
+    console.error('Gagal menyimpan semua settings ke Firebase:', err);
+    throw err;
+  });
 };
 
 // --- Attendance (disimpan per NIP karyawan) ---
@@ -64,7 +70,10 @@ export const listenAllAttendance = (callback: (records: AttendanceRecord[]) => v
 };
 
 export const saveOwnAttendance = (nip: string, records: AttendanceRecord[]) => {
-  return set(ref(db, `presensi-settings/attendance/${nip}`), records);
+  return set(ref(db, `presensi-settings/attendance/${nip}`), records).catch((err) => {
+    console.error(`Gagal menyimpan absensi NIP ${nip} ke Firebase:`, err);
+    throw err;
+  });
 };
 
 export const saveAttendanceByNip = (records: AttendanceRecord[]) => {

@@ -296,15 +296,15 @@ export default function AdminPanel({
 
   const handleAddNewEmployee = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNip || !newNama || !newJabatan) return;
+    if (!newEmail.trim() || !newNama) return;
 
     const newEmp: Employee = {
-      nip: newNip,
+      nip: newNip.trim() || `NIP-${Date.now()}`,
       nama: newNama,
       jabatan: newJabatan,
       lembaga: newLembaga,
       foto: ASSETS.genericAvatar,
-      email: newEmail.trim() || undefined
+      email: newEmail.trim()
     };
 
     onAddEmployee(newEmp);
@@ -549,11 +549,18 @@ export default function AdminPanel({
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl md:text-2xl font-extrabold text-gray-800 tracking-tight dark:text-gray-100">Data Karyawan</h2>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Total terdaftar {employees.length} karyawan aktif. Karyawan otomatis terdaftar saat login pertama.</p>
                 </div>
+                <button
+                  onClick={() => setIsAddEmployeeOpen(true)}
+                  className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#00418f] shadow-md hover:brightness-110 active:scale-95 transition-all dark:bg-blue-700"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Tambah Karyawan
+                </button>
               </div>
 
               {/* Search Bar */}
@@ -939,162 +946,59 @@ export default function AdminPanel({
                   </button>
                 </section>
 
-                {/* Lokasi Gedung */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4 dark:bg-gray-900 dark:border-gray-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-[#00418f] dark:text-blue-400" />
-                      <h3 className="font-bold text-gray-800 text-sm dark:text-gray-100">Lokasi Gedung</h3>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {geofences.map((geo, idx) => (
-                      <div key={idx} className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-gray-800 dark:bg-gray-800/50">
-                        <div className="bg-[#00418f]/10 p-2 rounded-lg text-[#00418f] shrink-0 dark:bg-blue-900/30 dark:text-blue-400">
-                          <MapPin className="w-5 h-5" />
-                        </div>
-                        <div className="flex-grow min-w-0">
-                          <h4 className="font-bold text-gray-800 text-xs truncate dark:text-gray-100">{geo.nama}</h4>
-                          <p className="text-[10px] text-gray-400 truncate dark:text-gray-500">{geo.lat}, {geo.lng}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold text-[9px] uppercase dark:bg-emerald-900/30 dark:text-emerald-400">
-                              Radius: {geo.radius}m
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <button 
-                            onClick={() => {
-                              if (confirm(`Apakah Anda yakin ingin menghapus lokasi ${geo.nama}?`)) {
-                                onDeleteGeofence(geo.id);
-                              }
-                            }}
-                            className="text-gray-400 hover:text-rose-600 transition-colors dark:text-gray-500 dark:hover:text-rose-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-              </div>
-
-              {/* Right Column: Generate QR & Info */}
-              <div className="space-y-6">
-                
-                {/* Generate QR Code per Lokasi Gedung */}
+                {/* Lokasi Presensi & QR Code (digabung) */}
                 <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4 dark:bg-gray-900 dark:border-gray-800">
                   <div className="flex items-center gap-2">
                     <QrCode className="w-5 h-5 text-[#00418f] dark:text-blue-400" />
-                    <h3 className="font-bold text-gray-800 text-sm dark:text-gray-100">QR Code Lokasi Presensi</h3>
+                    <h3 className="font-bold text-gray-800 text-sm dark:text-gray-100">Lokasi Presensi & QR Code</h3>
                   </div>
 
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Setiap lokasi gedung memiliki QR Code unik berisi data GPS. Cetak dan tempel di lokasi masing-masing.
+                    Tambahkan lokasi gedung sekaligus membuat QR Code presensinya. Setiap lokasi tersimpan otomatis sebagai zona presensi.
                   </p>
 
-                  {geofences.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-4 dark:text-gray-500">Belum ada lokasi. Tambahkan di menu "Lokasi Gedung".</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {geofences.map((geo) => {
-                        const qrData = `P|${geo.id}|${geo.nama}|${geo.lat.toFixed(4)}|${geo.lng.toFixed(4)}|${geo.radius}`;
-                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
-                        
-                        return (
-                          <div key={geo.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                            <div className="flex items-start gap-4">
-                              {/* QR Code */}
-                              <div className="w-28 h-28 bg-white p-2 rounded-lg shadow-sm shrink-0">
-                                <img 
-                                  src={qrUrl}
-                                  alt={`QR - ${geo.nama}`}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                              
-                              {/* Info */}
-                              <div className="flex-1 space-y-2">
-                                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">{geo.nama}</h4>
-                                <div className="space-y-1 text-[10px] text-gray-500 dark:text-gray-400">
-                                  <p className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3" />
-                                    {geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}
-                                  </p>
-                                  <p>Radius: {geo.radius}m</p>
-                                </div>
-                                
-                                <button
-                                  onClick={() => downloadImage(qrUrl.replace('400x400', '800x800'), `QR_Presensi_${geo.nama.replace(/\s+/g, '_')}.png`).catch((err) => alert(err.message || 'Gagal mengunduh QR Code.'))}
-                                  className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#00418f] bg-[#00418f]/10 px-3 py-1.5 rounded-lg hover:bg-[#00418f]/20 transition-all dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
-                                >
-                                  <Download className="w-3 h-3" />
-                                  Download QR
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-
-                {/* Generate QR Kustom */}
-                <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4 dark:bg-gray-900 dark:border-gray-800">
-                  <div className="flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-[#00418f] dark:text-blue-400" />
-                    <h3 className="font-bold text-gray-800 text-sm dark:text-gray-100">Generate QR Kustom</h3>
-                  </div>
-
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Buat QR Code baru dengan memasukkan nama gedung dan koordinat GPS.
-                  </p>
-
-                  <div className="space-y-3">
+                  {/* Form tambah lokasi + generate QR */}
+                  <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-800/50">
                     <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Gedung / Lokasi</label>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Nama Gedung / Lokasi</label>
                       <input
                         type="text"
                         placeholder="Contoh: Masjid Al Hikmah"
                         value={customQrNama}
                         onChange={(e) => setCustomQrNama(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-800 dark:border-gray-700"
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] outline-none dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Latitude</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Latitude</label>
                         <input
                           type="text"
                           placeholder="-6.945395"
                           value={customQrLat}
                           onChange={(e) => setCustomQrLat(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
+                          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Longitude</label>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Longitude</label>
                         <input
                           type="text"
                           placeholder="109.638433"
                           value={customQrLng}
                           onChange={(e) => setCustomQrLng(e.target.value)}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
+                          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Radius (meter)</label>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1 dark:text-gray-500">Radius (meter)</label>
                       <input
                         type="number"
                         placeholder="100"
                         value={customQrRadius}
                         onChange={(e) => setCustomQrRadius(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none"
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#00418f]/20 outline-none dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
                       />
                     </div>
 
@@ -1110,7 +1014,18 @@ export default function AdminPanel({
                           alert('Koordinat tidak valid.');
                           return;
                         }
-                        const qrData = `P|custom-${Date.now()}|${customQrNama.trim()}|${lat.toFixed(4)}|${lng.toFixed(4)}|${customQrRadius || '100'}`;
+                        const radius = parseInt(customQrRadius, 10) || 100;
+                        const geoId = `geo-${Date.now()}`;
+                        const nama = customQrNama.trim();
+                        // Simpan lokasi gedung otomatis sebagai zona presensi
+                        onAddGeofence({
+                          id: geoId,
+                          nama,
+                          lat,
+                          lng,
+                          radius
+                        });
+                        const qrData = `P|${geoId}|${nama}|${lat.toFixed(4)}|${lng.toFixed(4)}|${radius}`;
                         setCustomQrDataUrl(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`);
                         setCustomQrImgError(false);
                         setCustomQrGenerated(true);
@@ -1119,12 +1034,12 @@ export default function AdminPanel({
                       className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 dark:bg-blue-700"
                     >
                       <QrCode className="w-4 h-4" />
-                      Generate QR Code
+                      Simpan Lokasi & Generate QR
                     </button>
 
-                    {/* QR Preview */}
+                    {/* QR Preview hasil generate */}
                     {customQrGenerated && customQrDataUrl && (
-                      <div ref={customQrRef} className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col items-center gap-3 dark:bg-gray-800 dark:border-gray-700">
+                      <div ref={customQrRef} className="bg-white rounded-xl p-4 border border-emerald-200 flex flex-col items-center gap-3 dark:bg-gray-900 dark:border-emerald-800/50">
                         <div className="w-40 h-40 bg-white p-2 rounded-lg shadow-sm">
                           {customQrImgError ? (
                             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 gap-2">
@@ -1155,8 +1070,68 @@ export default function AdminPanel({
                       </div>
                     )}
                   </div>
+
+                  {/* Daftar lokasi terdaftar + QR */}
+                  <div className="space-y-3">
+                    {geofences.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-4 dark:text-gray-500">Belum ada lokasi. Tambahkan lokasi gedung di atas untuk membuat zona presensi & QR Code.</p>
+                    ) : (
+                      geofences.map((geo) => {
+                        const qrData = `P|${geo.id}|${geo.nama}|${geo.lat.toFixed(4)}|${geo.lng.toFixed(4)}|${geo.radius}`;
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
+                        return (
+                          <div key={geo.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                            <div className="flex items-start gap-4">
+                              <div className="w-24 h-24 bg-white p-2 rounded-lg shadow-sm shrink-0">
+                                <img 
+                                  src={qrUrl}
+                                  alt={`QR - ${geo.nama}`}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <div className="flex-1 space-y-2 min-w-0">
+                                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{geo.nama}</h4>
+                                <div className="space-y-1 text-[10px] text-gray-500 dark:text-gray-400">
+                                  <p className="flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" />
+                                    {geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}
+                                  </p>
+                                  <p>Radius: {geo.radius}m</p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                    onClick={() => downloadImage(qrUrl.replace('400x400', '800x800'), `QR_Presensi_${geo.nama.replace(/\s+/g, '_')}.png`).catch((err) => alert(err.message || 'Gagal mengunduh QR Code.'))}
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#00418f] bg-[#00418f]/10 px-3 py-1.5 rounded-lg hover:bg-[#00418f]/20 transition-all dark:text-blue-400 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    Download QR
+                                  </button>
+                                  <button 
+                                    onClick={() => {
+                                      if (confirm(`Hapus lokasi ${geo.nama} beserta QR-nya?`)) {
+                                        onDeleteGeofence(geo.id);
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-all dark:text-rose-400 dark:bg-rose-900/30 dark:hover:bg-rose-900/50"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                    Hapus
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </section>
 
+              </div>
+
+              {/* Right Column: Profil & Info */}
+              <div className="space-y-6">
+                
                 {/* Profil Administrator Customizer */}
                 <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm space-y-4 dark:bg-gray-900 dark:border-gray-800">
                   <div className="flex items-center justify-between">
@@ -1322,15 +1297,21 @@ export default function AdminPanel({
                 
                 <form onSubmit={handleAddNewEmployee} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">Nomor Induk Pegawai (NIP)</label>
+                    <label className="text-xs font-bold text-[#00418f] ml-1 uppercase flex items-center gap-1.5 dark:text-blue-400">
+                      Email Google Workspace
+                      <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase dark:bg-blue-900/30 dark:text-blue-400">Utama</span>
+                    </label>
                     <input 
-                      type="text"
+                      type="email"
                       required
-                      value={newNip}
-                      onChange={(e) => setNewNip(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
-                      placeholder="Masukkan NIP (misal: 19951102)"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="w-full bg-white border border-[#00418f]/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 font-medium text-gray-800 dark:bg-gray-900 dark:border-blue-800/30 dark:text-gray-100 dark:placeholder:text-gray-600"
+                      placeholder="contoh: budi@yayasanbaitulhikmah.com"
                     />
+                    <p className="text-[10px] text-gray-400 leading-relaxed px-1 dark:text-gray-500">
+                      Karyawan akan login menggunakan Akun Google ini. Pastikan domain email organisasi sesuai.
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
@@ -1373,21 +1354,14 @@ export default function AdminPanel({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#00418f] ml-1 uppercase flex items-center gap-1.5 dark:text-blue-400">
-                      Email Google Workspace
-                      <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase dark:bg-blue-900/30 dark:text-blue-400">Utama</span>
-                    </label>
+                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">NIP <span className="text-gray-300 font-medium normal-case dark:text-gray-600">(opsional)</span></label>
                     <input 
-                      type="email"
-                      required
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="w-full bg-white border border-[#00418f]/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 font-medium text-gray-800 dark:bg-gray-900 dark:border-blue-800/30 dark:text-gray-100 dark:placeholder:text-gray-600"
-                      placeholder="contoh: budi@yayasanbaitulhikmah.com"
+                      type="text"
+                      value={newNip}
+                      onChange={(e) => setNewNip(e.target.value)}
+                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
+                      placeholder="Kosongkan untuk dibuat otomatis"
                     />
-                    <p className="text-[10px] text-gray-400 leading-relaxed px-1 dark:text-gray-500">
-                      Karyawan akan login menggunakan Akun Google ini. Pastikan domain email organisasi sesuai.
-                    </p>
                   </div>
 
                   <div className="pt-4 flex gap-3">
