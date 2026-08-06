@@ -118,6 +118,7 @@ export default function EmployeeApp({
   });
 
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Track personal records (merging local offline records and server records)
   const personalRecords = [
@@ -609,6 +610,21 @@ export default function EmployeeApp({
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="leading-relaxed">{syncMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Success notification toast */}
+        <AnimatePresence>
+          {successMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-emerald-800 shadow-sm"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="leading-relaxed">{successMessage}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1564,6 +1580,8 @@ export default function EmployeeApp({
                     setIsPermitModalOpen(false);
                     setPermitReason('');
                     setPermitFile(null);
+                    setSuccessMessage(isOnline ? 'Izin berhasil dikirim!' : 'Izin tersimpan offline, akan disinkronkan saat online.');
+                    setTimeout(() => setSuccessMessage(null), 3000);
                   }}
                   className="flex-1 py-3 text-xs font-bold rounded-xl bg-sky-600 hover:bg-sky-700 text-white shadow-md transition-colors"
                 >
