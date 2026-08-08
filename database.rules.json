@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "presensi-settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

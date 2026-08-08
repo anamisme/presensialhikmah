@@ -133,6 +133,8 @@ export default function EmployeeApp({
   // Find today's records (multiple sessions possible)
   const todayStr = localDateString();
   const todayRecords = personalRecords.filter(r => r.tanggal === todayStr);
+  // Izin full day = izin tanpa jam tertentu (memblokir absen QR)
+  const hasFullDayIzin = todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai);
 
   // Deteksi sesi saat ini: malam bila jam sekarang >= jam masuk malam
   const currentSession: 'siang' | 'malam' = (() => {
@@ -200,6 +202,14 @@ export default function EmployeeApp({
   const reachableGeofences = userLocation
     ? geofences.filter(g => calculateDistance(userLocation.lat, userLocation.lng, g.lat, g.lng) <= g.radius)
     : [];
+
+  // Jarak & status terjangkau untuk zona yang dipilih user
+  const distanceToSelected = selectedLocation && userLocation
+    ? Math.round(calculateDistance(userLocation.lat, userLocation.lng, selectedLocation.lat, selectedLocation.lng))
+    : null;
+  const isWithinSelected = selectedLocation && userLocation
+    ? calculateDistance(userLocation.lat, userLocation.lng, selectedLocation.lat, selectedLocation.lng) <= selectedLocation.radius
+    : false;
 
   // Anti-Fake GPS: Track location history for anomaly detection
   const locationHistoryRef = useRef<{ lat: number; lng: number; timestamp: number; accuracy: number }[]>([]);
@@ -564,7 +574,7 @@ export default function EmployeeApp({
 
   const handleStartScan = () => {
     // Hanya izin full day yang memblokir absen QR; izin jam tertentu tidak
-    if (todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai)) return;
+    if (hasFullDayIzin) return;
     
     // Refresh GPS before opening camera
     getCurrentLocation();
@@ -574,6 +584,39 @@ export default function EmployeeApp({
   const handleSelectZone = (geo: Geofence) => {
     setSelectedLocation(geo);
   };
+
+  // Auto-aktifkan kamera saat home tab, mati otomatis saat pindah tab / app ke background
+  useEffect(() => {
+    if (activeTab === 'home') {
+      // Jangan nyalakan kamera saat izin full day
+      if (hasFullDayIzin) {
+        setIsCameraActive(false);
+        return;
+      }
+      getCurrentLocation();
+      setIsCameraActive(true);
+    } else {
+      setIsCameraActive(false);
+    }
+  }, [activeTab, hasFullDayIzin]);
+
+  // Matikan kamera saat app tidak terlihat (background) dan aktifkan lagi saat kembali ke home
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setIsCameraActive(false);
+      } else if (activeTab === 'home') {
+        if (hasFullDayIzin) {
+          setIsCameraActive(false);
+          return;
+        }
+        getCurrentLocation();
+        setIsCameraActive(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [activeTab, hasFullDayIzin]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-gray-950 text-gray-900 dark:text-gray-100 pb-24 font-sans select-none transition-colors duration-300">
@@ -669,12 +712,18 @@ export default function EmployeeApp({
 
             {/* Lokasi Terkini - di atas scanner */}
             <div className="text-center">
-              {nearestGeofence && isWithinGeofence ? (
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                  📍 {nearestGeofence.nama}
-                </p>
+              {selectedLocation ? (
+                isWithinSelected ? (
+                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                    📍 {selectedLocation.nama}
+                  </p>
+                ) : (
+                  <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                    📍 {selectedLocation.nama}{distanceToSelected != null ? ` (${distanceToSelected}m)` : ''}
+                  </p>
+                )
               ) : nearestGeofence ? (
-                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                <p className={`text-sm font-bold ${isWithinGeofence ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
                   📍 {nearestGeofence.nama} ({distanceToNearest}m)
                 </p>
               ) : userLocation ? (
@@ -734,7 +783,7 @@ export default function EmployeeApp({
                     <p className="text-rose-300 text-[10px] text-center mb-3 px-4">{scanError}</p>
                   )}
                   <button
-                    onClick={() => { setScanError(null); setIsCameraActive(true); }}
+                    onClick={() => { setScanError(null); handleStartScan(); }}
                     className="bg-[#0058bc] text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all"
                   >
                     {activeSession ? 'Scan Keluar' : currentSession === 'malam' ? 'Scan Masuk Malam' : 'Scan Masuk Siang'}
@@ -743,7 +792,7 @@ export default function EmployeeApp({
               )}
 
               {/* Disabled overlay when izin full day */}
-              {todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) && (
+              {hasFullDayIzin && (
                 <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
                   <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-2" />
                   <p className="text-white font-bold text-sm">Izin Hari Ini</p>

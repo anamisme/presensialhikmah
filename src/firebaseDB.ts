@@ -29,6 +29,12 @@ export const saveSetting = (key: string, value: unknown) => {
   const settingRef = ref(db, `presensi-settings/${key}`);
   return set(settingRef, value).catch((err) => {
     console.error(`Gagal menyimpan setting "${key}" ke Firebase:`, err);
+    // Tampilkan peringatan agar kegagalan tidak tertelan diam-diam
+    alert(`⚠️ Gagal menyinkronkan "${key}" ke server.
+Data hanya tersimpan di perangkat ini dan tidak akan terlihat pengguna lain.
+
+Penyebab umum: aturan Firebase (Rules) menolak penulisan, atau koneksi terputus.
+Detail: ${err?.message || err}`);
     throw err;
   });
 };
@@ -65,6 +71,11 @@ export const listenAllAttendance = (callback: (records: AttendanceRecord[]) => v
 export const saveOwnAttendance = (nip: string, records: AttendanceRecord[]) => {
   return set(ref(db, `presensi-settings/attendance/${nip}`), records).catch((err) => {
     console.error(`Gagal menyimpan absensi NIP ${nip} ke Firebase:`, err);
+    alert(`⚠️ Gagal menyinkronkan absensi ke server.
+Data hanya tersimpan offline di perangkat ini.
+
+Penyebab umum: aturan Firebase (Rules) menolak penulisan, atau koneksi terputus.
+Detail: ${err?.message || err}`);
     throw err;
   });
 };
