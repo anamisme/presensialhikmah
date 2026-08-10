@@ -53,14 +53,16 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
       await scanner.start(
         { facingMode: "environment" },
         {
-          fps: 30,
+          fps: 10,
           videoConstraints: {
             facingMode: "environment",
-            width: { min: 480, ideal: 1280, max: 1920 },
-            height: { min: 360, ideal: 720, max: 1080 },
-            aspectRatio: { ideal: 1 }
+            width: { ideal: 640 },
+            height: { ideal: 480 }
           },
-          qrbox: { width: 250, height: 250 }
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const size = Math.min(Math.floor(viewfinderWidth * 0.75), Math.floor(viewfinderHeight * 0.75), 260);
+            return { width: size, height: size };
+          }
         },
         (decodedText) => {
           if (!hasScannedRef.current) {
