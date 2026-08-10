@@ -445,6 +445,16 @@ export default function EmployeeApp({
       }
     }
 
+    // Gunakan koordinat & radius geofence (presisi penuh) bila zona cocok ditemukan,
+    // agar validasi konsisten dengan daftar "Pilih Zona" (yang memakai geofence).
+    const qrZoneMatch = qrGeoId ? geofences.find(g => g.id === qrGeoId || g.nama === qrGeoId) : null;
+    if (qrZoneMatch) {
+      qrLat = qrZoneMatch.lat;
+      qrLng = qrZoneMatch.lng;
+      qrRadius = qrZoneMatch.radius;
+      locationName = qrZoneMatch.nama;
+    }
+
     // GPS distance validation — WAJIB dalam radius
     if (qrLat !== null && qrLng !== null) {
       const distance = calculateDistance(gpsLat, gpsLng, qrLat, qrLng);
