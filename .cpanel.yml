@@ -1,4 +1,4 @@
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/contact@yayasanbaitulhikmah.com/public_html/presensi/
+    - export DEPLOYPATH=/home/uifodiej/presensi.yayasanbaitulhikmah.com/
     - /bin/cp -R * $DEPLOYPATH
