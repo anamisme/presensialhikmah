@@ -32,6 +32,7 @@ jobs:
           rm -rf /tmp/deploy-dist
           mkdir -p /tmp/deploy-dist
           cp -R dist/. /tmp/deploy-dist/
+          cp .cpanel.yml /tmp/deploy-dist/
 
           git checkout deploy 2>/dev/null || git checkout --orphan deploy
           git rm -rf . > /dev/null 2>&1 || true
