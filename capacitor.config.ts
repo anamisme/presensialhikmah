@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
     // This makes Firebase Auth popup open in system browser (Chrome)
     // instead of embedded WebView — fixes "disallowed_useragent" error
     androidScheme: 'https',
-    hostname: 'presensialhikmah.pages.dev',
+    hostname: 'presensi.yayasanbaitulhikmah.com',
     allowNavigation: [
       'presensi-alhikmah.firebaseapp.com',
       'accounts.google.com',
