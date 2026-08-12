@@ -1,0 +1,310 @@
+{
+  "api": {
+    "name": "GoogleSignInPlugin",
+    "slug": "googlesigninplugin",
+    "docs": "",
+    "tags": [
+      {
+        "text": "0.1.0",
+        "name": "since"
+      }
+    ],
+    "methods": [
+      {
+        "name": "handleRedirectCallback",
+        "signature": "() => Promise<SignInResult>",
+        "parameters": [],
+        "returns": "Promise<SignInResult>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.1.0"
+          }
+        ],
+        "docs": "Handle the redirect callback from the OAuth provider.\n\nThis method must be called when the app is redirected back from the OAuth provider.\nIt exchanges the authorization code for tokens and returns the sign-in result.\n\nOnly available on Web.",
+        "complexTypes": [
+          "SignInResult"
+        ],
+        "slug": "handleredirectcallback"
+      },
+      {
+        "name": "initialize",
+        "signature": "(options: InitializeOptions) => Promise<void>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "InitializeOptions"
+          }
+        ],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.1.0"
+          }
+        ],
+        "docs": "Initialize the Google Sign-In plugin.\n\nThis method must be called once before all other methods.",
+        "complexTypes": [
+          "InitializeOptions"
+        ],
+        "slug": "initialize"
+      },
+      {
+        "name": "signIn",
+        "signature": "(options?: SignInOptions | undefined) => Promise<SignInResult>",
+        "parameters": [
+          {
+            "name": "options",
+            "docs": "",
+            "type": "SignInOptions | undefined"
+          }
+        ],
+        "returns": "Promise<SignInResult>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.1.0"
+          }
+        ],
+        "docs": "Start the Google Sign-In flow.\n\nOn Web, this redirects to the Google OAuth authorization page.\nThe promise will never resolve on Web. After the user signs in,\nthe app will be redirected back to the `redirectUrl`.\nUse `handleRedirectCallback()` to complete the sign-in flow.",
+        "complexTypes": [
+          "SignInResult",
+          "SignInOptions"
+        ],
+        "slug": "signin"
+      },
+      {
+        "name": "signOut",
+        "signature": "() => Promise<void>",
+        "parameters": [],
+        "returns": "Promise<void>",
+        "tags": [
+          {
+            "name": "since",
+            "text": "0.1.0"
+          }
+        ],
+        "docs": "Sign out the current user.\n\nOn Android, this clears the credential state.\nOn iOS, this signs out from the Google Sign-In SDK.\nOn Web, this is a no-op.",
+        "complexTypes": [],
+        "slug": "signout"
+      }
+    ],
+    "properties": []
+  },
+  "interfaces": [
+    {
+      "name": "SignInResult",
+      "slug": "signinresult",
+      "docs": "",
+      "tags": [
+        {
+          "text": "0.1.0",
+          "name": "since"
+        }
+      ],
+      "methods": [],
+      "properties": [
+        {
+          "name": "idToken",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The ID token (JWT) returned by Google.\n\nThis token can be sent to your backend for verification.",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "userId",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The unique identifier of the user's Google Account.",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "email",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The user's email address.",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "displayName",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The user's display name (full name).",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "givenName",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The user's given name (first name).",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "familyName",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The user's family name (last name).",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "imageUrl",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The URL of the user's profile picture.",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "accessToken",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The access token for accessing Google APIs.\n\nOnly available when `scopes` are configured in `initialize()`.",
+          "complexTypes": [],
+          "type": "string | null"
+        },
+        {
+          "name": "serverAuthCode",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "The server auth code that can be exchanged on your backend\nfor access and refresh tokens.\n\nOnly available on Android and iOS when `scopes` are configured in `initialize()`.",
+          "complexTypes": [],
+          "type": "string | null"
+        }
+      ]
+    },
+    {
+      "name": "InitializeOptions",
+      "slug": "initializeoptions",
+      "docs": "",
+      "tags": [
+        {
+          "text": "0.1.0",
+          "name": "since"
+        }
+      ],
+      "methods": [],
+      "properties": [
+        {
+          "name": "clientId",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "\"123456789-abc.apps.googleusercontent.com\"",
+              "name": "example"
+            }
+          ],
+          "docs": "The web client ID from Google Cloud Console.\n\nOn Android, this is passed as the server client ID to the Credential Manager API\nand the AuthorizationClient API.\nOn iOS, this is used as the server client ID for the Google Sign-In SDK.\nOn Web, this is used to initialize the Google Sign-In JavaScript API.\n\n**Attention**: This must be a web client ID on all platforms, even on Android and iOS.",
+          "complexTypes": [],
+          "type": "string"
+        },
+        {
+          "name": "redirectUrl",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "\"http://localhost:4200\"",
+              "name": "example"
+            }
+          ],
+          "docs": "The URL to redirect to after the OAuth flow.\n\nOnly available on Web.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        },
+        {
+          "name": "scopes",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            },
+            {
+              "text": "[\"https://www.googleapis.com/auth/drive.file\"]",
+              "name": "example"
+            }
+          ],
+          "docs": "The OAuth scopes to request.\n\nIf provided, the plugin will request authorization in addition to authentication.\nThis enables `accessToken` and `serverAuthCode` in the sign-in result.",
+          "complexTypes": [],
+          "type": "string[] | undefined"
+        }
+      ]
+    },
+    {
+      "name": "SignInOptions",
+      "slug": "signinoptions",
+      "docs": "",
+      "tags": [
+        {
+          "text": "0.1.0",
+          "name": "since"
+        }
+      ],
+      "methods": [],
+      "properties": [
+        {
+          "name": "nonce",
+          "tags": [
+            {
+              "text": "0.1.0",
+              "name": "since"
+            }
+          ],
+          "docs": "A nonce to prevent replay attacks.\n\nOnly available on Android and Web.",
+          "complexTypes": [],
+          "type": "string | undefined"
+        }
+      ]
+    }
+  ],
+  "enums": [],
+  "typeAliases": [],
+  "pluginConfigs": []
+}

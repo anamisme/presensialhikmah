@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-egG-xcvV.js","assets/index-C4lh6G8I.js","assets/index-CBA0aTzm.css"])))=>i.map(i=>d[i]);
-import{r as n,_ as r}from"./index-C4lh6G8I.js";var o;(function(e){e.SignInCanceled="SIGN_IN_CANCELED"})(o||(o={}));const _=n("GoogleSignIn",{web:()=>r(()=>import("./web-egG-xcvV.js"),__vite__mapDeps([0,1,2])).then(e=>new e.GoogleSignInWeb)});export{o as ErrorCode,_ as GoogleSignIn};
