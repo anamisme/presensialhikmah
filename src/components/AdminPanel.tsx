@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Users,
@@ -145,6 +145,11 @@ export default function AdminPanel({
   const [tempJamMalamMasuk, setTempJamMalamMasuk] = useState(jamMalamMasukProp);
   const [tempJamMalamPulang, setTempJamMalamPulang] = useState(jamMalamPulangProp);
   const [hariLibur, setHariLibur] = useState<number[]>(hariLiburProp);
+
+  // Sinkronkan hari libur dari data Firebase saat prop berubah (misal diubah admin lain)
+  useEffect(() => {
+    setHariLibur(hariLiburProp);
+  }, [hariLiburProp]);
 
   // CSV Exporter
   // CSV Exporter with injection prevention
