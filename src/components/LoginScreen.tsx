@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Moon, 
@@ -58,14 +58,23 @@ export default function LoginScreen({
     };
   }, []);
 
+  // Guard: pastikan satu login hanya diproses sekali
+  // (onAuthStateChanged + hasil klik tombol bisa memicu fungsi yang sama dua kali)
+  const lastProcessedEmailRef = useRef<string | null>(null);
+  const handlerRef = useRef<((user: any) => void) | null>(null);
+
   const handleLoginSuccessWithDetails = (googleUser: any) => {
     const email = googleUser.email;
     if (!email) {
       setError('Gagal membaca alamat email dari akun Google Anda.');
+      setIsAuthenticating(false);
       return;
     }
 
     const emailLower = email.toLowerCase();
+
+    if (lastProcessedEmailRef.current === emailLower) return;
+    lastProcessedEmailRef.current = emailLower;
     
     // 1. Check if Administrator
     if (adminEmails.includes(emailLower)) {
@@ -94,6 +103,7 @@ export default function LoginScreen({
     const isOrgEmail = allowedDomains.some(domain => emailLower.endsWith(domain));
     if (!isOrgEmail) {
       setError('Akses ditolak. Silakan gunakan akun Google Workspace dengan email organisasi resmi.');
+      setIsAuthenticating(false);
       return;
     }
 
@@ -138,10 +148,15 @@ export default function LoginScreen({
     }
   };
 
+  // Selalu pakai closure terbaru (employees/adminEmails termuat async dari Firebase)
+  useEffect(() => {
+    handlerRef.current = handleLoginSuccessWithDetails;
+  });
+
   // Handle redirect result on native (user returning from Google)
   useEffect(() => {
     const unsubscribe = initAuth(
-      (user) => handleLoginSuccessWithDetails(user),
+      (user) => handlerRef.current?.(user),
       () => setIsAuthenticating(false)
     );
     return () => unsubscribe();

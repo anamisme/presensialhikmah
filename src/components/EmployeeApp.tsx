@@ -39,7 +39,7 @@ interface EmployeeAppProps {
   geofences: Geofence[];
   attendanceRecords: AttendanceRecord[];
   onAddAttendance: (record: AttendanceRecord) => void;
-  onAddAttendanceBatch?: (records: AttendanceRecord[]) => void;
+  onAddAttendanceBatch?: (records: AttendanceRecord[]) => Promise<boolean>;
   onLogout: () => void;
   onChangeProfilePicture: (nip: string, newFoto: string) => void;
   onUpdateEmployeeProfile?: (nip: string, updates: Partial<Employee>) => void;
@@ -49,6 +49,7 @@ interface EmployeeAppProps {
   jamMalamPulang?: string;
   isAdmin?: boolean;
   onNavigateToAdmin?: () => void;
+  hariLibur?: number[];
 }
 
 export default function EmployeeApp({
@@ -65,7 +66,8 @@ export default function EmployeeApp({
   jamMalamMasuk = '18:30',
   jamMalamPulang = '22:00',
   isAdmin = false,
-  onNavigateToAdmin
+  onNavigateToAdmin,
+  hariLibur = []
 }: EmployeeAppProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'stats' | 'profile'>('home');
   const [selectedLocation, setSelectedLocation] = useState<Geofence | null>(() => geofences[2] || geofences[0] || null);
@@ -135,6 +137,22 @@ export default function EmployeeApp({
   const todayRecords = personalRecords.filter(r => r.tanggal === todayStr);
   // Izin full day = izin tanpa jam tertentu (memblokir absen QR)
   const hasFullDayIzin = todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai);
+
+  // Hari libur dari pengaturan admin (indeks: 0=Senin..6=Minggu, getDay(): 0=Minggu)
+  const isLiburToday = hariLibur.includes((new Date().getDay() + 6) % 7);
+
+  // Izin jam tertentu: blokir absen hanya selama rentang jam izin
+  const activeIzinTime = todayRecords.find(r => r.status === 'Izin' && r.izinMulai && r.izinSelesai);
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+  const isInIzinTime = activeIzinTime ? (() => {
+    const [sh, sm] = (activeIzinTime.izinMulai || '00:00').split(':').map(Number);
+    const [eh, em] = (activeIzinTime.izinSelesai || '23:59').split(':').map(Number);
+    const start = sh * 60 + sm;
+    const end = eh * 60 + em;
+    return currentMinutes >= start && currentMinutes < end;
+  })() : false;
+
+  const isAbsenceBlocked = hasFullDayIzin || isLiburToday || isInIzinTime;
 
   // Deteksi sesi saat ini: malam bila jam sekarang >= jam masuk malam
   const currentSession: 'siang' | 'malam' = (() => {
@@ -542,24 +560,34 @@ export default function EmployeeApp({
     if (isOnline && offlineQueue.length > 0) {
       setSyncMessage(`Menyinkronkan ${offlineQueue.length} data presensi offline ke server...`);
       
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         // Process all records in the queue in one batch to avoid stale-closure overwrites
+        let success = false;
         if (onAddAttendanceBatch) {
-          onAddAttendanceBatch(offlineQueue);
+          success = await onAddAttendanceBatch(offlineQueue).catch(() => false);
         } else {
-          offlineQueue.forEach(record => {
-            onAddAttendance(record);
-          });
+          try {
+            offlineQueue.forEach(record => {
+              onAddAttendance(record);
+            });
+            success = true;
+          } catch {
+            success = false;
+          }
         }
         
-        // Clear queue
-        setOfflineQueue([]);
-        localStorage.removeItem(`offline_queue_${currentUser.nip}`);
-        setSyncMessage('Sinkronisasi selesai! Semua data berhasil disimpan di server.');
+        if (success) {
+          // Baru hapus queue setelah berhasil disimpan ke server
+          setOfflineQueue([]);
+          localStorage.removeItem(`offline_queue_${currentUser.nip}`);
+          setSyncMessage('Sinkronisasi selesai! Semua data berhasil disimpan di server.');
+        } else {
+          setSyncMessage('Sinkronisasi gagal. Data tetap aman di perangkat dan akan dicoba ulang otomatis.');
+        }
         
         const hideTimer = setTimeout(() => {
           setSyncMessage(null);
-        }, 3000);
+        }, 4000);
         return () => clearTimeout(hideTimer);
       }, 1500);
 
@@ -583,8 +611,19 @@ export default function EmployeeApp({
   };
 
   const handleStartScan = () => {
-    // Hanya izin full day yang memblokir absen QR; izin jam tertentu tidak
-    if (hasFullDayIzin) return;
+    // Izin full day, hari libur, atau jam izin tertentu memblokir absen QR
+    if (hasFullDayIzin) {
+      setRejectMessage('Anda sedang dalam izin/sakit. Tidak dapat melakukan presensi.');
+      return;
+    }
+    if (isLiburToday) {
+      setRejectMessage('Hari ini adalah hari libur, presensi tidak wajib dilakukan.');
+      return;
+    }
+    if (isInIzinTime && activeIzinTime) {
+      setRejectMessage(`Anda sedang izin jam tertentu (${activeIzinTime.izinMulai} - ${activeIzinTime.izinSelesai}). Presensi QR diluar jam izin tersebut.`);
+      return;
+    }
     
     // Refresh GPS before opening camera
     getCurrentLocation();
@@ -598,8 +637,8 @@ export default function EmployeeApp({
   // Auto-aktifkan kamera saat home tab, mati otomatis saat pindah tab / app ke background
   useEffect(() => {
     if (activeTab === 'home') {
-      // Jangan nyalakan kamera saat izin full day
-      if (hasFullDayIzin) {
+      // Jangan nyalakan kamera saat izin full day / hari libur / jam izin
+      if (isAbsenceBlocked) {
         setIsCameraActive(false);
         return;
       }
@@ -608,7 +647,7 @@ export default function EmployeeApp({
     } else {
       setIsCameraActive(false);
     }
-  }, [activeTab, hasFullDayIzin]);
+  }, [activeTab, isAbsenceBlocked]);
 
   // Matikan kamera saat app tidak terlihat (background) dan aktifkan lagi saat kembali ke home
   useEffect(() => {
@@ -616,7 +655,7 @@ export default function EmployeeApp({
       if (document.hidden) {
         setIsCameraActive(false);
       } else if (activeTab === 'home') {
-        if (hasFullDayIzin) {
+        if (isAbsenceBlocked) {
           setIsCameraActive(false);
           return;
         }
@@ -626,7 +665,7 @@ export default function EmployeeApp({
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [activeTab, hasFullDayIzin]);
+  }, [activeTab, isAbsenceBlocked]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-gray-950 text-gray-900 dark:text-gray-100 pb-24 font-sans select-none transition-colors duration-300">
@@ -801,11 +840,18 @@ export default function EmployeeApp({
                 </div>
               )}
 
-              {/* Disabled overlay when izin full day */}
-              {hasFullDayIzin && (
+              {/* Disabled overlay when izin full day / hari libur / jam izin */}
+              {isAbsenceBlocked && (
                 <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
                   <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-2" />
-                  <p className="text-white font-bold text-sm">Izin Hari Ini</p>
+                  <p className="text-white font-bold text-sm">
+                    {hasFullDayIzin ? 'Izin Hari Ini' : isLiburToday ? 'Hari Libur' : 'Jam Izin Aktif'}
+                  </p>
+                  {isInIzinTime && activeIzinTime && (
+                    <p className="text-gray-300 text-[10px] mt-1 px-6 text-center">
+                      Izin jam tertentu {activeIzinTime.izinMulai} - {activeIzinTime.izinSelesai} WIB. Absen QR dapat dilakukan di luar jam tersebut.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -888,13 +934,15 @@ export default function EmployeeApp({
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${
                   todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai)
                     ? 'bg-sky-100 text-sky-700 border border-sky-100'
+                    : isLiburToday
+                    ? 'bg-violet-100 text-violet-700 border border-violet-100 dark:bg-violet-900/50 dark:text-violet-300'
                     : activeSession
                     ? 'bg-[#6ffb85]/20 text-[#00732a]'
                     : sessionTodayRecords.length > 0
                     ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300'
                     : 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300'
                 }`}>
-                  {todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) ? 'Izin' : activeSession ? 'Sedang Bekerja' : sessionTodayRecords.length > 0 ? `Sudah Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}` : `Belum Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}`}
+                  {todayRecords.some(r => r.status === 'Izin' && !r.izinMulai && !r.izinSelesai) ? 'Izin' : isLiburToday ? 'Hari Libur' : activeSession ? 'Sedang Bekerja' : sessionTodayRecords.length > 0 ? `Sudah Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}` : `Belum Absen ${currentSession === 'malam' ? 'Malam' : 'Siang'}`}
                 </span>
               </div>
 
@@ -1363,22 +1411,7 @@ export default function EmployeeApp({
                 <select
                   value={currentUser.jabatan}
                   onChange={(e) => {
-                    const updated = { ...currentUser, jabatan: e.target.value };
-                    onChangeProfilePicture(currentUser.nip, currentUser.foto); // trigger re-render
-                    // Update employee data via localStorage
-                    const employees = JSON.parse(localStorage.getItem('baitul_hikmah_employees') || '[]');
-                    const idx = employees.findIndex((emp: any) => emp.nip === currentUser.nip);
-                    if (idx > -1) {
-                      employees[idx].jabatan = e.target.value;
-                      localStorage.setItem('baitul_hikmah_employees', JSON.stringify(employees));
-                    }
-                    // Update session
-                    const session = JSON.parse(localStorage.getItem('baitul_hikmah_session') || '{}');
-                    if (session?.user?.nip === currentUser.nip) {
-                      session.user.jabatan = e.target.value;
-                      localStorage.setItem('baitul_hikmah_session', JSON.stringify(session));
-                    }
-                    window.location.reload();
+                    onUpdateEmployeeProfile?.(currentUser.nip, { jabatan: e.target.value });
                   }}
                   className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
                 >
@@ -1393,20 +1426,7 @@ export default function EmployeeApp({
                 <select
                   value={currentUser.lembaga}
                   onChange={(e) => {
-                    // Update employee data via localStorage
-                    const employees = JSON.parse(localStorage.getItem('baitul_hikmah_employees') || '[]');
-                    const idx = employees.findIndex((emp: any) => emp.nip === currentUser.nip);
-                    if (idx > -1) {
-                      employees[idx].lembaga = e.target.value;
-                      localStorage.setItem('baitul_hikmah_employees', JSON.stringify(employees));
-                    }
-                    // Update session
-                    const session = JSON.parse(localStorage.getItem('baitul_hikmah_session') || '{}');
-                    if (session?.user?.nip === currentUser.nip) {
-                      session.user.lembaga = e.target.value;
-                      localStorage.setItem('baitul_hikmah_session', JSON.stringify(session));
-                    }
-                    window.location.reload();
+                    onUpdateEmployeeProfile?.(currentUser.nip, { lembaga: e.target.value });
                   }}
                   className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
                 >

@@ -63,17 +63,17 @@ export default function App() {
   // Firebase Realtime Database sync
   useEffect(() => {
     listenSettings((data) => {
-      if (Array.isArray(data.employees) && data.employees.length > 0) {
+      if (Array.isArray(data.employees)) {
         const emps = data.employees as Employee[];
         setEmployees(emps);
         setStoredData('employees', emps);
       }
-      if (Array.isArray(data.geofences) && data.geofences.length > 0) {
+      if (Array.isArray(data.geofences)) {
         const geos = data.geofences as Geofence[];
         setGeofences(geos);
         setStoredData('geofences', geos);
       }
-      if (Array.isArray(data.activities) && data.activities.length > 0) {
+      if (Array.isArray(data.activities)) {
         const acts = data.activities as RecentActivity[];
         setRecentActivities(acts);
         setStoredData('activities', acts);
@@ -121,20 +121,16 @@ export default function App() {
       const nip = session.user?.nip;
       if (!nip) return;
       const off = listenOwnAttendance(nip, (records) => {
-        if (records.length > 0) {
-          setAttendanceRecords(records);
-          setStoredData('attendance', records);
-        }
+        setAttendanceRecords(records);
+        setStoredData('attendance', records);
       });
       return off;
     }
 
     // Admin: aggregate semua absensi
     const off = listenAllAttendance((records) => {
-      if (records.length > 0) {
-        setAttendanceRecords(records);
-        setStoredData('attendance', records);
-      }
+      setAttendanceRecords(records);
+      setStoredData('attendance', records);
     });
     return off;
   }, [session]);
@@ -173,9 +169,6 @@ export default function App() {
   const updateAttendance = (newAttendance: AttendanceRecord[]) => {
     setAttendanceRecords(newAttendance);
     setStoredData('attendance', newAttendance);
-    saveAttendanceByNip(newAttendance).catch((err) => {
-      console.error('Data absen tersimpan lokal, namun gagal disinkronkan ke Firebase:', err);
-    });
   };
 
   const updateActivities = (newActivities: RecentActivity[]) => {
@@ -296,7 +289,7 @@ export default function App() {
     handleAddAttendanceBatch([record]);
   };
 
-  const handleAddAttendanceBatch = (records: AttendanceRecord[]) => {
+  const handleAddAttendanceBatch = async (records: AttendanceRecord[]): Promise<boolean> => {
     let updated = [...attendanceRecords];
     records.forEach(record => {
       // Find existing record by id only to avoid overwriting different records for same NIP+date
@@ -348,6 +341,14 @@ export default function App() {
     });
     if (newActivities.length > 0) {
       updateActivities([...newActivities, ...recentActivities]);
+    }
+
+    try {
+      await saveAttendanceByNip(updated);
+      return true;
+    } catch (err) {
+      console.error('Data absen tersimpan lokal, namun gagal disinkronkan ke Firebase:', err);
+      return false;
     }
   };
 
@@ -420,6 +421,7 @@ export default function App() {
           jamMalamPulang={jamMalamPulang}
           isAdmin={session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')}
           onNavigateToAdmin={(session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')) ? () => setCurrentView('admin') : undefined}
+          hariLibur={hariLibur}
         />
       ) : (session.role === 'admin' || adminEmails.includes(session.user?.email?.toLowerCase() || '')) ? (
         <AdminPanel 

@@ -89,6 +89,10 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
         setCameraError('Gagal mengakses kamera.');
       }
       
+      // Bersihkan referensi scanner agar tombol "Coba Lagi" bisa memulai ulang
+      try { scannerRef.current?.clear(); } catch {}
+      scannerRef.current = null;
+      
       if (onScanError) onScanError(msg);
       setIsStarting(false);
     }
