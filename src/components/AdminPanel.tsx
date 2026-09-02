@@ -902,14 +902,14 @@ export default function AdminPanel({
                           key={day}
                           type="button"
                           onClick={() => {
+                            // Hanya ubah state lokal; commit ke cloud terjadi saat tombol
+                            // "Simpan Pengaturan Waktu" ditekan. Menulis langsung ke cloud di sini
+                            // memicu listener Firebase balik dengan data kadaluarsa (race) yang
+                            // mengembalikan nilai sebelumnya (mis. hari Minggu kembali libur).
                             if (hariLibur.includes(idx)) {
-                              const updated = hariLibur.filter(d => d !== idx);
-                              setHariLibur(updated);
-                              onSetHariLibur(updated);
+                              setHariLibur(hariLibur.filter(d => d !== idx));
                             } else {
-                              const updated = [...hariLibur, idx];
-                              setHariLibur(updated);
-                              onSetHariLibur(updated);
+                              setHariLibur([...hariLibur, idx]);
                             }
                           }}
                           className={`py-2 px-1 rounded-lg text-[10px] font-bold border transition-all ${
@@ -935,7 +935,7 @@ export default function AdminPanel({
                       onSetJamPulang(tempJamPulang);
                       onSetJamMalamMasuk(tempJamMalamMasuk);
                       onSetJamMalamPulang(tempJamMalamPulang);
-                      onSetHariLibur(hariLiburProp);
+                      onSetHariLibur(hariLibur);
                       alert(`Pengaturan waktu kerja berhasil disimpan!\nJam Siang: ${tempLimitTime} - ${tempJamPulang}\nJam Malam: ${tempJamMalamMasuk} - ${tempJamMalamPulang}\nHari Libur: ${hariLibur.length > 0 ? hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ') : 'Tidak ada'}`);
                     }}
                     className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md dark:bg-blue-700"
