@@ -143,9 +143,17 @@ export default function AdminPanel({
   const [tempJamMalamPulang, setTempJamMalamPulang] = useState(jamMalamPulangProp);
   const [hariLibur, setHariLibur] = useState<number[]>(hariLiburProp);
 
-  // Sinkronkan hari libur dari data Firebase saat prop berubah (misal diubah admin lain)
+  // Sinkronkan nilai formulari dari data cloud saat prop berubah (misal rubah di admin lain),
+  // biar form selalu tampil nilai server terbaru, bukan nilai button yang tamene di app ini.
   useEffect(() => {
-    setHariLibur(hariLiburProp);
+    setTempLimitTime(limitTime);
+    setTempJamMalamPulang(jamMalamPulangProp);
+  }, [limitTime, jamMalamPulangProp]);
+
+  useEffect(() => {
+    if (hariLiburProp.length !== hariLibur.length || hariLibur.some((d, i) => d !== hariLiburProp[i])) {
+      setHariLibur(hariLiburProp);
+    }
   }, [hariLiburProp]);
 
   // CSV Exporter
@@ -927,7 +935,7 @@ export default function AdminPanel({
                       onSetJamPulang(tempJamPulang);
                       onSetJamMalamMasuk(tempJamMalamMasuk);
                       onSetJamMalamPulang(tempJamMalamPulang);
-                      onSetHariLibur(hariLibur);
+                      onSetHariLibur(hariLiburProp);
                       alert(`Pengaturan waktu kerja berhasil disimpan!\nJam Siang: ${tempLimitTime} - ${tempJamPulang}\nJam Malam: ${tempJamMalamMasuk} - ${tempJamMalamPulang}\nHari Libur: ${hariLibur.length > 0 ? hariLibur.map(d => ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'][d]).join(', ') : 'Tidak ada'}`);
                     }}
                     className="w-full bg-[#00418f] text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all shadow-md dark:bg-blue-700"
