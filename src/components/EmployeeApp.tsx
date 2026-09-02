@@ -112,14 +112,7 @@ export default function EmployeeApp({
   const [isOnlineReal, setIsOnlineReal] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   const isOnline = isOnlineReal;
 
-  const [offlineQueue, setOfflineQueue] = useState<AttendanceRecord[]>(() => {
-    try {
-      const stored = localStorage.getItem(`offline_queue_${currentUser.nip}`);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [offlineQueue, setOfflineQueue] = useState<AttendanceRecord[]>([]);
 
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -525,7 +518,6 @@ export default function EmployeeApp({
         } else {
           const updatedQueue = [...offlineQueue, newRecord];
           setOfflineQueue(updatedQueue);
-          localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
         }
       } else {
         const updatedRecord = {
@@ -545,7 +537,6 @@ export default function EmployeeApp({
             updatedQueue = [...offlineQueue, updatedRecord];
           }
           setOfflineQueue(updatedQueue);
-          localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
         }
       }
 
@@ -579,10 +570,9 @@ export default function EmployeeApp({
         if (success) {
           // Baru hapus queue setelah berhasil disimpan ke server
           setOfflineQueue([]);
-          localStorage.removeItem(`offline_queue_${currentUser.nip}`);
           setSyncMessage('Sinkronisasi selesai! Semua data berhasil disimpan di server.');
         } else {
-          setSyncMessage('Sinkronisasi gagal. Data tetap aman di perangkat dan akan dicoba ulang otomatis.');
+          setSyncMessage('Sinkronisasi gagal. Data akan dicoba ulang otomatis saat online kembali.');
         }
         
         const hideTimer = setTimeout(() => {
@@ -1704,7 +1694,6 @@ export default function EmployeeApp({
                     } else {
                       const updatedQueue = [...offlineQueue, newRecord];
                       setOfflineQueue(updatedQueue);
-                      localStorage.setItem(`offline_queue_${currentUser.nip}`, JSON.stringify(updatedQueue));
                     }
 
                     setIsPermitModalOpen(false);

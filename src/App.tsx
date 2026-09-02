@@ -5,8 +5,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  getStoredData, 
-  setStoredData, 
   INITIAL_EMPLOYEES, 
   INITIAL_GEOFENCES, 
   INITIAL_ATTENDANCE, 
@@ -17,35 +15,34 @@ import { Employee, AttendanceRecord, Geofence, RecentActivity } from './types';
 import EmployeeApp from './components/EmployeeApp';
 import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
+import CompleteProfile from './components/CompleteProfile';
 import { syncAttendanceToSheet } from './googleSheets';
 import { logout as googleLogout } from './googleAuth';
 import { ThemeProvider } from './ThemeContext';
 import { listenSettings, stopListening, saveSetting, listenOwnAttendance, listenAllAttendance, saveAttendanceByNip } from './firebaseDB';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'employee' | 'admin'>(() => {
-    const savedSession = getStoredData('session', null) as { role: 'employee' | 'admin' } | null;
-    return savedSession?.role || 'employee';
-  });
+  const [currentView, setCurrentView] = useState<'employee' | 'admin'>('employee');
   
-  // App-level state initialized from localStorage
-  const [employees, setEmployees] = useState<Employee[]>(() => getStoredData('employees', INITIAL_EMPLOYEES));
-  const [geofences, setGeofences] = useState<Geofence[]>(() => getStoredData('geofences', INITIAL_GEOFENCES));
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => getStoredData('attendance', INITIAL_ATTENDANCE));
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(() => getStoredData('activities', INITIAL_ACTIVITIES));
-  const [limitTime, setLimitTime] = useState<string>(() => getStoredData('limit_time', '07:00'));
-  const [jamPulang, setJamPulang] = useState<string>(() => getStoredData('jam_pulang', '14:00'));
-  const [jamMalamMasuk, setJamMalamMasuk] = useState<string>(() => getStoredData('jam_malam_masuk', '18:30'));
-  const [jamMalamPulang, setJamMalamPulang] = useState<string>(() => getStoredData('jam_malam_pulang', '22:00'));
-  const [hariLibur, setHariLibur] = useState<number[]>(() => getStoredData('hari_libur', [6]));
+  // Cloud-only state: data HANYA dari Firebase, TIDAK dicache di localStorage.
+  // Tiap session dibuka data dimuat ulang dari cloud (sumber tunggal antar akun/devices).
+  const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
+  const [geofences, setGeofences] = useState<Geofence[]>(INITIAL_GEOFENCES);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(INITIAL_ACTIVITIES);
+  const [limitTime, setLimitTime] = useState<string>('07:00');
+  const [jamPulang, setJamPulang] = useState<string>('14:00');
+  const [jamMalamMasuk, setJamMalamMasuk] = useState<string>('18:30');
+  const [jamMalamPulang, setJamMalamPulang] = useState<string>('22:00');
+  const [hariLibur, setHariLibur] = useState<number[]>([6]);
 
-  // Session state (null means logged out, shows Login screen)
-  const [session, setSession] = useState<{ role: 'employee' | 'admin'; user: any } | null>(() => {
-    return getStoredData('session', null);
-  });
+  // Session state (null means logged out, shows Login screen).
+  // Sesuai desain cloud-only: sesi tidak disimpan di localStorage,
+  // di-restore otomatis oleh Firebase Auth (onAuthStateChanged).
+  const [session, setSession] = useState<{ role: 'employee' | 'admin'; user: any } | null>(null);
 
   // Admin profile state
-  const [adminProfile, setAdminProfile] = useState(() => getStoredData('admin_profile', {
+  const [adminProfile, setAdminProfile] = useState(() => ({
     nama: "Admin Baitul Hikmah",
     foto: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80",
     role: "Super Admin"
@@ -54,64 +51,62 @@ export default function App() {
   // Admin emails list
   const PRIMARY_ADMIN = 'contact@yayasanbaitulhikmah.com';
   const HARDCODED_ADMINS = ['contact@yayasanbaitulhikmah.com', 'anam@yayasanbaitulhikmah.com'];
-  const [adminEmails, setAdminEmails] = useState<string[]>(() => {
-    const stored = getStoredData('admin_emails', HARDCODED_ADMINS);
-    const merged = [...new Set([...HARDCODED_ADMINS, ...stored])];
-    return merged;
-  });
+  const [adminEmails, setAdminEmails] = useState<string[]>(HARDCODED_ADMINS);
+
+  // Flags: data cloud sudah termuat (menghindari "flash" data default saat login)
+  const [cloudReady, setCloudReady] = useState(false);
 
   // Firebase Realtime Database sync
+  // Dipasang HANYA setelah login: listener yang dipasang sebelum autentikasi
+  // ditolak aturan "auth != null" dan tidak ter-refresh setelah login,
+  // sehingga data cloud (geofences/QR, karyawan, dll) tidak pernah termuat
+  // di browser/perangkat yang membuka aplikasi dalam keadaan belum login.
   useEffect(() => {
+    if (!session) return;
     listenSettings((data) => {
+      setCloudReady(true);
       if (Array.isArray(data.employees)) {
-        const emps = data.employees as Employee[];
-        setEmployees(emps);
-        setStoredData('employees', emps);
+        setEmployees(data.employees as Employee[]);
       }
       if (Array.isArray(data.geofences)) {
-        const geos = data.geofences as Geofence[];
-        setGeofences(geos);
-        setStoredData('geofences', geos);
+        setGeofences(data.geofences as Geofence[]);
       }
       if (Array.isArray(data.activities)) {
-        const acts = data.activities as RecentActivity[];
-        setRecentActivities(acts);
-        setStoredData('activities', acts);
+        setRecentActivities(data.activities as RecentActivity[]);
       }
       if (data.limit_time) {
-        const lt = data.limit_time as string;
-        setLimitTime(lt);
-        setStoredData('limit_time', lt);
+        setLimitTime(data.limit_time as string);
       }
       if (data.jam_pulang) {
-        const jp = data.jam_pulang as string;
-        setJamPulang(jp);
-        setStoredData('jam_pulang', jp);
+        setJamPulang(data.jam_pulang as string);
       }
       if (data.jam_malam_masuk) {
-        const jmm = data.jam_malam_masuk as string;
-        setJamMalamMasuk(jmm);
-        setStoredData('jam_malam_masuk', jmm);
+        setJamMalamMasuk(data.jam_malam_masuk as string);
       }
       if (data.jam_malam_pulang) {
-        const jmp = data.jam_malam_pulang as string;
-        setJamMalamPulang(jmp);
-        setStoredData('jam_malam_pulang', jmp);
+        setJamMalamPulang(data.jam_malam_pulang as string);
       }
       if (data.hari_libur) {
-        const hl = data.hari_libur as number[];
-        setHariLibur(hl);
-        setStoredData('hari_libur', hl);
+        setHariLibur(data.hari_libur as number[]);
       }
       if (data.admin_emails) {
         const emails = data.admin_emails as string[];
-        const merged = [...new Set([...HARDCODED_ADMINS, ...emails])];
-        setAdminEmails(merged);
-        setStoredData('admin_emails', merged);
+        setAdminEmails([...new Set([...HARDCODED_ADMINS, ...emails])]);
+      }
+      if (data.admin_profile) {
+        setAdminProfile(data.admin_profile as { nama: string; foto: string; role: string });
       }
     });
     return () => stopListening();
-  }, []);
+  }, [session]);
+
+  // Pengaman: kalau cloud tidak kunjung memberi data (mis. jaringan sangat lambat),
+  // tetap jalankan aplikasi setelah 8 detik daripada stuck di layar loading.
+  useEffect(() => {
+    if (!session) return;
+    const t = setTimeout(() => setCloudReady(true), 8000);
+    return () => clearTimeout(t);
+  }, [session]);
 
   // Attendance listener (per-user: karyawan dengar data sendiri, admin dengar semua)
   useEffect(() => {
@@ -122,7 +117,6 @@ export default function App() {
       if (!nip) return;
       const off = listenOwnAttendance(nip, (records) => {
         setAttendanceRecords(records);
-        setStoredData('attendance', records);
       });
       return off;
     }
@@ -130,7 +124,6 @@ export default function App() {
     // Admin: aggregate semua absensi
     const off = listenAllAttendance((records) => {
       setAttendanceRecords(records);
-      setStoredData('attendance', records);
     });
     return off;
   }, [session]);
@@ -141,7 +134,6 @@ export default function App() {
     if (adminEmails.includes(sanitized)) return;
     const updated = [...adminEmails, sanitized];
     setAdminEmails(updated);
-    setStoredData('admin_emails', updated);
     saveSetting('admin_emails', updated);
   };
 
@@ -149,20 +141,17 @@ export default function App() {
     if (HARDCODED_ADMINS.includes(email)) return;
     const updated = adminEmails.filter(e => e !== email);
     setAdminEmails(updated);
-    setStoredData('admin_emails', updated);
     saveSetting('admin_emails', updated);
   };
 
-  // Sync state to localStorage and Firebase on update
+  // Sync state to cloud Firebase on update (cloud-only, tanpa localStorage)
   const updateEmployees = (newEmployees: Employee[]) => {
     setEmployees(newEmployees);
-    setStoredData('employees', newEmployees);
     saveSetting('employees', newEmployees);
   };
 
   const updateGeofences = (newGeofences: Geofence[]) => {
     setGeofences(newGeofences);
-    setStoredData('geofences', newGeofences);
     return saveSetting('geofences', newGeofences);
   };
 
@@ -175,55 +164,59 @@ export default function App() {
 
   const updateAttendance = (newAttendance: AttendanceRecord[]) => {
     setAttendanceRecords(newAttendance);
-    setStoredData('attendance', newAttendance);
   };
 
   const updateActivities = (newActivities: RecentActivity[]) => {
     setRecentActivities(newActivities);
-    setStoredData('activities', newActivities);
     saveSetting('activities', newActivities);
   };
 
   const updateLimitTimeValue = (newTime: string) => {
     setLimitTime(newTime);
-    setStoredData('limit_time', newTime);
     saveSetting('limit_time', newTime);
   };
 
   const updateJamPulang = (newTime: string) => {
     setJamPulang(newTime);
-    setStoredData('jam_pulang', newTime);
     saveSetting('jam_pulang', newTime);
   };
 
   const updateJamMalamMasuk = (newTime: string) => {
     setJamMalamMasuk(newTime);
-    setStoredData('jam_malam_masuk', newTime);
     saveSetting('jam_malam_masuk', newTime);
   };
 
   const updateJamMalamPulang = (newTime: string) => {
     setJamMalamPulang(newTime);
-    setStoredData('jam_malam_pulang', newTime);
     saveSetting('jam_malam_pulang', newTime);
   };
 
   const updateHariLibur = (newDays: number[]) => {
     setHariLibur(newDays);
-    setStoredData('hari_libur', newDays);
     saveSetting('hari_libur', newDays);
   };
 
   const handleLoginSuccess = (newSession: { role: 'employee' | 'admin'; user: any }) => {
     setSession(newSession);
-    setStoredData('session', newSession);
     setCurrentView(newSession.role);
   };
 
   const handleLogout = async () => {
     await googleLogout().catch(() => {});
     setSession(null);
-    setStoredData('session', null);
+  };
+
+  // Simpan profil kepegawaian pertama kali (pengguna baru) lalu lanjut ke presensi.
+  const handleCompleteProfile = (updates: Partial<Employee>) => {
+    if (!session) return;
+    const user = session.user as Employee;
+    const merged: Employee = { ...user, ...updates, profileCompleted: true };
+    let updated = employees.map(e => e.nip === user.nip ? { ...e, ...merged } : e);
+    if (!employees.some(e => e.nip === user.nip)) {
+      updated = [merged, ...updated];
+    }
+    updateEmployees(updated);
+    setSession({ ...session, user: merged });
   };
 
   const handleChangeProfilePicture = (nip: string, newFoto: string) => {
@@ -237,12 +230,10 @@ export default function App() {
 
     // Sync state if currently logged in as this employee
     if (session && session.role === 'employee' && session.user.nip === nip) {
-      const updatedSession = {
+      setSession({
         ...session,
         user: { ...session.user, foto: newFoto }
-      };
-      setSession(updatedSession);
-      setStoredData('session', updatedSession);
+      });
     }
   };
 
@@ -257,19 +248,17 @@ export default function App() {
 
     // Sync session if currently logged in as this employee
     if (session && session.role === 'employee' && session.user.nip === nip) {
-      const updatedSession = {
+      setSession({
         ...session,
         user: { ...session.user, ...updates }
-      };
-      setSession(updatedSession);
-      setStoredData('session', updatedSession);
+      });
     }
   };
 
   const handleChangeAdminProfilePicture = (newFoto: string) => {
     const updatedAdmin = { ...adminProfile, foto: newFoto };
     setAdminProfile(updatedAdmin);
-    setStoredData('admin_profile', updatedAdmin);
+    saveSetting('admin_profile', updatedAdmin);
 
     // Sync session
     if (session && session.role === 'admin') {
@@ -278,7 +267,6 @@ export default function App() {
         user: { ...session.user, foto: newFoto }
       };
       setSession(updatedSession);
-      setStoredData('session', updatedSession);
     }
   };
 
@@ -354,7 +342,7 @@ export default function App() {
       await saveAttendanceByNip(updated);
       return true;
     } catch (err) {
-      console.error('Data absen tersimpan lokal, namun gagal disinkronkan ke Firebase:', err);
+      console.error('Data absen gagal disinkronkan ke Firebase:', err);
       return false;
     }
   };
@@ -408,11 +396,29 @@ export default function App() {
     );
   }
 
+  // Layar loading singkat saat data cloud sedang dimuat (menghindari flash data default)
+  if (!cloudReady) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen bg-[#F2F2F7] dark:bg-gray-950 flex flex-col items-center justify-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#00418f] border-t-transparent rounded-full animate-spin dark:border-blue-400" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Memuat data terbaru dari cloud...</p>
+        </div>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider>
       <div className="relative min-h-screen bg-[#F2F2F7] text-gray-900 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-300">
 
-      {currentView === 'employee' ? (
+      {session.role === 'employee' && (session.user as Employee)?.profileCompleted === false ? (
+        <CompleteProfile
+          user={session.user as Employee}
+          onSave={handleCompleteProfile}
+          onLogout={handleLogout}
+        />
+      ) : currentView === 'employee' ? (
         <EmployeeApp 
           currentUser={session.role === 'employee' ? session.user : defaultEmployee}
           geofences={geofences}

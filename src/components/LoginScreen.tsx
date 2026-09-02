@@ -129,7 +129,8 @@ export default function LoginScreen({
         jabatan: "Pendidik",
         lembaga: "Yayasan Baitul Hikmah",
         foto: googleUser.photoURL || ASSETS.genericAvatar,
-        email: emailLower
+        email: emailLower,
+        profileCompleted: false
       };
 
       setSuccessMsg(`Email organisasi baru terdeteksi. Mendaftarkan ${newEmpName} sebagai identitas karyawan resmi...`);

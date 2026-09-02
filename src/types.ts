@@ -10,6 +10,7 @@ export interface Employee {
   lembaga: string;
   foto: string;
   email?: string;
+  profileCompleted?: boolean;
 }
 
 export interface AttendanceRecord {

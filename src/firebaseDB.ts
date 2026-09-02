@@ -1,6 +1,5 @@
 import { getDatabase, ref, onValue, set, off } from 'firebase/database';
 import { app } from './googleAuth';
-import { setStoredData } from './data';
 import { AttendanceRecord } from './types';
 
 const db = getDatabase(app);
@@ -13,10 +12,8 @@ let currentCallback: SettingsCallback | null = null;
 export const listenSettings = (callback: SettingsCallback) => {
   currentCallback = callback;
   onValue(settingsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      callback(data);
-    }
+    // Selalu panggil callback (walau null) supaya UI tahu proses muat sudah selesai.
+    callback(snapshot.val() ?? {});
   });
 };
 

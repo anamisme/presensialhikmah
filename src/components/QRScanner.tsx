@@ -47,20 +47,27 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
     hasScannedRef.current = false;
 
     try {
-      const scanner = new Html5Qrcode(idRef.current);
+      const scanner = new Html5Qrcode(idRef.current, {
+        verbose: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
+      });
       scannerRef.current = scanner;
 
       await scanner.start(
         { facingMode: "environment" },
         {
-          fps: 10,
+          fps: 16,
           videoConstraints: {
             facingMode: "environment",
-            width: { ideal: 640 },
-            height: { ideal: 480 }
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           },
+          // Perkecil area pindai: ZXing bekerja jauh lebih cepat pada region kecil,
+          // QR umumnya dibaca dalam jarak dekat sehingga area ~60% sudah lebih dari cukup.
           qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-            const size = Math.min(Math.floor(viewfinderWidth * 0.75), Math.floor(viewfinderHeight * 0.75), 260);
+            const size = Math.floor(Math.min(viewfinderWidth * 0.6, viewfinderHeight * 0.6, 240));
             return { width: size, height: size };
           }
         },
