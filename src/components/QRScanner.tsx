@@ -185,8 +185,10 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
       rafRef.current = requestAnimationFrame(processNativeFrame);
       return;
     }
-    // Decode pada resolusi sedang (lebih ringan & tetap akurat) bila video lebih besar.
-    const scale = Math.min(1, 1080 / Math.max(video.videoWidth, video.videoHeight));
+    // Decode pada resolusi tinggi (bila video > 1280) supaya QR kecil/jauh/miring
+    // tetap terdeteksi. Resolusi yang terlalu rendah membuat QR susah tertangkap
+    // dan terasa "tidak responsif" karena harus dekat & diam lama.
+    const scale = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight));
     canvas.width = Math.round(video.videoWidth * scale);
     canvas.height = Math.round(video.videoHeight * scale);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -221,8 +223,8 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
         video: {
           deviceId: cameraId ? { exact: cameraId } : undefined,
           facingMode: cameraId ? undefined : { ideal: "environment" },
-          width: { ideal: 640 },
-          height: { ideal: 480 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       });
       if (!mountedRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
@@ -286,7 +288,7 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
         {
           onDecodeError: () => {},
           preferredCamera: "environment",
-          maxScansPerSecond: 10,
+          maxScansPerSecond: 30,
           highlightScanRegion: true,
           highlightCodeOutline: true,
         }
