@@ -2,16 +2,23 @@
  * QR Code Scanner - optimized for fast detection across devices.
  *
  * Strategy:
- *  1. Gunakan BarcodeDetector asli browser (Chrome/Android) PER FRAME TANPA ZXing.
- *     html5-qrcode menyele-selikan BarcodeDetector & ZXing tiap frame, sehingga
- *     ZXing (lambat, berat CPU) tetap jalan bergantian. Dengan memakai
- *     BarcodeDetector murni + getUserMedia langsung, decoding jauh lebih ringan.
- *  2. Bila BarcodeDetector tidak tersedia, fallback ke html5-qrcode.
+ *  1. Gunakan BarcodeDetector asli browser (Chromium/Android WebView) PER FRAME
+ *     TANPA ZXing. Native API jauh lebih ringan & cepat, dan bebas race karena
+ *     setiap frame menunggu decode selesai (processNativeFrame guard).
+ *  2. Bila BarcodeDetector tidak tersedia (mis. WKWebView iOS), fallback ke
+ *     `qr-scanner` (berbasis WebAssembly) — pengganti ZXing yang lebih cepat.
  *  3. Kamera belakang dipilih eksplisit via deviceId bila tersedia.
+ *
+ * Catatan anti-race / cleanup:
+ *  - Hanya SATU scanner aktif dalam satu waktu. Sebelum membuat instance baru,
+ *    scanner lama (native / fallback) di-stop & destroy lebih dulu.
+ *  - Tidak ada decode yang tumpang-tindih: mode native memakai flag
+ *    `processingRef`, sedangkan qr-scanner maksimal `maxScansPerSecond` scan/detik.
+ *  - Kamera & resource di-stop saat komponen unmount maupun saat isActive berubah.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import QrScanner from 'qr-scanner';
 
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -50,8 +57,22 @@ async function getSupportedFormats(): Promise<string[]> {
   return ['qr_code'];
 }
 
+function mapError(err: any): string {
+  const msg = err?.message || String(err);
+  if (msg.includes('NotAllowedError') || msg.includes('Permission') || msg.includes('NotAllowed')) {
+    return 'Izinkan akses kamera di pengaturan browser.';
+  }
+  if (msg.includes('NotFoundError') || msg.includes('Requested device not found') || msg.includes('No matching device')) {
+    return 'Kamera tidak ditemukan.';
+  }
+  if (msg.includes('NotReadableError') || msg.includes('in use')) {
+    return 'Kamera sedang digunakan aplikasi lain.';
+  }
+  return msg;
+}
+
 export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRScannerProps) {
-  const fallbackScannerRef = useRef<Html5Qrcode | null>(null);
+  const qrScannerRef = useRef<QrScanner | null>(null);
   const nativeDetectorRef = useRef<{ detect: (s: CanvasImageSource) => Promise<Array<{ rawValue?: string }>> } | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -79,25 +100,28 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
     videoRef.current = null;
   };
 
-  const stopScanner = async () => {
-    if (nativeMode && hasNativeBarcodeDetector()) {
-      stopNative();
-      return;
-    }
-    const scanner = fallbackScannerRef.current;
+  const stopFallback = async () => {
+    const scanner = qrScannerRef.current;
     if (scanner) {
-      fallbackScannerRef.current = null;
+      qrScannerRef.current = null;
       try {
-        await scanner.stop();
-        scanner.clear();
-      } catch { try { scanner.clear(); } catch {} }
+        scanner.stop();
+      } catch { /* ignore */ }
+      scanner.destroy();
     }
+  };
+
+  const stopScanner = async () => {
+    // Selalu stop & destroy scanner lama (fallback qr-scanner ATAU native)
+    // sebelum membuat instance baru, agar hanya 1 scanner aktif.
+    if (qrScannerRef.current) await stopFallback();
+    if (nativeMode && hasNativeBarcodeDetector()) stopNative();
   };
 
   useEffect(() => {
     mountedRef.current = true;
     const container = document.getElementById(idRef.current);
-    // Pada mode native, inject <video> sekali ke dalam kontainer
+    // Pada mode native, inject <video> sekali ke dalam kontainer.
     if (container && !container.querySelector('video')) {
       const v = document.createElement('video');
       v.setAttribute('playsinline', 'true');
@@ -121,7 +145,10 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
 
   useEffect(() => {
     if (isActive) {
-      if (mountedRef.current) startScanner();
+      if (mountedRef.current) {
+        // Hentikan scanner aktif apa pun lalu buka yang baru.
+        stopScanner().then(() => { if (mountedRef.current) startScanner(); });
+      }
       return;
     }
     stopScanner();
@@ -150,6 +177,7 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
       container.appendChild(canvas);
       canvasRef.current = canvas;
     }
+    // Guard anti race: decode sebelumnya harus selesai dulu sebelum frame berikutnya.
     processingRef.current = true;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) {
@@ -157,7 +185,7 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
       rafRef.current = requestAnimationFrame(processNativeFrame);
       return;
     }
-    // decode pada resolusi sedang (lebih ringan & tetap akurat) bila video lebih besar
+    // Decode pada resolusi sedang (lebih ringan & tetap akurat) bila video lebih besar.
     const scale = Math.min(1, 1080 / Math.max(video.videoWidth, video.videoHeight));
     canvas.width = Math.round(video.videoWidth * scale);
     canvas.height = Math.round(video.videoHeight * scale);
@@ -193,8 +221,8 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
         video: {
           deviceId: cameraId ? { exact: cameraId } : undefined,
           facingMode: cameraId ? undefined : { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 640 },
+          height: { ideal: 480 },
         },
       });
       if (!mountedRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
@@ -218,16 +246,8 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
       await video.play().catch(() => {});
     } catch (err: any) {
       if (!mountedRef.current) return;
-      const msg = err?.message || String(err);
-      if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
-        setCameraError('Izinkan akses kamera di pengaturan browser.');
-      } else if (msg.includes('NotFoundError') || msg.includes('Requested device not found')) {
-        setCameraError('Kamera tidak ditemukan.');
-      } else if (msg.includes('NotReadableError')) {
-        setCameraError('Kamera sedang digunakan aplikasi lain.');
-      } else {
-        setCameraError(msg);
-      }
+      const msg = mapError(err);
+      setCameraError(msg);
       if (onScanError) onScanError(msg);
       setIsStarting(false);
       return;
@@ -242,57 +262,51 @@ export default function QRScanner({ onScanSuccess, onScanError, isActive }: QRSc
     const container = document.getElementById(idRef.current);
     if (!container) { setIsStarting(false); return; }
 
+    let video = container.querySelector('video') as HTMLVideoElement | null;
+    if (!video) {
+      video = document.createElement('video');
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('muted', 'true');
+      video.autoplay = true;
+      video.className = 'w-full h-full object-cover';
+      container.appendChild(video);
+    }
+
     try {
-      const scanner = new Html5Qrcode(idRef.current, {
-        verbose: false,
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-      });
-      fallbackScannerRef.current = scanner;
-      await scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 8,
-          videoConstraints: {
-            facingMode: "environment",
-            width: { ideal: 960 },
-            height: { ideal: 720 },
-          },
-          qrbox: (vw: number, vh: number) => {
-            const size = Math.floor(Math.min(vw * 0.6, vh * 0.6, 260));
-            return { width: size, height: size };
-          },
-        },
-        (decodedText) => {
+      const scanner = new QrScanner(
+        video,
+        (result) => {
+          const decodedText = result?.data ?? String(result);
           if (!hasScannedRef.current) {
             hasScannedRef.current = true;
             onScanSuccess(decodedText);
             stopScanner();
           }
         },
-        () => {}
+        {
+          onDecodeError: () => {},
+          preferredCamera: "environment",
+          maxScansPerSecond: 10,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
       );
+      qrScannerRef.current = scanner;
+      await scanner.start();
       if (mountedRef.current) setIsStarting(false);
     } catch (err: any) {
       if (!mountedRef.current) return;
-      const msg = err?.message || String(err);
-      if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
-        setCameraError('Izinkan akses kamera di pengaturan browser.');
-      } else if (msg.includes('NotFoundError') || msg.includes('Requested device not found')) {
-        setCameraError('Kamera tidak ditemukan.');
-      } else if (msg.includes('NotReadableError')) {
-        setCameraError('Kamera sedang digunakan aplikasi lain.');
-      } else {
-        setCameraError(msg);
-      }
-      try { fallbackScannerRef.current?.clear(); } catch {}
-      fallbackScannerRef.current = null;
+      const msg = mapError(err);
+      setCameraError(msg);
+      try { qrScannerRef.current?.destroy(); } catch {}
+      qrScannerRef.current = null;
       if (onScanError) onScanError(msg);
       setIsStarting(false);
     }
   };
 
-  const startScanner = () => {
-    if (fallbackScannerRef.current || isStarting) return;
+  const startScanner = async () => {
+    if (qrScannerRef.current || isStarting) return;
     const container = document.getElementById(idRef.current);
     if (!container) return;
     hasScannedRef.current = false;
