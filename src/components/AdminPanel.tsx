@@ -28,7 +28,8 @@ import {
   X,
   AlertTriangle,
   Printer,
-  Edit3
+  Edit3,
+  CloudUpload
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence, RecentActivity } from '../types';
 import { ASSETS, localDateString } from '../data';
@@ -55,6 +56,7 @@ interface AdminPanelProps {
   onAddGeofence: (geo: Geofence) => void;
   onUpdateGeofence: (id: string, updates: Partial<Geofence>) => void;
   onDeleteGeofence: (id: string) => void;
+  onSyncGeofences?: () => Promise<void>;
   onBackToEmployee: () => void;
   adminProfile: { nama: string; foto: string; role: string };
   onChangeAdminProfilePicture: (newFoto: string) => void;
@@ -84,6 +86,7 @@ export default function AdminPanel({
   onAddGeofence,
   onUpdateGeofence,
   onDeleteGeofence,
+  onSyncGeofences,
   onBackToEmployee,
   adminProfile,
   onChangeAdminProfilePicture,
@@ -106,6 +109,9 @@ export default function AdminPanel({
   const [customQrDataUrl, setCustomQrDataUrl] = useState('');
   const [customQrImgError, setCustomQrImgError] = useState(false);
   const customQrRef = useRef<HTMLDivElement>(null);
+
+  // Sinkronisasi lokasi/geofence ke cloud
+  const [geofenceSyncState, setGeofenceSyncState] = useState<'idle' | 'syncing' | 'ok' | 'error'>('idle');
 
   // State for editing existing QR/location
   const [editingGeoId, setEditingGeoId] = useState<string | null>(null);
@@ -986,6 +992,35 @@ export default function AdminPanel({
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Tambahkan lokasi gedung sekaligus membuat QR Code presensinya. Setiap lokasi tersimpan otomatis sebagai zona presensi.
                   </p>
+
+                  {onSyncGeofences && (
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={async () => {
+                          setGeofenceSyncState('syncing');
+                          try {
+                            await onSyncGeofences();
+                            setGeofenceSyncState('ok');
+                            setTimeout(() => setGeofenceSyncState('idle'), 2500);
+                          } catch {
+                            setGeofenceSyncState('error');
+                            setTimeout(() => setGeofenceSyncState('idle'), 4000);
+                          }
+                        }}
+                        disabled={geofenceSyncState === 'syncing'}
+                        className="inline-flex items-center justify-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-4 py-2.5 rounded-xl hover:bg-emerald-100 transition-all dark:text-emerald-400 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 disabled:opacity-60"
+                      >
+                        <CloudUpload className="w-4 h-4" />
+                        {geofenceSyncState === 'syncing' ? 'Menyinkronkan...' : 'Sinkronkan Lokasi & QR ke Cloud'}
+                      </button>
+                      {geofenceSyncState === 'ok' && (
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400">✓ Lokasi & QR tersimpan ke cloud. Akan tampil di browser/perangkat lain setelah login.</p>
+                      )}
+                      {geofenceSyncState === 'error' && (
+                        <p className="text-[11px] text-rose-600 dark:text-rose-400">⚠️ Gagal menyinkronkan ke cloud. Periksa koneksi internet lalu coba lagi.</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Form tambah lokasi + generate QR */}
                   <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-800/50">

@@ -163,7 +163,14 @@ export default function App() {
   const updateGeofences = (newGeofences: Geofence[]) => {
     setGeofences(newGeofences);
     setStoredData('geofences', newGeofences);
-    saveSetting('geofences', newGeofences);
+    return saveSetting('geofences', newGeofences);
+  };
+
+  // Paksa kirim ulang data lokasi/geofence ke cloud Firebase.
+  // Dipakai tombol "Sinkronkan ke Cloud" di pengaturan agar data
+  // yang sudah dibuat tervalidasi tersimpan server (lintas browser/device).
+  const syncGeofencesToCloud = async () => {
+    await updateGeofences(geofences);
   };
 
   const updateAttendance = (newAttendance: AttendanceRecord[]) => {
@@ -444,6 +451,7 @@ export default function App() {
           onAddGeofence={handleAddGeofence}
           onUpdateGeofence={handleUpdateGeofence}
           onDeleteGeofence={handleDeleteGeofence}
+          onSyncGeofences={syncGeofencesToCloud}
           onBackToEmployee={() => setCurrentView('employee')}
           adminProfile={adminProfile}
           onChangeAdminProfilePicture={handleChangeAdminProfilePicture}
