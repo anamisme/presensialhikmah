@@ -19,7 +19,7 @@ import CompleteProfile from './components/CompleteProfile';
 import { syncAttendanceToSheet } from './googleSheets';
 import { logout as googleLogout } from './googleAuth';
 import { ThemeProvider } from './ThemeContext';
-import { listenSettings, stopListening, saveSetting, listenOwnAttendance, listenAllAttendance, saveAttendanceByNip } from './firebaseDB';
+import { listenSettings, stopListening, saveSetting, listenOwnAttendance, listenAllAttendance, saveAttendanceByEmail } from './firebaseDB';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'employee' | 'admin'>('employee');
@@ -113,9 +113,9 @@ export default function App() {
     if (!session) return;
 
     if (session.role === 'employee') {
-      const nip = session.user?.nip;
-      if (!nip) return;
-      const off = listenOwnAttendance(nip, (records) => {
+      const email = session.user?.email;
+      if (!email) return;
+      const off = listenOwnAttendance(email.toLowerCase(), (records) => {
         setAttendanceRecords(records);
       });
       return off;
@@ -211,17 +211,17 @@ export default function App() {
     if (!session) return;
     const user = session.user as Employee;
     const merged: Employee = { ...user, ...updates, profileCompleted: true };
-    let updated = employees.map(e => e.nip === user.nip ? { ...e, ...merged } : e);
-    if (!employees.some(e => e.nip === user.nip)) {
+    let updated = employees.map(e => e.email === user.email ? { ...e, ...merged } : e);
+    if (!employees.some(e => e.email === user.email)) {
       updated = [merged, ...updated];
     }
     updateEmployees(updated);
     setSession({ ...session, user: merged });
   };
 
-  const handleChangeProfilePicture = (nip: string, newFoto: string) => {
+  const handleChangeProfilePicture = (email: string, newFoto: string) => {
     const updated = employees.map(emp => {
-      if (emp.nip === nip) {
+      if (emp.email === email) {
         return { ...emp, foto: newFoto };
       }
       return emp;
@@ -229,7 +229,7 @@ export default function App() {
     updateEmployees(updated);
 
     // Sync state if currently logged in as this employee
-    if (session && session.role === 'employee' && session.user.nip === nip) {
+    if (session && session.role === 'employee' && session.user.email === email) {
       setSession({
         ...session,
         user: { ...session.user, foto: newFoto }
@@ -237,9 +237,9 @@ export default function App() {
     }
   };
 
-  const handleUpdateEmployeeProfile = (nip: string, updates: Partial<Employee>) => {
+  const handleUpdateEmployeeProfile = (email: string, updates: Partial<Employee>) => {
     const updated = employees.map(emp => {
-      if (emp.nip === nip) {
+      if (emp.email === email) {
         return { ...emp, ...updates };
       }
       return emp;
@@ -247,7 +247,7 @@ export default function App() {
     updateEmployees(updated);
 
     // Sync session if currently logged in as this employee
-    if (session && session.role === 'employee' && session.user.nip === nip) {
+    if (session && session.role === 'employee' && session.user.email === email) {
       setSession({
         ...session,
         user: { ...session.user, ...updates }
@@ -272,12 +272,11 @@ export default function App() {
 
   // Default employee fallback (for admin switching to employee view)
   const defaultEmployee = employees[0] || {
-    nip: 'SYSTEM',
+    email: '',
     nama: 'User',
     jabatan: 'Pegawai',
     lembaga: 'Yayasan Baitul Hikmah',
-    foto: ASSETS.genericAvatar,
-    email: ''
+    foto: ASSETS.genericAvatar
   };
 
   const handleAddAttendance = (record: AttendanceRecord) => {
@@ -287,7 +286,7 @@ export default function App() {
   const handleAddAttendanceBatch = async (records: AttendanceRecord[]): Promise<boolean> => {
     let updated = [...attendanceRecords];
     records.forEach(record => {
-      // Find existing record by id only to avoid overwriting different records for same NIP+date
+      // Find existing record by id only to avoid overwriting different records for same email+date
       const existsIdx = updated.findIndex(r => r.id === record.id);
       if (existsIdx > -1) {
         // Update existing record (e.g., add checkout time)
@@ -303,7 +302,7 @@ export default function App() {
     const newActivities: RecentActivity[] = [];
     records.forEach(record => {
       // Auto-sync to Google Sheets via webhook
-      const emp = employees.find(e => e.nip === record.nip);
+      const emp = employees.find(e => e.email === record.email);
       syncAttendanceToSheet({
         tanggal: record.tanggal,
         nama: record.nama,
@@ -327,7 +326,7 @@ export default function App() {
 
       newActivities.push({
         id: `act-${Date.now()}-${record.id}`,
-        nip: record.nip,
+        email: record.email,
         nama: record.nama,
         tipe: activityType,
         waktu: 'Baru saja',
@@ -339,7 +338,7 @@ export default function App() {
     }
 
     try {
-      await saveAttendanceByNip(updated);
+      await saveAttendanceByEmail(updated);
       return true;
     } catch (err) {
       console.error('Data absen gagal disinkronkan ke Firebase:', err);
@@ -353,7 +352,7 @@ export default function App() {
 
     const newActivity: RecentActivity = {
       id: `act-${Date.now()}`,
-      nip: newEmp.nip,
+      email: newEmp.email,
       nama: newEmp.nama,
       tipe: 'tambah',
       waktu: 'Baru saja',
@@ -362,8 +361,8 @@ export default function App() {
     updateActivities([newActivity, ...recentActivities]);
   };
 
-  const handleDeleteEmployee = (nip: string) => {
-    const updated = employees.filter(e => e.nip !== nip);
+  const handleDeleteEmployee = (email: string) => {
+    const updated = employees.filter(e => e.email !== email);
     updateEmployees(updated);
   };
 

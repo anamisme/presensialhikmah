@@ -4,18 +4,17 @@
  */
 
 export interface Employee {
-  nip: string;
+  email: string;
   nama: string;
   jabatan: string;
   lembaga: string;
   foto: string;
-  email?: string;
   profileCompleted?: boolean;
 }
 
 export interface AttendanceRecord {
   id: string;
-  nip: string;
+  email: string;
   nama: string;
   foto: string;
   tanggal: string; // formats "YYYY-MM-DD"
@@ -40,7 +39,7 @@ export interface Geofence {
 
 export interface RecentActivity {
   id: string;
-  nip: string;
+  email: string;
   nama: string;
   tipe: 'masuk' | 'keluar' | 'tambah';
   waktu: string; // e.g., "5 menit yang lalu", "1 jam yang lalu", etc.

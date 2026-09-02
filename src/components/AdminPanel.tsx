@@ -51,7 +51,7 @@ interface AdminPanelProps {
   onSetJamMalamMasuk: (time: string) => void;
   onSetJamMalamPulang: (time: string) => void;
   onSetHariLibur: (days: number[]) => void;
-  onDeleteEmployee: (nip: string) => void;
+  onDeleteEmployee: (email: string) => void;
   onAddGeofence: (geo: Geofence) => void;
   onUpdateGeofence: (id: string, updates: Partial<Geofence>) => void;
   onDeleteGeofence: (id: string) => void;
@@ -175,10 +175,10 @@ export default function AdminPanel({
       alert('Tidak ada data presensi yang cocok dengan filter untuk diexport.');
       return;
     }
-    const headers = ['Tanggal', 'NIP', 'Nama', 'Sesi', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
+    const headers = ['Tanggal', 'Email', 'Nama', 'Sesi', 'Masuk', 'Keluar', 'Status', 'Lokasi'];
     const rows = filteredAttendance.map(r => [
       r.tanggal,
-      r.nip,
+      r.email,
       sanitizeCSVField(r.nama),
       r.sesi || 'siang',
       r.masuk,
@@ -204,14 +204,14 @@ export default function AdminPanel({
 
     const title = `Rekap Presensi ${monthFilter === 'Semua' ? 'Semua Bulan' : monthFilter} ${yearFilter === 'Semua' ? 'Semua Tahun' : yearFilter}`;
     const tableHeader = `<tr>
-      <th>Tanggal</th><th>NIP</th><th>Nama</th><th>Jabatan</th><th>Lembaga</th>
+      <th>Tanggal</th><th>Email</th><th>Nama</th><th>Jabatan</th><th>Lembaga</th>
       <th>Sesi</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>Lokasi</th>
     </tr>`;
     const tableBody = filteredAttendance.map(r => {
-      const emp = employees.find(e => e.nip === r.nip);
+      const emp = employees.find(e => e.email === r.email);
       return `<tr>
         <td>${r.tanggal}</td>
-        <td>${r.nip}</td>
+        <td>${r.email}</td>
         <td>${r.nama}</td>
         <td>${emp?.jabatan || ''}</td>
         <td>${emp?.lembaga || ''}</td>
@@ -296,7 +296,7 @@ export default function AdminPanel({
   // Filter employees list by search query
   const filteredEmployees = employees.filter(emp => 
     emp.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.nip.includes(searchQuery)
+    (emp.email || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Filter attendance records
@@ -495,7 +495,7 @@ export default function AdminPanel({
                           </div>
                           <div className="flex-grow min-w-0">
                             <h4 className="font-bold text-gray-800 text-sm truncate dark:text-gray-100">{rec.nama}</h4>
-                            <p className="text-xs text-gray-400 truncate dark:text-gray-500">NIP: {rec.nip}</p>
+                            <p className="text-xs text-gray-400 truncate dark:text-gray-500">{rec.email}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{rec.masuk} WIB</p>
@@ -565,7 +565,7 @@ export default function AdminPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-white border border-gray-200/80 rounded-2xl py-3.5 pl-12 pr-4 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] transition-all text-sm outline-none placeholder:text-gray-400 dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-500"
-                  placeholder="Cari nama atau NIP..."
+                  placeholder="Cari nama atau email..."
                 />
               </div>
 
@@ -585,7 +585,6 @@ export default function AdminPanel({
                         <h3 className="font-bold text-gray-800 text-sm truncate dark:text-gray-100">{emp.nama}</h3>
                         <p className="text-xs text-gray-500 truncate dark:text-gray-400">{emp.jabatan} • <span className="text-gray-400 dark:text-gray-500">{emp.lembaga}</span></p>
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
-<span className="text-[10px] font-bold text-[#00418f] tracking-wide dark:text-blue-400">NIP: {emp.nip}</span>
                           {emp.email ? (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-blue-50 text-[#00418f] border border-blue-100 font-medium lowercase truncate max-w-[180px] dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800" title={emp.email}>
                               {emp.email}
@@ -600,7 +599,7 @@ export default function AdminPanel({
                       <button 
                         onClick={() => {
                           if (confirm(`Apakah Anda yakin ingin menghapus data ${emp.nama}?`)) {
-                            onDeleteEmployee(emp.nip);
+                            onDeleteEmployee(emp.email);
                           }
                         }}
                         className="w-9 h-9 flex items-center justify-center rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors dark:text-rose-400 dark:bg-rose-900/30 dark:hover:bg-rose-900/50"
@@ -678,7 +677,7 @@ export default function AdminPanel({
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Tanggal</th>
-                        <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">NIP</th>
+                        <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Email</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Nama</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Sesi</th>
                         <th className="px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider dark:text-gray-500">Masuk</th>
@@ -697,7 +696,7 @@ export default function AdminPanel({
                         paginatedAttendance.map((rec, idx) => (
                           <tr key={idx} className="hover:bg-gray-50/30 transition-colors dark:hover:bg-gray-800/30">
                             <td className="px-5 py-4 text-xs font-semibold text-gray-700 dark:text-gray-300">{rec.tanggal}</td>
-                            <td className="px-5 py-4 text-xs text-gray-500 dark:text-gray-400">{rec.nip}</td>
+                            <td className="px-5 py-4 text-xs text-gray-500 dark:text-gray-400">{rec.email}</td>
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-2.5">
                                 <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-50 shrink-0 border border-gray-100 dark:border-gray-700 dark:bg-gray-800">

@@ -120,16 +120,15 @@ export default function LoginScreen({
       }, 1000);
     } else {
       // 4. Dynamic Auto-Registration for new organization emails
-      const generatedNip = `${Date.now()}`;
+      // Identitas karyawan adalah EMAIL (bukan NIP); berikutnya diisi form profil.
       const newEmpName = googleUser.displayName || emailLower.split('@')[0].replace(/[^a-zA-Z]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       
       const newEmp: Employee = {
-        nip: generatedNip,
+        email: emailLower,
         nama: newEmpName,
         jabatan: "Pendidik",
         lembaga: "Yayasan Baitul Hikmah",
         foto: googleUser.photoURL || ASSETS.genericAvatar,
-        email: emailLower,
         profileCompleted: false
       };
 

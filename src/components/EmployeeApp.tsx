@@ -42,8 +42,8 @@ interface EmployeeAppProps {
   onAddAttendance: (record: AttendanceRecord) => void;
   onAddAttendanceBatch?: (records: AttendanceRecord[]) => Promise<boolean>;
   onLogout: () => void;
-  onChangeProfilePicture: (nip: string, newFoto: string) => void;
-  onUpdateEmployeeProfile?: (nip: string, updates: Partial<Employee>) => void;
+  onChangeProfilePicture: (email: string, newFoto: string) => void;
+  onUpdateEmployeeProfile?: (email: string, updates: Partial<Employee>) => void;
   limitTime?: string;
   jamPulang?: string;
   jamMalamMasuk?: string;
@@ -121,7 +121,7 @@ export default function EmployeeApp({
   // Track personal records (merging local offline records and server records)
   const personalRecords = [
     ...offlineQueue.map(item => ({ ...item, isOfflinePending: true })),
-    ...attendanceRecords.filter(r => r.nip === currentUser.nip)
+    ...attendanceRecords.filter(r => (r.email || '').toLowerCase() === (currentUser.email || '').toLowerCase())
   ].filter((value, index, self) => 
     self.findIndex(v => v.id === value.id) === index
   );
@@ -504,7 +504,7 @@ export default function EmployeeApp({
         
         const newRecord: AttendanceRecord = {
           id: `rec-${Date.now()}`,
-          nip: currentUser.nip,
+          email: (currentUser.email || '').toLowerCase(),
           nama: currentUser.nama,
           foto: currentUser.foto,
           tanggal: todayStr,
@@ -529,7 +529,7 @@ export default function EmployeeApp({
         if (isOnline) {
           onAddAttendance(updatedRecord);
         } else {
-          const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && r.nip === currentUser.nip && (r.sesi ?? 'siang') === currentSession);
+          const queueIndex = offlineQueue.findIndex(r => r.tanggal === todayStr && (r.email || '').toLowerCase() === (currentUser.email || '').toLowerCase() && (r.sesi ?? 'siang') === currentSession);
           let updatedQueue: AttendanceRecord[];
           if (queueIndex > -1) {
             updatedQueue = [...offlineQueue];
@@ -584,7 +584,7 @@ export default function EmployeeApp({
 
       return () => clearTimeout(timer);
     }
-  }, [isOnline, offlineQueue, onAddAttendance, onAddAttendanceBatch, currentUser.nip]);
+  }, [isOnline, offlineQueue, onAddAttendance, onAddAttendanceBatch, currentUser.email]);
 
   // Format time (WIB format)
   const formatClock = (date: Date) => {
@@ -1359,7 +1359,7 @@ export default function EmployeeApp({
                       onClick={() => {
                         const name = editName.trim();
                         if (!name) return;
-                        onUpdateEmployeeProfile?.(currentUser.nip, { nama: name });
+                        onUpdateEmployeeProfile?.(currentUser.email, { nama: name });
                         setIsEditingName(false);
                       }}
                       className="px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#0058bc] hover:bg-[#00418f] transition-colors"
@@ -1408,7 +1408,7 @@ export default function EmployeeApp({
                 <select
                   value={currentUser.jabatan}
                   onChange={(e) => {
-                    onUpdateEmployeeProfile?.(currentUser.nip, { jabatan: e.target.value });
+                    onUpdateEmployeeProfile?.(currentUser.email, { jabatan: e.target.value });
                   }}
                   className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
                 >
@@ -1423,7 +1423,7 @@ export default function EmployeeApp({
                 <select
                   value={currentUser.lembaga}
                   onChange={(e) => {
-                    onUpdateEmployeeProfile?.(currentUser.nip, { lembaga: e.target.value });
+                    onUpdateEmployeeProfile?.(currentUser.email, { lembaga: e.target.value });
                   }}
                   className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#0058bc]/20 outline-none text-gray-800 dark:text-gray-100"
                 >
@@ -1682,7 +1682,7 @@ export default function EmployeeApp({
                     const fullKeterangan = `${permitType}: ${permitReason}`;
                     const newRecord: AttendanceRecord = {
                       id: `rec-${Date.now()}`,
-                      nip: currentUser.nip,
+                      email: (currentUser.email || '').toLowerCase(),
                       nama: currentUser.nama,
                       foto: currentUser.foto,
                       tanggal: todayStr,
@@ -1781,7 +1781,7 @@ export default function EmployeeApp({
                       }
                       const reader = new FileReader();
                       reader.onloadend = () => {
-                        onChangeProfilePicture(currentUser.nip, reader.result as string);
+                        onChangeProfilePicture(currentUser.email, reader.result as string);
                         setIsEditingPhoto(false);
                       };
                       reader.readAsDataURL(file);

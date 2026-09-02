@@ -36,15 +36,15 @@ Detail: ${err?.message || err}`);
   });
 };
 
-// --- Attendance (disimpan per NIP karyawan) ---
+// --- Attendance (disimpan per EMAIL karyawan) ---
 
 const attendanceBase = () => ref(db, 'presensi-settings/attendance');
 
 export const listenOwnAttendance = (
-  nip: string,
+  email: string,
   callback: (records: AttendanceRecord[]) => void
 ) => {
-  return onValue(ref(db, `presensi-settings/attendance/${nip}`), (snapshot) => {
+  return onValue(ref(db, `presensi-settings/attendance/${email}`), (snapshot) => {
     const val = snapshot.val();
     callback(Array.isArray(val) ? val : []);
   });
@@ -65,9 +65,9 @@ export const listenAllAttendance = (callback: (records: AttendanceRecord[]) => v
   });
 };
 
-export const saveOwnAttendance = (nip: string, records: AttendanceRecord[]) => {
-  return set(ref(db, `presensi-settings/attendance/${nip}`), records).catch((err) => {
-    console.error(`Gagal menyimpan absensi NIP ${nip} ke Firebase:`, err);
+export const saveOwnAttendance = (email: string, records: AttendanceRecord[]) => {
+  return set(ref(db, `presensi-settings/attendance/${email}`), records).catch((err) => {
+    console.error(`Gagal menyimpan absensi ${email} ke Firebase:`, err);
     alert(`⚠️ Gagal menyinkronkan absensi ke server.
 Data hanya tersimpan offline di perangkat ini.
 
@@ -77,11 +77,11 @@ Detail: ${err?.message || err}`);
   });
 };
 
-export const saveAttendanceByNip = (records: AttendanceRecord[]) => {
-  const byNip: Record<string, AttendanceRecord[]> = {};
+export const saveAttendanceByEmail = (records: AttendanceRecord[]) => {
+  const byEmail: Record<string, AttendanceRecord[]> = {};
   for (const r of records) {
-    if (!byNip[r.nip]) byNip[r.nip] = [];
-    byNip[r.nip].push(r);
+    if (!byEmail[r.email]) byEmail[r.email] = [];
+    byEmail[r.email].push(r);
   }
-  return Promise.all(Object.entries(byNip).map(([nip, recs]) => saveOwnAttendance(nip, recs)));
+  return Promise.all(Object.entries(byEmail).map(([email, recs]) => saveOwnAttendance(email, recs)));
 };
