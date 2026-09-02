@@ -27,7 +27,8 @@ import {
   X,
   Calendar,
   Image as ImageIcon,
-  Pencil
+  Pencil,
+  Mail
 } from 'lucide-react';
 import { Employee, AttendanceRecord, Geofence } from '../types';
 import { ASSETS, localDateString } from '../data';
@@ -1389,6 +1390,12 @@ export default function EmployeeApp({
                 )}
                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{currentUser.jabatan}</p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{currentUser.lembaga}</p>
+                {currentUser.email && (
+                  <p className="flex items-center justify-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    <Mail className="w-3 h-3" />
+                    {currentUser.email}
+                  </p>
+                )}
               </div>
             </div>
 

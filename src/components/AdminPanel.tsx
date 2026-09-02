@@ -51,7 +51,6 @@ interface AdminPanelProps {
   onSetJamMalamMasuk: (time: string) => void;
   onSetJamMalamPulang: (time: string) => void;
   onSetHariLibur: (days: number[]) => void;
-  onAddEmployee: (emp: Employee) => void;
   onDeleteEmployee: (nip: string) => void;
   onAddGeofence: (geo: Geofence) => void;
   onUpdateGeofence: (id: string, updates: Partial<Geofence>) => void;
@@ -81,7 +80,6 @@ export default function AdminPanel({
   onSetJamMalamMasuk,
   onSetJamMalamPulang,
   onSetHariLibur,
-  onAddEmployee,
   onDeleteEmployee,
   onAddGeofence,
   onUpdateGeofence,
@@ -126,13 +124,6 @@ export default function AdminPanel({
   const [viewingAttachment, setViewingAttachment] = useState<string | null>(null);
   const [attachmentTitle, setAttachmentTitle] = useState('');
   
-  // State for adding employees bottom sheet
-  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
-
-  const [newNama, setNewNama] = useState('');
-  const [newJabatan, setNewJabatan] = useState('Pendidik');
-  const [newLembaga, setNewLembaga] = useState('MTS Al-Hikmah Tangkil Kulon');
-  const [newEmail, setNewEmail] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   // State for QR generation
@@ -326,36 +317,6 @@ export default function AdminPanel({
   const totalPages = Math.ceil(totalEntries / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedAttendance = filteredAttendance.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleAddNewEmployee = (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = newEmail.trim().toLowerCase();
-    if (!email || !newNama.trim()) return;
-
-    // Cegah duplikat email agar login via email tetap cocok dengan 1 akun
-    if (employees.some(emp => emp.email?.toLowerCase() === email)) {
-      alert('Email sudah terdaftar atas nama karyawan lain.');
-      return;
-    }
-    const nip = `NIP-${Date.now()}`;
-
-    const newEmp: Employee = {
-      nip,
-      nama: newNama.trim(),
-      jabatan: newJabatan,
-      lembaga: newLembaga,
-      foto: ASSETS.genericAvatar,
-      email
-    };
-
-    onAddEmployee(newEmp);
-    
-    // Clear inputs and close sheet
-    setNewNama('');
-    setNewJabatan('');
-    setNewEmail('');
-    setIsAddEmployeeOpen(false);
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F9F9FF] text-gray-900 font-sans pb-24 md:pb-0 select-none transition-colors duration-300 dark:bg-gray-950 dark:text-gray-100">
@@ -586,13 +547,6 @@ export default function AdminPanel({
                   <h2 className="text-xl md:text-2xl font-extrabold text-gray-800 tracking-tight dark:text-gray-100">Data Karyawan</h2>
                   <p className="text-xs text-gray-400 dark:text-gray-500">Total terdaftar {employees.length} karyawan aktif. Karyawan otomatis terdaftar saat login pertama.</p>
                 </div>
-                <button
-                  onClick={() => setIsAddEmployeeOpen(true)}
-                  className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#00418f] shadow-md hover:brightness-110 active:scale-95 transition-all dark:bg-blue-700"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Tambah Karyawan
-                </button>
               </div>
 
               {/* Search Bar */}
@@ -1414,116 +1368,6 @@ export default function AdminPanel({
 
         </main>
       </div>
-
-      {/* Adding Karyawan Bottom Sheet Sheet Modal */}
-      <AnimatePresence>
-        {isAddEmployeeOpen && (
-          <>
-            {/* Dark overlay backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAddEmployeeOpen(false)}
-              className="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" 
-            />
-
-            {/* Inset Grouped Bottom Form Panel Sheet */}
-            <motion.div 
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 z-[70] bg-[#F2F2F7] rounded-t-[32px] shadow-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-950"
-            >
-              <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-4" />
-              
-              <div className="px-4 pb-12 max-w-md mx-auto">
-                <h2 className="text-lg font-black text-gray-800 mb-6 flex items-center gap-2 dark:text-gray-100">
-                  <UserPlus className="w-5 h-5 text-[#00418f]" />
-                  Tambah Karyawan Baru
-                </h2>
-                
-                <form onSubmit={handleAddNewEmployee} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#00418f] ml-1 uppercase flex items-center gap-1.5 dark:text-blue-400">
-                      Email Google Workspace
-                      <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase dark:bg-blue-900/30 dark:text-blue-400">Utama</span>
-                    </label>
-                    <input 
-                      type="email"
-                      required
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="w-full bg-white border border-[#00418f]/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 font-medium text-gray-800 dark:bg-gray-900 dark:border-blue-800/30 dark:text-gray-100 dark:placeholder:text-gray-600"
-                      placeholder="contoh: budi@yayasanbaitulhikmah.com"
-                    />
-                    <p className="text-[10px] text-gray-400 leading-relaxed px-1 dark:text-gray-500">
-                      Karyawan akan login menggunakan Akun Google ini. Pastikan domain email organisasi sesuai.
-                    </p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">Nama Lengkap</label>
-                    <input 
-                      type="text"
-                      required
-                      value={newNama}
-                      onChange={(e) => setNewNama(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none placeholder:text-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:placeholder:text-gray-600"
-                      placeholder="Masukkan nama lengkap"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">Jabatan</label>
-                    <select 
-                      required
-                      value={newJabatan}
-                      onChange={(e) => setNewJabatan(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none cursor-pointer dark:bg-gray-900 dark:border-gray-700"
-                    >
-                      <option value="Pendidik">Pendidik</option>
-                      <option value="Ketua Lembaga">Ketua Lembaga</option>
-                      <option value="Tenaga Pendidik">Tenaga Pendidik</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-400 ml-1 uppercase dark:text-gray-500">Lembaga</label>
-                    <select 
-                      value={newLembaga}
-                      onChange={(e) => setNewLembaga(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-[#00418f]/20 focus:border-[#00418f] text-sm outline-none cursor-pointer dark:bg-gray-900 dark:border-gray-700"
-                    >
-                      <option value="MTS Al-Hikmah Tangkil Kulon">MTS Al-Hikmah Tangkil Kulon</option>
-                      <option value="MIS Al-Hikmah Tangkil Kulon">MIS Al-Hikmah Tangkil Kulon</option>
-                      <option value="PKBM Al-Hikmah">PKBM Al-Hikmah</option>
-                      <option value="KB Al-Hikmah">KB Al-Hikmah</option>
-                    </select>
-                  </div>
-
-                  <div className="pt-4 flex gap-3">
-                    <button 
-                      type="button"
-                      onClick={() => setIsAddEmployeeOpen(false)}
-                      className="flex-1 py-4 rounded-xl text-xs font-bold uppercase tracking-wider text-[#00418f] bg-[#00418f]/10 active:scale-95 transition-transform dark:text-blue-400 dark:bg-blue-900/30"
-                    >
-                      Batal
-                    </button>
-                    <button 
-                      type="submit"
-                      className="flex-1 py-4 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-[#00418f] shadow-md hover:brightness-110 active:scale-95 transition-transform dark:bg-blue-700"
-                    >
-                      Simpan Data
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* Admin Mobile Bottom Tabs Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 flex justify-around items-center px-4 py-2 shadow-lg">

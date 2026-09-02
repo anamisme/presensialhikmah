@@ -452,7 +452,6 @@ export default function App() {
           onSetJamMalamMasuk={updateJamMalamMasuk}
           onSetJamMalamPulang={updateJamMalamPulang}
           onSetHariLibur={updateHariLibur}
-          onAddEmployee={handleAddEmployee}
           onDeleteEmployee={handleDeleteEmployee}
           onAddGeofence={handleAddGeofence}
           onUpdateGeofence={handleUpdateGeofence}

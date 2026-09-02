@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserCircle, LogOut, Save } from 'lucide-react';
+import { UserCircle, LogOut, Save, Mail } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { Employee } from '../types';
 
@@ -48,6 +48,12 @@ export default function CompleteProfile({ user, onSave, onLogout }: CompleteProf
             <p className="text-xs text-white/80 text-center mt-1">
               Sebelum mulai presensi, lengkapi data kepegawaian Anda terlebih dahulu.
             </p>
+            {user.email && (
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-white/90">
+                <Mail className="w-3.5 h-3.5" />
+                {user.email}
+              </p>
+            )}
           </div>
         </div>
 
